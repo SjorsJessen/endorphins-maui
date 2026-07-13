@@ -1,17 +1,27 @@
 @using Endorphins.Shared
-@inject IFileStorageService Storage
+@inject IFileStorageService StorageService
 
-<button @onclick="Open">Open project</button>
+<button @onclick="OpenProject">Open project</button>
 
 @code {
-    async Task Open()
+
+    private async Task OpenProject()
     {
-        await Storage.PickProjectFolderAsync();
-        var files = await Storage.ListFilesAsync();
-        files.ToList().ForEach(f => Console.WriteLine(f));
+        await StorageService.PickProjectFolderAsync();
         
-        // read one, edit, write back:
-        var text = await Storage.ReadFileAsync("README.md");
-        await Storage.WriteFileAsync("README.md", text + "\nedited");
+        var filePaths = await StorageService.ListFilePathsAsync();
+        foreach (var filePath in filePaths)
+        {
+            try
+            {
+                var contents = await StorageService.ReadFileAsTextAsync(relativePath: filePath);
+                Console.WriteLine(contents.Length);
+            }
+            catch (Exception exc)
+            {
+                await Console.Error.WriteLineAsync($"Encountered an exception when reading {filePath}: {exc}");
+            }
+        }
     }
+
 }

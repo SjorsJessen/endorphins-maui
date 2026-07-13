@@ -1,0 +1,17 @@
+@using Endorphins.Shared
+@inject IFileStorageService Storage
+
+<button @onclick="Open">Open project</button>
+
+@code {
+    async Task Open()
+    {
+        await Storage.PickProjectFolderAsync();
+        var files = await Storage.ListFilesAsync();
+        files.ToList().ForEach(f => Console.WriteLine(f));
+        
+        // read one, edit, write back:
+        var text = await Storage.ReadFileAsync("README.md");
+        await Storage.WriteFileAsync("README.md", text + "\nedited");
+    }
+}

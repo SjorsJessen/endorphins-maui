@@ -1,0 +1,25 @@
+﻿@using Endorphins.Components
+@using MudBlazor
+@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<div class="page">
+    <MudGrid Spacing="0">
+        <MudItem xs="12" Class="header">
+            <Header></Header>
+        </MudItem>
+        <MudItem xs="12" Class="toolbar">
+            <Toolbar></Toolbar>
+        </MudItem>
+        <MudItem xs="2" Class="sidebar">
+            <AssetPanel/>
+        </MudItem>
+        <MudItem xs="10" Class="workspace">
+            <WorkspaceComponent></WorkspaceComponent>
+        </MudItem>
+    </MudGrid>
+</div>

@@ -1,0 +1,40 @@
+@inject AssetsService AssetsService;
+@implements IDisposable;
+
+<div class="markdown-editor">
+    <MarkdownEditor 
+        @ref="_editor" 
+        Value="@Content" 
+        ValueChanged="OnContentChanged" 
+        MaxHeight="100vh"
+    />
+</div>
+
+@code
+{
+    private MarkdownEditor? _editor;
+    private string Content { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        AssetsService.MarkdownFileSelected += OnMarkdownFileSelect;
+    }
+
+    private void OnMarkdownFileSelect(string newContent)
+    {
+        InvokeAsync(async () =>
+        {
+            Content = newContent;
+            if (_editor is not null)
+            {
+                await _editor.SetValueAsync(newContent);
+            }
+            StateHasChanged();
+        });
+    }
+
+    private void OnContentChanged(string newContent) => Content = newContent;
+
+    public void Dispose() => AssetsService.MarkdownFileSelected -= OnMarkdownFileSelect;
+}

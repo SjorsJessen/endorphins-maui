@@ -1,0 +1,39 @@
+@inject IJSRuntime JS
+@inject InkStoryService InkStoryService;
+
+<StandaloneCodeEditor
+    @ref="_editor"
+    CssClass="ink-editor"
+    ConstructionOptions="EditorConstructionOptions"
+    OnDidChangeModelContent="UpdateEditorContent"
+/>
+
+@code {
+    private StandaloneCodeEditor? _editor;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("registerInkLanguage");
+        }
+    }
+    
+    private async void UpdateEditorContent(ModelContentChangedEvent e)
+    {
+        if (_editor == null) return;
+        var content = await _editor.GetValue();
+        InkStoryService.SetContent(content);
+    }
+    
+    private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
+    {
+
+        return new StandaloneEditorConstructionOptions{
+            AutomaticLayout = true,
+            Language = "ink",
+            Theme = "ink-dark",
+            Value = InkStoryService.EditorContent,
+        };
+    }
+}

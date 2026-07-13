@@ -1,0 +1,64 @@
+@using Endorphins.Models
+@implements IAsyncDisposable
+@inject IJSRuntime Js
+@inject PdfService PdfService
+
+<div class="pdf-viewer">
+    <canvas @ref="_canvasRef" id="pdf-viewer-canvas"></canvas>
+    @if (!PdfService.HasSelectedPdfFile)
+    {
+        <MudText Align="Align.Center">No Pdf File selected.</MudText>
+    }
+</div>
+
+@code {
+    private ElementReference _canvasRef;
+    private IJSObjectReference? _module;
+    private const string JavascriptFilePath = $"./Components/{nameof(PdfViewerComponent)}.razor.js";
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        PdfService.PdfFileSelected += OnPdfFileOpened;
+        if (PdfService.HasSelectedPdfFile)
+        {
+            OnPdfFileOpened(PdfService.SelectedPdfFile);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _module = await Js.InvokeAsync<IJSObjectReference>("import", JavascriptFilePath);
+        }
+    }
+
+    private async void OnPdfFileOpened(PdfFile pdfFile)
+    {
+        try
+        {
+            _module = await Js.InvokeAsync<IJSObjectReference>("import", JavascriptFilePath);
+            await _module.InvokeVoidAsync("renderPage", pdfFile.Content, _canvasRef, 1, 1.5);
+        }
+        catch (Exception e)
+        {
+           Console.Error.WriteLine(e);
+        }
+    }
+    
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (_module is not null)
+        {
+            try
+            {
+                await _module.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                await Console.Error.WriteLineAsync($"Failed to disconnect {nameof(PdfViewerComponent)}");
+            }
+        }
+    }
+}

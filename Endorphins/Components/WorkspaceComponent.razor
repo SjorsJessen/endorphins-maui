@@ -1,0 +1,56 @@
+@implements IDisposable;
+@inject EditorService EditorService;
+
+<MudSplitPanel @ref="_splitPanel" Class="mud-width-full mud-height-full">
+    <FirstPanel>
+        @switch (EditorService.ActiveEditor)
+        {
+            case EditorType.Ink:
+                <InkEditorComponent></InkEditorComponent>
+                break;
+            case EditorType.Markdown:
+                <MarkdownEditorComponent></MarkdownEditorComponent>
+                break;
+            default:
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled" NoIcon="true" Class="my-2">
+                    Failed to load editor.
+                </MudAlert>
+                break;
+        }
+    </FirstPanel>
+    <SecondPanel>
+        <MudTabs Color="Color.Inherit" MinimumTabWidth="80px">
+            <MudTabPanel Text="Story">
+                <InkStoryRunnerComponent/>
+            </MudTabPanel>
+            <MudTabPanel Text="Reader">
+                <PdfViewerComponent/>
+            </MudTabPanel>
+            <MudTabPanel Text="Graph">
+                <GraphComponent/>
+            </MudTabPanel>            
+            <MudTabPanel Text="Photoshop">
+                <PhotoshopComponent/>
+            </MudTabPanel>            
+            <MudTabPanel Text="Moodboard">
+                <MoodboardComponent/>
+            </MudTabPanel>
+        </MudTabs>
+        <MudDivider/>
+    </SecondPanel>
+</MudSplitPanel>
+   
+@code {
+    private MudSplitPanel? _splitPanel;
+
+    protected override void OnInitialized()
+    {
+        EditorService.EditorChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        EditorService.EditorChanged -= StateHasChanged;
+    }
+
+}

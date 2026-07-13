@@ -1,0 +1,31 @@
+@namespace Endorphins.Components
+@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<ErrorBoundary>
+    <ChildContent>
+        <div class="page">
+            <MudGrid Spacing="0">
+                <MudItem xs="12" Class="header">
+                    <Header></Header>
+                </MudItem>
+                <MudItem xs="12" Class="toolbar">
+                    <Toolbar />
+                </MudItem>
+                <MudItem xs="2" Class="sidebar">
+                    <AssetPanel />
+                </MudItem>
+                <MudItem xs="10" Class="workspace">
+                    <WorkspaceComponent />
+                </MudItem>
+            </MudGrid>
+        </div>
+    </ChildContent>
+    <ErrorContent Context="ex">
+        <pre style="white-space:pre-wrap; color:red;">@ex.ToString()</pre>
+    </ErrorContent>
+</ErrorBoundary>

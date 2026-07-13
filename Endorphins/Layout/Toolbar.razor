@@ -1,0 +1,64 @@
+@using Endorphins.Services
+@using MudBlazor
+@inject InkStoryService StoryService;
+
+<MudToolBar Dense Style="background-color: #1A1A1A; color: white">
+    <MudButton
+        Variant="Variant.Text"
+        StartIcon="@Icons.Material.Sharp.FolderOpen"
+        Color="Color.Inherit"
+        Size="Size.Small"
+        Class="ml-4">
+        Open Project
+    </MudButton>
+    <MudButton
+        Variant="Variant.Text"
+        StartIcon="@Icons.Material.Sharp.Save"
+        Color="Color.Inherit"
+        Size="Size.Small"
+        Class="ml-4">
+        Save Project
+    </MudButton>
+    <MudButton
+        Variant="Variant.Text"
+        StartIcon="@Icons.Material.Sharp.Upload"
+        Color="Color.Inherit"
+        Size="Size.Small"
+        Class="ml-4">
+        Export to JSON
+    </MudButton>
+
+    <MudSpacer/>
+
+    <MudButton
+        Variant="Variant.Text"
+        StartIcon="@Icons.Material.Sharp.Replay"
+        Color="Color.Inherit"
+        Size="Size.Small"
+        Class="mr-4"
+        OnClick="StoryService.ResetStory"
+        >
+        Restart
+    </MudButton>
+    <MudButton
+        Variant="Variant.Outlined"
+        StartIcon="@Icons.Material.Sharp.PlayArrow"  
+        Color="Color.Info"
+        Size="Size.Small"
+        Class="mr-4"
+        OnClick="StoryService.Run"
+        >
+        Run
+    </MudButton>    
+    <MudButton
+        Variant="Variant.Outlined"
+        StartIcon="@Icons.Material.Sharp.PlayArrow"  
+        Color="Color.Info"
+        Size="Size.Small"
+        Class="mr-4"
+        OnClick="StoryService.ContinueStory"
+        >
+        Continue
+    </MudButton>
+</MudToolBar>
+<MudDivider/>

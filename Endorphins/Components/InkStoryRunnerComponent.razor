@@ -1,0 +1,77 @@
+@using Endorphins.Models
+@using Ink.Runtime
+@inject InkStoryService StoryService;
+@implements IDisposable;
+
+<MudCard Style="display: flex; background-color: green; height: 100%;" Class="ink-story-runner">
+    @if (_dialogLines != null)
+    {
+        foreach (var line in _dialogLines)
+        {
+            <div class="dialog-line mb-6" style="background-color: blue">
+                <MudPaper>
+                    <MudText Typo="Typo.h6">@line.Line</MudText>
+                </MudPaper>
+            </div>
+        }
+    }
+    @if (_choices != null)
+    {
+        <MudPaper>
+            <MudList T="string">
+                @foreach (var choice in _choices)
+                {
+                    <MudListItem Text="@choice.text" OnClick="() => StoryService.MakeChoice(choice.index)"/>
+                }
+            </MudList>
+        </MudPaper>
+    }
+</MudCard>
+
+@code {
+    private List<Choice>? _choices = [];
+    private readonly List<DialogLine>? _dialogLines = [];
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        StoryService.ChoicesAdded += OnChoicesAdded;
+        StoryService.DialogUpdated += OnDialogUpdated;
+        StoryService.StoryReset += OnStoryReset;
+        StoryService.ChoicesReset += OnChoicesReset;
+    }
+
+    private void OnDialogUpdated(DialogLine dialogLine)
+    {
+        _dialogLines?.Add(dialogLine);
+        StateHasChanged();
+    }
+
+    private void OnChoicesAdded(List<Choice> choices)
+    {
+        _choices = choices;
+        StateHasChanged();
+    }
+
+    private void OnStoryReset()
+    {
+        _dialogLines?.Clear();
+        _choices?.Clear();
+        StateHasChanged();
+    }
+
+    private void OnChoicesReset()
+    {
+        _choices?.Clear();
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        StoryService.ChoicesAdded -= OnChoicesAdded;
+        StoryService.DialogUpdated -= OnDialogUpdated;
+    }
+
+}
+

@@ -1,0 +1,25 @@
+@inject AssetsService AssetsService
+@implements IDisposable
+
+<video controls autoplay src="@_videoUrl"></video>
+
+@code {
+    private string _videoUrl = string.Empty;
+    
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        AssetsService.VideoSelected += OnVideoSelected;
+    }
+
+    private void OnVideoSelected(string videoUrl)
+    {
+        _videoUrl = videoUrl;
+        StateHasChanged();
+    }
+    
+    public void Dispose()
+    {
+        AssetsService.VideoSelected -= OnVideoSelected;
+    }
+}

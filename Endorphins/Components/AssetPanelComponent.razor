@@ -1,20 +1,12 @@
 @using Endorphins.Models
-@using Endorphins.Utilities
+
 @inject AssetsService AssetsService;
 @inject InkStoryService InkStoryService;
 @inject PdfService PdfService;
 @inject EditorService EditorService;
+@inject FileStorageService StorageService;
 
 <div class="asset-panel">
-    <InputFile 
-        id="folderInput"
-        OnChange="UploadFiles"
-        webkitdirectory="true"
-        directory="true"
-        multiple="true"
-        style="display:none"
-    />
-
     <MudToolBar Class="justify-space-between" Dense>
         <MudText>Project</MudText>
         <MudIconButton
@@ -24,44 +16,45 @@
             Size="Size.Small"
             HtmlTag="label"
             for="folderInput"
+            OnClick="OpenProject"
         />
     </MudToolBar>
     <MudDivider></MudDivider>
     <MudTreeView T="string" Dense AutoExpand>
         <MudTreeViewItem Value='"scripts"' Class="mt-2">
-            @foreach (var inkScript in AssetsService.FilterBy([".ink"]))
+            @foreach (var inkScript in StorageService.FilterBy([".ink"]))
             {
-                <MudTreeViewItem Text="@inkScript.Name" Value="@inkScript.Name" OnClick="() => SelectInkScript(inkScript)"/>
+                <MudTreeViewItem Text="@inkScript" Value="@inkScript" OnClick="() => SelectInkScript(inkScript)"/>
             }
         </MudTreeViewItem>             
         <MudTreeViewItem Value='"notes"'>
-            @foreach (var markdownFile in AssetsService.FilterBy([".md"]))
+            @foreach (var markdownFile in StorageService.FilterBy([".md"]))
             {
-                <MudTreeViewItem Text="@markdownFile.Name" Value="@markdownFile.Name" OnClick="() => SelectMarkdown(markdownFile)"/>
+                <MudTreeViewItem Text="@markdownFile" Value="@markdownFile" OnClick="() => SelectMarkdown(markdownFile)"/>
             }
         </MudTreeViewItem>        
         <MudTreeViewItem Value='"images"'>
-            @foreach (var imageFile in AssetsService.FilterBy([".png", ".jpg", ".jpeg", ".gif"]))
+            @foreach (var imageFile in StorageService.FilterBy([".png", ".jpg", ".jpeg", ".gif"]))
             {
-                <MudTreeViewItem Text="@imageFile.Name" Value="@imageFile.Name" OnClick="() => Preview(imageFile)"/>
+                <MudTreeViewItem Text="@imageFile" Value="@imageFile" OnClick="() => Preview(imageFile)"/>
             }
         </MudTreeViewItem>        
         <MudTreeViewItem Value='"books"'>
-            @foreach (var pdfFile in AssetsService.FilterBy([".pdf"]))
+            @foreach (var pdfFile in StorageService.FilterBy([".pdf"]))
             {
-                <MudTreeViewItem Text="@pdfFile.Name" Value="@pdfFile.Name" OnClick="() => OpenPdf(pdfFile)"/>
+                <MudTreeViewItem Text="@pdfFile" Value="@pdfFile" OnClick="() => OpenPdf(pdfFile)"/>
             }
         </MudTreeViewItem>
         <MudTreeViewItem Value='"audio"'>
-            @foreach (var audioFile in AssetsService.FilterBy([".mp3", ".wav"]))
+            @foreach (var audioFile in StorageService.FilterBy([".mp3", ".wav"]))
             {
-                <MudTreeViewItem Text="@audioFile.Name" Value="@audioFile.Name" OnClick="() => Preview(audioFile)"/>
+                <MudTreeViewItem Text="@audioFile" Value="@audioFile" OnClick="() => Preview(audioFile)"/>
             }
         </MudTreeViewItem>            
         <MudTreeViewItem Value='"video"'>
-            @foreach (var videoFile in AssetsService.FilterBy([".mp4", ".mkv", ".webm"]))
+            @foreach (var videoFile in StorageService.FilterBy([".mp4", ".mkv", ".webm"]))
             {
-                <MudTreeViewItem Text="@videoFile.Name" Value="@videoFile.Name" OnClick="() => PlayVideo(videoFile)"/>
+                <MudTreeViewItem Text="@videoFile" Value="@videoFile" OnClick="() => PlayVideo(videoFile)"/>
             }
         </MudTreeViewItem>    
     </MudTreeView>
@@ -78,13 +71,13 @@
             <MudCardContent>
                 @switch (_selectedContentType)
                 {
-                    case "image/png":
-                    case "image/jpeg":
-                    case "image/gif":
-                        <MudImage Src="@_selectedFileUrl"/>
+                    case "png":
+                    case "jpeg":
+                    case "gif":
+                        <MudImage Src="@_selectedFile"/>
                         break;
-                    case "audio/mpeg":
-                        <audio controls autoplay src="@_selectedFileUrl"></audio>
+                    case "mpeg":
+                        <audio controls autoplay src="@_selectedFile"></audio>
                         break;
                     default:
                         <MudAlert Severity="Severity.Error" Variant="Variant.Filled" NoIcon="true" Class="my-2">
@@ -98,46 +91,24 @@
 </div>
 
 @code {
-
-    private readonly Dictionary<string, string> _fileUrls = new();
-    private string? _selectedFileUrl;
+    private string? _selectedFile;
     private string? _selectedContentType;
     private bool _isPreviewPanelActive;
-
-    private async Task UploadFiles(InputFileChangeEventArgs e)
+    
+    private async Task OpenProject()
     {
-        AssetsService.ResetAssets();
-        AssetsService.AddAssets(assets: e.GetMultipleFiles(maximumFileCount: 1000));
-        await ConvertImageFilesToUrls();
-        await ConvertAudioFilesToUrls();
+        await StorageService.PickProjectFolderAsync();
+        await StorageService.SetFilePathsAsync();
     }
-
-    private async Task ConvertImageFilesToUrls()
-    {
-        foreach (var imageFile in AssetsService.FilterBy([".png", ".jpg", ".jpeg", ".gif"]))
-        {
-            var imageUrl = await BrowserFileToUrlConverter.Convert(imageFile, maxWidth: 200, maxHeight: 200);
-            _fileUrls[imageFile.Name] = imageUrl;
-        }
-    }
-
-    private async Task ConvertAudioFilesToUrls()
-    {
-        foreach (var audioFile in AssetsService.FilterBy([".mp3", ".wav"]))
-        {
-            var audioUrl = await BrowserFileToUrlConverter.Convert(audioFile);
-            _fileUrls[audioFile.Name] = audioUrl;
-        }
-    }    
-
-    private async Task OpenPdf(IBrowserFile file)
+    
+    private async Task OpenPdf(string filePath)
     {
         try
         {
-            var content = await FileStreamConverter.ConvertToBytes(file);
+            var content = await StorageService.ReadFileAsBytesAsync(filePath);
             var pdfFile = new PdfFile
             {
-                Name = file.Name,
+                Name = filePath,
                 Content = content
             };
             PdfService.SelectPdfFile(pdfFile);
@@ -149,12 +120,11 @@
         }
     }    
     
-    private async void PlayVideo(IBrowserFile file)
+    private async void PlayVideo(string filePath)
     {
         try
         {
-            var videoUrl = await BrowserFileToUrlConverter.Convert(file);
-            AssetsService.VideoSelected?.Invoke(videoUrl);
+            AssetsService.VideoSelected?.Invoke(filePath);
         }
         catch (Exception exc)
         {
@@ -162,12 +132,12 @@
         }
     }
     
-    private async void SelectMarkdown(IBrowserFile file)
+    private async void SelectMarkdown(string filePath)
     {
         try
         {
-            var fileContents = await FileStreamConverter.ConvertToString(file);
-            AssetsService.MarkdownFileSelected?.Invoke(fileContents);
+            var contents = await StorageService.ReadFileAsTextAsync(filePath);
+            AssetsService.MarkdownFileSelected?.Invoke(contents);
         }
         catch (Exception exc)
         {
@@ -178,11 +148,11 @@
         StateHasChanged();
     }    
     
-    private async void SelectInkScript(IBrowserFile file)
+    private async void SelectInkScript(string filePath)
     {
         try
         {
-            var fileContents = await FileStreamConverter.ConvertToString(file);
+            var fileContents = await StorageService.ReadFileAsTextAsync(filePath);
             InkStoryService.InkScriptSelected?.Invoke(fileContents);
         }
         catch (Exception exc)
@@ -194,11 +164,12 @@
         StateHasChanged();
     }
     
-    private void Preview(IBrowserFile file)
+    private void Preview(string filePath)
     {
-        _selectedFileUrl = _fileUrls[file.Name];
-        _selectedContentType = file.ContentType;
+        _selectedFile = filePath;
+        _selectedContentType = filePath.Split('.').Last();
         _isPreviewPanelActive = true;
+        Console.WriteLine($"Previewing {_selectedFile} of {_selectedContentType}");
     }
 
 }

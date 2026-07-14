@@ -17,11 +17,11 @@ public static class MauiProgram
             .ConfigureFonts(fonts => { fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular"); });
 
         builder.Services.AddMauiBlazorWebView();
-        builder.Services.AddSingleton<IFileStorageService>(new FileStorageService());
         builder.Services.AddSingleton<AssetsService>();
         builder.Services.AddSingleton<PdfService>();
         builder.Services.AddSingleton<InkStoryService>();
         builder.Services.AddSingleton<EditorService>();
+        builder.Services.AddSingleton<FileStorageService>();
         builder.Services.AddMudServices();
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();

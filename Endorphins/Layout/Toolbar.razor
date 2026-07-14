@@ -1,16 +1,10 @@
+@using Endorphins.Components
 @using Endorphins.Services
 @using MudBlazor
 @inject InkStoryService StoryService;
 
-<MudToolBar Dense Style="background-color: #1A1A1A; color: white">
-    <MudButton
-        Variant="Variant.Text"
-        StartIcon="@Icons.Material.Sharp.FolderOpen"
-        Color="Color.Inherit"
-        Size="Size.Small"
-        Class="ml-4">
-        Open Project
-    </MudButton>
+<MudToolBar Dense>
+    <FileStorageComponent></FileStorageComponent>
     <MudButton
         Variant="Variant.Text"
         StartIcon="@Icons.Material.Sharp.Save"

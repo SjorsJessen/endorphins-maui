@@ -6,6 +6,7 @@ namespace Endorphins.Services;
 public sealed class InkStoryService
 {
     public string? EditorContent => _editorContent;
+    public string ActiveScriptPath { get; set; }
     
     public Action<string>? InkScriptSelected { get; set; }
     public Action<DialogLine>? DialogUpdated { get; set; }

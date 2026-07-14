@@ -1,5 +1,6 @@
 @inject IJSRuntime JS
 @inject InkStoryService InkStoryService;
+@inject FileStorageService StorageService;
 @implements IDisposable;
 
 <StandaloneCodeEditor
@@ -31,6 +32,8 @@
         if (_editor == null) return;
         var content = await _editor.GetValue();
         InkStoryService.SetContent(content);
+        
+        await StorageService.WriteFileAsync(InkStoryService.ActiveScriptPath, content);
         StateHasChanged();
     }    
     

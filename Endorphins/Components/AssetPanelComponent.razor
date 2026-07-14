@@ -153,6 +153,7 @@
         try
         {
             var fileContents = await StorageService.ReadFileAsTextAsync(filePath);
+            InkStoryService.ActiveScriptPath = filePath;
             InkStoryService.InkScriptSelected?.Invoke(fileContents);
         }
         catch (Exception exc)

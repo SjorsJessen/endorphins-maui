@@ -1,5 +1,6 @@
 @inject IJSRuntime JS
 @inject InkStoryService InkStoryService;
+@implements IDisposable;
 
 <StandaloneCodeEditor
     @ref="_editor"
@@ -10,6 +11,12 @@
 
 @code {
     private StandaloneCodeEditor? _editor;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        InkStoryService.InkScriptSelected += UpdateEditorContent;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -24,6 +31,14 @@
         if (_editor == null) return;
         var content = await _editor.GetValue();
         InkStoryService.SetContent(content);
+        StateHasChanged();
+    }    
+    
+    private async void UpdateEditorContent(string content)
+    {
+        InkStoryService.SetContent(content);
+        await _editor?.SetValue(content)!;
+        StateHasChanged();
     }
     
     private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
@@ -35,5 +50,11 @@
             Theme = "ink-dark",
             Value = InkStoryService.EditorContent,
         };
+    }
+
+    public void Dispose()
+    {
+        _editor?.Dispose();
+        InkStoryService.InkScriptSelected -= UpdateEditorContent;
     }
 }

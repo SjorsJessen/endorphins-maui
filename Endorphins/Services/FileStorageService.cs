@@ -5,17 +5,17 @@ namespace Endorphins.Services;
 
 public class FileStorageService : IFileStorageService
 {
+    public string? Root;
     private List<string> _filePaths = [];
-    private string? _root;
 
     public async Task<string?> PickProjectFolderAsync()
     {
         var result = await MainThread.InvokeOnMainThreadAsync(() => FolderPicker.Default.PickAsync());
         if (result.IsSuccessful)
         {
-            _root = result.Folder!.Path;
+            Root = result.Folder!.Path;
         }
-        return _root;
+        return Root;
     }
 
     public List<string> FilterBy(string[] extensions)
@@ -27,8 +27,8 @@ public class FileStorageService : IFileStorageService
     {
         EnsureRoot();
         _filePaths = Directory
-            .EnumerateFiles(_root!, "*", SearchOption.AllDirectories)
-            .Select(path => Path.GetRelativePath(_root!, path))
+            .EnumerateFiles(Root!, "*", SearchOption.AllDirectories)
+            .Select(path => Path.GetRelativePath(Root!, path))
             .ToList();
         return Task.CompletedTask;
     }
@@ -36,26 +36,26 @@ public class FileStorageService : IFileStorageService
     public Task<string> ReadFileAsTextAsync(string relativePath)
     {
         EnsureRoot();
-        return File.ReadAllTextAsync(Path.Combine(_root!, relativePath));
+        return File.ReadAllTextAsync(Path.Combine(Root!, relativePath));
     }    
     
     public Task<byte[]> ReadFileAsBytesAsync(string relativePath)
     {
         EnsureRoot();
-        return File.ReadAllBytesAsync(Path.Combine(_root!, relativePath));
+        return File.ReadAllBytesAsync(Path.Combine(Root!, relativePath));
     }
 
     public Task WriteFileAsync(string relativePath, string content)
     {
         EnsureRoot();
-        var full = Path.Combine(_root!, relativePath);
+        var full = Path.Combine(Root!, relativePath);
         Directory.CreateDirectory(Path.GetDirectoryName(full)!);
         return File.WriteAllTextAsync(full, content);   // overwrites in place
     }
 
     private void EnsureRoot()
     {
-        if (_root is null)
+        if (Root is null)
         {
             throw new InvalidOperationException("No folder picked yet.");
         }

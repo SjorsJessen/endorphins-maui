@@ -2,6 +2,7 @@
 @using Endorphins.Services
 @using MudBlazor
 @inject InkStoryService StoryService;
+@inject FileStorageService StorageService;
 
 <MudToolBar Dense>
     <FileStorageComponent></FileStorageComponent>
@@ -40,7 +41,7 @@
         Color="Color.Info"
         Size="Size.Small"
         Class="mr-4"
-        OnClick="StoryService.Run"
+        OnClick="Run"
         >
         Run
     </MudButton>    
@@ -56,3 +57,12 @@
     </MudButton>
 </MudToolBar>
 <MudDivider/>
+
+@code
+{
+    public void Run()
+    {
+        var root = StorageService.Root;
+        StoryService.Run(root);
+    }
+}

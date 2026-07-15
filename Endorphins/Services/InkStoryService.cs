@@ -1,7 +1,22 @@
 ﻿using Endorphins.Models;
 using Ink;
 using Ink.Runtime;
+using Path = System.IO.Path;
+
 namespace Endorphins.Services;
+
+
+public sealed class ProjectFileHandler : IFileHandler
+{
+    private readonly string _root;
+    public ProjectFileHandler(string root) => _root = root;
+
+    public string ResolveInkFilename(string includeName)
+        => Path.Combine(_root, includeName);
+
+    public string LoadInkFileContents(string fullFilename)
+        => File.ReadAllText(fullFilename);
+}
 
 public sealed class InkStoryService
 {
@@ -19,10 +34,11 @@ public sealed class InkStoryService
     private const string MainCharacter = "Aiden";
     private string? _editorContent;
     
-    public void Run()
+    public void Run(string? root)
     {
         if(_editorContent == null) return;
-        _activeStory = ParseEditorContentToStory(_editorContent);
+        _activeStory = ParseEditorContentToStory(root, _editorContent);
+        Setup(_activeStory);
         ContinueStory();
     }
 
@@ -87,13 +103,21 @@ public sealed class InkStoryService
         story.Continue();
     }
     
-    private static Story ParseEditorContentToStory(string editorContent)
+    private Story? ParseEditorContentToStory(string filesRoot, string editorContent)
     {
-        var parser = new InkParser(editorContent);
+        var handler = new ProjectFileHandler(filesRoot);
+        var parser = new InkParser(
+            str: editorContent,
+            filenameForMetadata: ActiveScriptPath,
+            fileHandler: handler);
+
         var parsed = parser.Parse();
         var story = parsed.ExportRuntime();
         return story;
     }
+
+    private void OnCompileError(string message, ErrorType type)
+        => InkCompileStateUpdated?.Invoke($"{type}: {message}");
     
     private bool HasChoices()
     {
@@ -152,9 +176,12 @@ public sealed class InkStoryService
     private void BindExternalFunctions(Story story)
     {
         Console.WriteLine($"Binding external functions to story: {story}");
-        story.BindExternalFunction<string>("PlaySound", ServiceFunctions.PlaySound, true);
-        story.BindExternalFunction<string, int>("DisplayImage", ServiceFunctions.DisplayImage, true);
-        story.BindExternalFunction<string>("AnimateCharacter", ServiceFunctions.AnimateCharacter, true);
+        story.BindExternalFunction<string>("setImage", ServiceFunctions.SetImage, true);
+        story.BindExternalFunction<string>("setBackground", ServiceFunctions.SetBackground, true);
+        story.BindExternalFunction<string>("updateSpeaker", ServiceFunctions.UpdateSpeaker, true);
+        story.BindExternalFunction<string>("playAudio", ServiceFunctions.PlayAudio, true);
+        story.BindExternalFunction("addDivider", ServiceFunctions.AddDivider, true);
+        story.BindExternalFunction<string>("transition", ServiceFunctions.Transition, true);
     }
 
     private static void SetErrorHandling(Story story)
@@ -184,18 +211,33 @@ public sealed class InkStoryService
 
 public static class ServiceFunctions
 {
-    public static void DisplayImage(string imageName, int duration)
+    public static void SetImage(string imageName)
     {
-        Console.WriteLine($"Displaying image: {imageName} for {duration}");
+        Console.WriteLine($"Set image: {imageName}");
+    }    
+    
+    public static void SetBackground(string imageName)
+    {
+        Console.WriteLine($"Set background: {imageName}");
     }
-
-    public static void PlaySound(string soundName)
+    
+    public static void UpdateSpeaker(string speakerName)
     {
-        Console.WriteLine($"Playing sound: {soundName}");
+        Console.WriteLine($"Speaker: {speakerName}");
+    }   
+    
+    public static void PlayAudio(string audioName)
+    {
+        Console.WriteLine($"Playing: {audioName}");
+    }    
+    
+    public static void AddDivider()
+    {
+        Console.WriteLine("Adding divider");
     }
-
-    public static void AnimateCharacter(string characterId)
+    
+    public static void Transition(string title)
     {
-        Console.WriteLine($"Animating character: {characterId}");
+        Console.WriteLine($"Setting title: {title}");
     }
 }

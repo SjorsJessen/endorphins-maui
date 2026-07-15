@@ -83,41 +83,26 @@ public sealed class InkStoryService
     {
         _editorContent = newContent;
     }
-    
-    public void Setup(Story story)
+
+    private void Setup(Story story)
     {
         SetErrorHandling(story);
         BindExternalFunctions(story);
     }
-
-    public void GoToKnot(Story story, string knotId)
-    {
-        story.ChoosePathString(knotId);
-        story.Continue();
-    }
-
-    public void GoToStitch(Story story, string stitchId)
-    {
-        //Knot.Stitch
-        story.ChoosePathString(stitchId);
-        story.Continue();
-    }
     
     private Story? ParseEditorContentToStory(string filesRoot, string editorContent)
     {
-        var handler = new ProjectFileHandler(filesRoot);
+        var fileHandler = new ProjectFileHandler(filesRoot);
         var parser = new InkParser(
             str: editorContent,
             filenameForMetadata: ActiveScriptPath,
-            fileHandler: handler);
+            fileHandler: fileHandler
+        );
 
         var parsed = parser.Parse();
         var story = parsed.ExportRuntime();
         return story;
     }
-
-    private void OnCompileError(string message, ErrorType type)
-        => InkCompileStateUpdated?.Invoke($"{type}: {message}");
     
     private bool HasChoices()
     {
@@ -133,44 +118,6 @@ public sealed class InkStoryService
     private bool CanContinue()
     {
         return _activeStory != null && _activeStory.canContinue;
-    }
-
-    private void CreateVariableObserver(string variableName, Story story)
-    {
-        if (!HasVariable(variableName, story)) return;
-        story.ObserveVariable(variableName, (name, newValue) => { Callback(name, (int)newValue); });
-    }
-
-    private void SetVariableState(string variableName, object value, Story story)
-    {
-        story.variablesState[variableName] = value;
-    }
-
-    private T GetVariableState<T>(string variableName, Story story)
-    {
-        return (T)story.variablesState[variableName];
-    }
-
-    private void Callback(string variableName, int newValue)
-    {
-        Console.WriteLine($"Variable name: {variableName} with value: {newValue}");
-    }
-
-    private void SaveState(Story story)
-    {
-        var savedState = story?.state.ToJson();
-        Console.WriteLine(savedState);
-    }
-
-    private void LoadState(string savedState, Story story)
-    {
-        story?.state.LoadJson(savedState);
-    }
-
-    private static bool HasVariable(string variableName, Story story)
-    {
-        var variable = story?.variablesState[variableName];
-        return variable != null;
     }
 
     private void BindExternalFunctions(Story story)

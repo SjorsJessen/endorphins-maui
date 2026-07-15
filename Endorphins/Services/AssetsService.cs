@@ -4,7 +4,7 @@ namespace Endorphins.Services;
 
 public sealed class AssetsService
 {
-    public Action<string>? MarkdownFileSelected { get; set; }
+    public Action<string, string>? MarkdownFileSelected { get; set; }
     public Action<string>? VideoSelected { get; set; }
     
     private List<IBrowserFile> Assets { get; } = [];

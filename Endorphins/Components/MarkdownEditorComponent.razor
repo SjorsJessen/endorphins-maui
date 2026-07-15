@@ -1,4 +1,5 @@
 @inject AssetsService AssetsService;
+@inject FileStorageService StorageService;
 @implements IDisposable;
 
 <div class="markdown-editor">
@@ -14,15 +15,17 @@
 {
     private MarkdownEditor? _editor;
     private string Content { get; set; } = string.Empty;
-
+    private string _activeFile = string.Empty;
+    
     protected override void OnInitialized()
     {
         base.OnInitialized();
         AssetsService.MarkdownFileSelected += OnMarkdownFileSelect;
     }
 
-    private void OnMarkdownFileSelect(string newContent)
+    private void OnMarkdownFileSelect(string filePath, string newContent)
     {
+        _activeFile = filePath;
         InvokeAsync(async () =>
         {
             Content = newContent;
@@ -34,7 +37,14 @@
         });
     }
 
-    private void OnContentChanged(string newContent) => Content = newContent;
+    private void OnContentChanged(string newContent)
+    {
+        Content = newContent;
+        StorageService.WriteFileAsync(relativePath: _activeFile, content: newContent);
+    }
 
-    public void Dispose() => AssetsService.MarkdownFileSelected -= OnMarkdownFileSelect;
+    public void Dispose()
+    {
+        AssetsService.MarkdownFileSelected -= OnMarkdownFileSelect;
+    }
 }

@@ -3,7 +3,7 @@
 @inject InkStoryService StoryService;
 @implements IDisposable;
 
-<MudCard Style="display: flex; background-color: green; height: 100%;" Class="ink-story-runner">
+<div style="background-color: red; height: 100%; max-height: calc(100vh - 120px);" class="ink-story-runner overflow-auto overflow-scroll">
     @if (_dialogLines != null)
     {
         foreach (var line in _dialogLines)
@@ -26,7 +26,7 @@
             </MudList>
         </MudPaper>
     }
-</MudCard>
+</div>
 
 @code {
     private List<Choice>? _choices = [];

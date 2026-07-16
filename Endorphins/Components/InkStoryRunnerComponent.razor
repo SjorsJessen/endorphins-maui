@@ -1,6 +1,7 @@
 @using Endorphins.Models
 @using Ink.Runtime
 @inject InkStoryService StoryService;
+@inherits DevHotReloadComponentBase;
 @implements IDisposable;
 
 <div style="background-color: red; height: 100%; max-height: calc(100vh - 120px);" class="ink-story-runner overflow-auto overflow-scroll">
@@ -71,7 +72,8 @@
     {
         StoryService.ChoicesAdded -= OnChoicesAdded;
         StoryService.DialogUpdated -= OnDialogUpdated;
+        StoryService.StoryReset -= OnStoryReset;
+        StoryService.ChoicesReset -= OnChoicesReset;
     }
-
 }
 

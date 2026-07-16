@@ -1,15 +1,17 @@
-@inject InkStoryService InkStoryService;
 @using Endorphins.Services
 @using MudBlazor
+
+@inject InkStoryService InkStoryService;
+@inherits DevHotReloadComponentBase;
 @implements IDisposable
 
 <MudToolBar Fixed="false" Dense>
     <div class="app-logo" style="display: flex; gap: 1rem; justify-items: center; align-self: center;">
         <img srcset="Assets/endorphins-icon.svg" alt="logo" width="24px" height="24px"/>    
-        <span class="app-name">Endorphins_</span> 
+        <span class="app-name">new app name</span> 
     </div>
     <MudSpacer/>
-    <MudBadge Dot="true" Color="Color.Info" Class="mx-6 my-4">
+    <MudBadge Dot="true" Color="Color.Error" Class="mx-6 my-4">
         <MudText>@_inkState</MudText>
     </MudBadge>
 </MudToolBar>
@@ -17,7 +19,7 @@
 
 @code
 {
-    private string _inkState = "unknown";
+    private string _inkState = "Shalom!";
 
     protected override void OnInitialized()
     {
@@ -28,6 +30,7 @@
     private void OnInkCompileStateUpdated(string newState)
     {
         _inkState = newState;
+        Console.WriteLine($"Ink compile state updated: {newState}");
     }
 
     public void Dispose()

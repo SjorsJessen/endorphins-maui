@@ -2,6 +2,7 @@
 @implements IAsyncDisposable
 @inject IJSRuntime Js
 @inject PdfService PdfService
+@inherits DevHotReloadComponentBase;
 
 <div class="pdf-viewer">
     <canvas @ref="_canvasRef" id="pdf-viewer-canvas"></canvas>

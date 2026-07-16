@@ -1,62 +1,34 @@
-@using Endorphins.Components
 @using Endorphins.Services
 @using MudBlazor
 @inject InkStoryService StoryService;
 @inject FileStorageService StorageService;
 
 <MudToolBar Dense>
-    <FileStorageComponent></FileStorageComponent>
-    <MudButton
-        Variant="Variant.Text"
-        StartIcon="@Icons.Material.Sharp.Save"
-        Color="Color.Inherit"
-        Size="Size.Small"
-        Class="ml-4">
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Sharp.Save" Color="Color.Inherit" Size="Size.Small"
+               Class="ml-4">
         Save Project
     </MudButton>
-    <MudButton
-        Variant="Variant.Text"
-        StartIcon="@Icons.Material.Sharp.Upload"
-        Color="Color.Inherit"
-        Size="Size.Small"
-        Class="ml-4">
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Sharp.Upload" Color="Color.Inherit" Size="Size.Small"
+               Class="ml-4">
         Export to JSON
     </MudButton>
 
-    <MudSpacer/>
+    <MudSpacer />
 
-    <MudButton
-        Variant="Variant.Text"
-        StartIcon="@Icons.Material.Sharp.Replay"
-        Color="Color.Inherit"
-        Size="Size.Small"
-        Class="mr-4"
-        OnClick="StoryService.ResetStory"
-        >
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Sharp.Replay" Color="Color.Inherit" Size="Size.Small"
+               Class="mr-4" OnClick="StoryService.ResetStory">
         Restart
     </MudButton>
-    <MudButton
-        Variant="Variant.Outlined"
-        StartIcon="@Icons.Material.Sharp.PlayArrow"  
-        Color="Color.Info"
-        Size="Size.Small"
-        Class="mr-4"
-        OnClick="Run"
-        >
+    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Sharp.PlayArrow" Color="Color.Info"
+               Size="Size.Small" Class="mr-4" OnClick="Run">
         Run
-    </MudButton>    
-    <MudButton
-        Variant="Variant.Outlined"
-        StartIcon="@Icons.Material.Sharp.PlayArrow"  
-        Color="Color.Info"
-        Size="Size.Small"
-        Class="mr-4"
-        OnClick="StoryService.ContinueStory"
-        >
+    </MudButton>
+    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Sharp.PlayArrow" Color="Color.Info"
+               Size="Size.Small" Class="mr-4" OnClick="StoryService.ContinueStory">
         Continue
     </MudButton>
 </MudToolBar>
-<MudDivider/>
+<MudDivider />
 
 @code
 {

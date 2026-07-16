@@ -2,6 +2,7 @@
 @inject InkStoryService InkStoryService;
 @inject FileStorageService StorageService;
 @implements IDisposable;
+@inherits DevHotReloadComponentBase;
 
 <StandaloneCodeEditor
     @ref="_editor"

@@ -103,7 +103,6 @@
       <AdditionalFiles Include="Layout\AssetPanel.razor" />
       <AdditionalFiles Include="Layout\Header.razor" />
       <AdditionalFiles Include="Layout\MainLayout.razor" />
-      <AdditionalFiles Include="Layout\NavMenu.razor" />
       <AdditionalFiles Include="Layout\Toolbar.razor" />
     </ItemGroup>
 </Project>

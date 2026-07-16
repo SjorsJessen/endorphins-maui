@@ -4,16 +4,36 @@
 @inherits DevHotReloadComponentBase;
 @implements IDisposable;
 
-<div style="background-color: red; height: 100%; max-height: calc(100vh - 120px);" class="ink-story-runner overflow-auto overflow-scroll">
+<div style="background-color: #1A1A1A;height: 100%; max-height: calc(100vh - 120px);"
+     class="ink-story-runner overflow-auto overflow-scroll">
     @if (_dialogLines != null)
     {
         foreach (var line in _dialogLines)
         {
-            <div class="dialog-line mb-6" style="background-color: blue">
-                <MudPaper>
-                    <MudText Typo="Typo.h6">@line.Line</MudText>
-                </MudPaper>
-            </div>
+            if (@line.IsMainCharacter)
+            {
+                <div style="color: white; margin-left: 1rem; display: flex; gap: 1rem; justify-content: left; align-items: center; padding: 1rem; text-align: left;"
+                     class="dialog-line mb-6">
+                    <img srcset="Assets/endorphins-icon.svg" alt="logo" width="36px" height="36px" />
+                    <div style="display: flex; flex-direction: row; gap: 0.5rem;">
+                        <MudText Style="font-size: 13px; font-weight: 500; text-transform: uppercase; color: orange;">@line.Speaker</MudText>
+                        <MudText Style="font-size: 20px;">@line.Line</MudText>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div style="color: white; margin-right: 1rem; display: flex; gap: 1rem; justify-content: right; align-items: center; padding: 1rem; text-align: right;"
+                     class="dialog-line mb-6">
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <MudText Style="font-size: 13px; font-weight: 500; text-transform: uppercase; color: orange;">@line.Speaker</MudText>
+                        <MudText Style="font-size: 20px;">@line.Line</MudText>
+                    </div>
+                    <img srcset="Assets/endorphins-icon.svg" alt="logo" width="40px" height="40px" style="border: thin green solid; border-radius: 4px; padding: 4px;" />
+                </div>
+            }
+
+
         }
     }
     @if (_choices != null)
@@ -22,7 +42,7 @@
             <MudList T="string">
                 @foreach (var choice in _choices)
                 {
-                    <MudListItem Text="@choice.text" OnClick="() => StoryService.MakeChoice(choice.index)"/>
+                    <MudListItem Text="@choice.text" OnClick="() => StoryService.MakeChoice(choice.index)" />
                 }
             </MudList>
         </MudPaper>

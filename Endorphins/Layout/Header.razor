@@ -11,7 +11,7 @@
         <span class="app-name">Endorphins_</span> 
     </div>
     <MudSpacer/>
-    <MudBadge Dot="true" Color="Color.Error" Class="mx-6 my-4">
+    <MudBadge Dot="true" Color="Color.Info" Class="mx-6 my-4">
         <MudText>@_inkState</MudText>
     </MudBadge>
 </MudToolBar>
@@ -19,12 +19,13 @@
 
 @code
 {
-    private string _inkState = "Shalom!";
+    private string _inkState = "Test test!";
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
         InkStoryService.InkCompileStateUpdated += OnInkCompileStateUpdated;
+        Console.WriteLine($"Ink compile state updated: {_inkState}");
     }
 
     private void OnInkCompileStateUpdated(string newState)

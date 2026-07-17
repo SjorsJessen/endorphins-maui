@@ -20,6 +20,7 @@ public sealed class ProjectFileHandler : IFileHandler
 
 public sealed class InkStoryService
 {
+    public bool HasStoryStarted { get; private set; }
     public string? EditorContent => _editorContent;
     public string ActiveScriptPath { get; set; }
     
@@ -33,13 +34,14 @@ public sealed class InkStoryService
     private Story? _activeStory;
     private const string MainCharacter = "Aiden";
     private string? _editorContent;
-    
+
     public void Run(string? root)
     {
         if(_editorContent == null) return;
         _activeStory = ParseEditorContentToStory(root, _editorContent);
         Setup(_activeStory);
         ContinueStory();
+        HasStoryStarted = true;
     }
 
     public void ContinueStory()

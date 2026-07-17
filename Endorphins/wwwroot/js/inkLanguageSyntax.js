@@ -18,12 +18,12 @@ window.registerInkLanguage = function () {
                     [/^\s*=(?!=)/, 'keyword', '@knotHeader'],          // = stitch
                     [/^\s*[*+](?:[ \t]*[*+])*/, 'keyword.choice'],
                     [/^\s*-(?!>)(?:[ \t]*-(?!>))*/, 'keyword.gather'],
-                    [/^\s*~/, 'keyword'],                              // ~ logic line
+                    [/^\s*~/, 'keyword.tilde'],                        // ~ logic line
                     [/->->|->|<-/, 'keyword.flow'],                    // diverts / threads
                     [/<>/, 'keyword.glue'],                            // glue
                     [/#.*$/, 'tag'],                                   // # tags
                     [/\[/, '@brackets', '@choiceBracket'],            // [choice-only text]
-                    [/\{/, '@brackets', '@inlineLogic'],              // { inline logic }
+                    [/\{/, 'keyword.brace', '@inlineLogic'],          // { inline logic }
                     [/"/, 'string', '@string'],
                     [/[A-Za-z_]\w*/, {cases: {'@keywords': 'keyword', '@default': ''}}],
                 ],
@@ -49,15 +49,15 @@ window.registerInkLanguage = function () {
                     [/[/*]/, 'comment'],
                 ],
                 choiceBracket: [
-                    [/[^\]]+/, 'string'],
-                    [/\]/, '@brackets', '@pop'],
+                    [/[^\]]+/, 'string.bracket'],
+                    [/\]/, 'string.bracket', '@pop'],
                 ],
                 inlineLogic: [
                     [/[^{}|:"]+/, 'variable'],
                     [/[|:]/, 'delimiter'],
                     [/"/, 'string', '@string'],
-                    [/\{/, '@brackets', '@push'],
-                    [/\}/, '@brackets', '@pop'],
+                    [/\{/, 'keyword.brace', '@push'],
+                    [/\}/, 'keyword.brace', '@pop'],
                 ],
                 string: [
                     [/[^"]+/, 'string'],
@@ -70,12 +70,17 @@ window.registerInkLanguage = function () {
             base: 'vs-dark',
             inherit: true,
             rules: [
-                {token: 'keyword.choice', foreground: 'C586C0', fontStyle: 'bold'},
-                {token: 'keyword.gather', foreground: '4EC9B0'},
-                {token: 'keyword.flow', foreground: 'DCDCAA', fontStyle: 'bold'},
-                {token: 'keyword.glue', foreground: '808080'},
-                {token: 'type.identifier', foreground: '4FC1FF'},
-                {token: 'tag', foreground: '6A9955', fontStyle: 'italic'},
+                {token: 'comment', foreground: '4A5568', fontStyle: 'italic'},   // tok-comment
+                {token: 'type.identifier', foreground: 'E8A07A', fontStyle: 'bold'}, // tok-knot
+                {token: 'keyword.flow', foreground: '4F9CF0'},                    // tok-divert
+                {token: 'keyword', foreground: 'C586C0'},                        // tok-keyword
+                {token: 'keyword.tilde', foreground: 'B1A7C7'},                  // tok-tilde
+                {token: 'keyword.glue', foreground: '4F9CF0'},                   // tok-glue
+                {token: 'keyword.brace', foreground: 'E8C97A'},                  // tok-brace
+                {token: 'keyword.choice', foreground: '4EC9A0'},                 // tok-choice
+                {token: 'keyword.gather', foreground: '4EC9A0'},                 // tok-choice
+                {token: 'string.bracket', foreground: '4EC9A0'},                 // tok-bracket
+                {token: 'variable.parameter', foreground: '9CDCFE'},             // tok-label
             ],
             colors: {},
         });

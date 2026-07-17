@@ -1,64 +1,149 @@
 @inject IJSRuntime JS
 @inject InkStoryService InkStoryService;
 @inject FileStorageService StorageService;
-@implements IDisposable;
+
 @inherits DevHotReloadComponentBase;
 
-<StandaloneCodeEditor
-    @ref="_editor"
-    CssClass="ink-editor"
+<MudToolBar Class="justify-space-between" Dense>
+    <MudButton
+        Icon="@Icons.Material.Sharp.FolderOpen"
+        Variant="Variant.Text"
+        Color="Color.Inherit"
+        Size="Size.Small"
+        HtmlTag="label"
+        OnClick="() => AddKnot(_knotPlaceholder)"
+    >=== Knot ===</MudButton>
+</MudToolBar>
+<StandaloneCodeEditor 
+    @ref="_editor" 
+    CssClass="ink-editor" 
     ConstructionOptions="EditorConstructionOptions"
-    OnDidChangeModelContent="UpdateEditorContent"
+    OnDidChangeModelContent="OnModelContentChanged"
+    OnDidChangeCursorPosition="EditorDidChangeCursorPosition"
 />
 
 @code {
+    private const string InkScriptsDirectory = "scripts";
+    private const string MainInkScriptPath = $"{InkScriptsDirectory}/main.ink";
     private StandaloneCodeEditor? _editor;
+    private BlazorMonaco.Position _currentCursorPosition = new();
+    private string _knotPlaceholder = "Knot";
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
         InkStoryService.InkScriptSelected += UpdateEditorContent;
+        StorageService.FilesLoaded += LoadMainInkScript;
+    }
+
+    private async Task AddKnot(string knotName)
+    {
+        if (_editor is null) return;
+        await _editor.SetPosition(_currentCursorPosition, knotName);            // just move caret
+        await _editor.Trigger("addKnot", "type", new { text = $"=== {knotName} ===\n" });
+        await _editor.Focus();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await JS.InvokeVoidAsync("registerInkLanguage");
+            await JS.InvokeVoidAsync(identifier: "registerInkLanguage");
         }
     }
-    
-    private async void UpdateEditorContent(ModelContentChangedEvent e)
+
+    // Subscribed to StorageService.FilesLoaded (a plain Action), so this must return void.
+    // Route the async work through InvokeAsync: it runs on the renderer's sync context and
+    // any exception is caught here. An unhandled exception in an async void tears down the
+    // whole app (it surfaces as an ArgumentNullException at UIApplicationMain).
+    private void LoadMainInkScript(IEnumerable<string> files)
     {
-        if (_editor == null) return;
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                var filePath = files?.FirstOrDefault(file => file == MainInkScriptPath);
+                if (ScriptExists(filePath))
+                {
+                    var content = await StorageService.ReadFileAsTextAsync(filePath!);
+                    await ApplyContentAsync(content);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"LoadMainInkScript failed: {ex}");
+            }
+        });
+    }
+
+    private async Task OnModelContentChanged(ModelContentChangedEvent e)
+    {
+        if (_editor is null) return;
         var content = await _editor.GetValue();
         InkStoryService.SetContent(content);
-        
-        await StorageService.WriteFileAsync(InkStoryService.ActiveScriptPath, content);
-        StateHasChanged();
-    }    
-    
-    private async void UpdateEditorContent(string content)
-    {
-        InkStoryService.SetContent(content);
-        await _editor?.SetValue(content)!;
+        await SaveContentToFile(content);
         StateHasChanged();
     }
-    
+
+    // Subscribed to InkStoryService.InkScriptSelected (a plain Action<string>) -> must be void.
+    private void UpdateEditorContent(string content)
+    {
+        _ = InvokeAsync(() => ApplyContentAsync(content));
+    }
+
+    private async Task ApplyContentAsync(string content)
+    {
+        try
+        {
+            InkStoryService.SetContent(content ?? string.Empty);
+            // The editor may not be constructed yet (content imported before first render);
+            // in that case EditorConstructionOptions.Value seeds it from EditorContent instead.
+            if (_editor is not null)
+            {
+                await _editor.SetValue(content ?? string.Empty);
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ApplyContentAsync failed: {ex}");
+        }
+    }
+
+    private async Task SaveContentToFile(string content)
+    {
+        await StorageService.WriteFileAsync(InkStoryService.ActiveScriptPath, content);
+    }
+
+    private void EditorDidChangeCursorPosition(CursorPositionChangedEvent eventArgs)
+    {
+        Console.WriteLine("EditorDidChangeCursorPosition", eventArgs);
+        _currentCursorPosition = eventArgs.Position;
+    }
+
     private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
     {
 
-        return new StandaloneEditorConstructionOptions{
+        return new StandaloneEditorConstructionOptions
+        {
             AutomaticLayout = true,
             Language = "ink",
             Theme = "ink-dark",
+            FontSize = 16,
             Value = InkStoryService.EditorContent,
         };
     }
 
-    public void Dispose()
+    private bool ScriptExists(string? scriptPath)
     {
+        return !string.IsNullOrWhiteSpace(scriptPath);
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
         _editor?.Dispose();
         InkStoryService.InkScriptSelected -= UpdateEditorContent;
+        StorageService.FilesLoaded -= LoadMainInkScript;
     }
 }

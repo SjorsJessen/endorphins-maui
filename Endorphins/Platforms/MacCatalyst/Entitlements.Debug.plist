@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <!-- Debug-only entitlements: NO App Sandbox, so the debugger and Hot Reload can open
+         their sockets to the IDE. Do not use this file for App Store builds. -->
+    <dict>
+        <!-- Allow the debugger to attach to the running process. -->
+        <key>com.apple.security.get-task-allow</key>
+        <true/>
+    </dict>
+</plist>

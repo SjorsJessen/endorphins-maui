@@ -1,19 +1,19 @@
 @using Endorphins.Models
 @using Ink.Runtime
-@inject InkStoryService StoryService;
-@inherits DevHotReloadComponentBase;
-@implements IDisposable;
+@inject FileStorageService StorageService
+@inject InkStoryService StoryService
 
-<div style="background-color: #1A1A1A;height: 100%; max-height: calc(100vh - 120px);"
-     class="ink-story-runner overflow-auto overflow-scroll">
+@inherits DevHotReloadComponentBase
+
+<div id="test"></div>
+<div style="background-color: #1A1A1A;height: 100%; max-height: calc(100vh - 120px);" class="ink-story-runner overflow-auto overflow-scroll">
     @if (_dialogLines != null)
     {
         foreach (var line in _dialogLines)
         {
             if (@line.IsMainCharacter)
             {
-                <div style="color: white; margin-left: 1rem; display: flex; gap: 1rem; justify-content: left; align-items: center; padding: 1rem; text-align: left;"
-                     class="dialog-line mb-6">
+                <div style="color: white; margin-left: 1rem; display: flex; gap: 1rem; justify-content: left; align-items: center; padding: 1rem; text-align: left;" class="dialog-line mb-6">
                     <img srcset="Assets/endorphins-icon.svg" alt="logo" width="36px" height="36px" />
                     <div style="display: flex; flex-direction: row; gap: 0.5rem;">
                         <MudText Style="font-size: 13px; font-weight: 500; text-transform: uppercase; color: orange;">@line.Speaker</MudText>
@@ -29,11 +29,9 @@
                         <MudText Style="font-size: 13px; font-weight: 500; text-transform: uppercase; color: orange;">@line.Speaker</MudText>
                         <MudText Style="font-size: 20px;">@line.Line</MudText>
                     </div>
-                    <img srcset="Assets/endorphins-icon.svg" alt="logo" width="40px" height="40px" style="border: thin green solid; border-radius: 4px; padding: 4px;" />
+                    <img srcset="Assets/endorphins-icon.svg" alt="logo" width="40px" height="40px" style="border: thin yellow solid; border-radius: 4px; padding: 4px;" />
                 </div>
             }
-
-
         }
     }
     @if (_choices != null)
@@ -50,6 +48,8 @@
 </div>
 
 @code {
+    private const string InkScriptsDirectory = "scripts";
+    private const string MainInkScriptPath = $"{InkScriptsDirectory}/main.ink";
     private List<Choice>? _choices = [];
     private readonly List<DialogLine>? _dialogLines = [];
 
@@ -57,10 +57,22 @@
     {
         base.OnInitialized();
 
+        StorageService.FilesLoaded += LoadMainInkScript;
+        
         StoryService.ChoicesAdded += OnChoicesAdded;
         StoryService.DialogUpdated += OnDialogUpdated;
         StoryService.StoryReset += OnStoryReset;
         StoryService.ChoicesReset += OnChoicesReset;
+    }
+
+    private async void LoadMainInkScript(IEnumerable<string> files)
+    {
+        var filePath = files.Single<string>(file => file == MainInkScriptPath);
+        if(ScriptExists(filePath))
+        {
+            var root = StorageService.Root;
+            StoryService.Run(root);
+        }
     }
 
     private void OnDialogUpdated(DialogLine dialogLine)
@@ -88,8 +100,14 @@
         StateHasChanged();
     }
 
-    public void Dispose()
+    private bool ScriptExists(string scriptPath)
     {
+        return !string.IsNullOrEmpty(scriptPath) && !string.IsNullOrWhiteSpace(scriptPath);
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
         StoryService.ChoicesAdded -= OnChoicesAdded;
         StoryService.DialogUpdated -= OnDialogUpdated;
         StoryService.StoryReset -= OnStoryReset;

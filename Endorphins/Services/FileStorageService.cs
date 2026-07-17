@@ -6,6 +6,8 @@ namespace Endorphins.Services;
 public class FileStorageService : IFileStorageService
 {
     public string? Root;
+    public Action<List<string>>? FilesLoaded { get; set; }
+
     private List<string> _filePaths = [];
 
     public async Task<string?> PickProjectFolderAsync()
@@ -23,14 +25,15 @@ public class FileStorageService : IFileStorageService
         return _filePaths.Where(path => extensions.Any(ext => path.EndsWith(ext, StringComparison.OrdinalIgnoreCase))).ToList();
     }
     
-    public Task SetFilePathsAsync()
+    public void SetFilePathsAsync()
     {
         EnsureRoot();
         _filePaths = Directory
             .EnumerateFiles(Root!, "*", SearchOption.AllDirectories)
             .Select(path => Path.GetRelativePath(Root!, path))
             .ToList();
-        return Task.CompletedTask;
+
+        FilesLoaded?.Invoke(_filePaths);
     }
 
     public Task<string> ReadFileAsTextAsync(string relativePath)

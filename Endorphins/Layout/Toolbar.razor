@@ -23,10 +23,15 @@
                Size="Size.Small" Class="mr-4" OnClick="Run">
         Run
     </MudButton>
-    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Sharp.PlayArrow" Color="Color.Info"
-               Size="Size.Small" Class="mr-4" OnClick="StoryService.ContinueStory">
-        Continue
-    </MudButton>
+
+    @if (StoryService.HasStoryStarted)
+    {
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Sharp.PlayArrow" Color="Color.Info"
+                   Size="Size.Small" Class="mr-4" OnClick="StoryService.ContinueStory">
+            Continue
+        </MudButton>
+    }
+
 </MudToolBar>
 <MudDivider />
 

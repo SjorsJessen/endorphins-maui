@@ -99,7 +99,7 @@
     private async Task OpenProject()
     {
         await StorageService.PickProjectFolderAsync();
-        await StorageService.SetFilePathsAsync();
+        StorageService.SetFilePathsAsync();
     }
     
     private async Task OpenPdf(string filePath)

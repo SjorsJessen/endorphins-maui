@@ -21,43 +21,20 @@
         />
     </MudToolBar>
     <MudDivider></MudDivider>
-    <MudTreeView T="string" Dense AutoExpand>
-        <MudTreeViewItem Value='"scripts"' Class="mt-2">
-            @foreach (var inkScript in StorageService.FilterBy([".ink"]))
+    <MudTreeView T="string" Dense Hover ExpandOnClick>
+        @if (_tree.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Class="pa-3" Style="color: var(--text-dim);">
+                No project loaded.
+            </MudText>
+        }
+        else
+        {
+            @foreach (var node in _tree)
             {
-                <MudTreeViewItem Text="@inkScript" Value="@inkScript" OnClick="() => SelectInkScript(inkScript)"/>
+                <AssetTreeNodeComponent Node="node" OnFileActivated="OnFileActivated"/>
             }
-        </MudTreeViewItem>             
-        <MudTreeViewItem Value='"notes"'>
-            @foreach (var markdownFile in StorageService.FilterBy([".md"]))
-            {
-                <MudTreeViewItem Text="@markdownFile" Value="@markdownFile" OnClick="() => SelectMarkdown(markdownFile)"/>
-            }
-        </MudTreeViewItem>        
-        <MudTreeViewItem Value='"images"'>
-            @foreach (var imageFile in StorageService.FilterBy([".png", ".jpg", ".jpeg", ".gif"]))
-            {
-                <MudTreeViewItem Text="@imageFile" Value="@imageFile" OnClick="() => Preview(imageFile)"/>
-            }
-        </MudTreeViewItem>        
-        <MudTreeViewItem Value='"books"'>
-            @foreach (var pdfFile in StorageService.FilterBy([".pdf"]))
-            {
-                <MudTreeViewItem Text="@pdfFile" Value="@pdfFile" OnClick="() => OpenPdf(pdfFile)"/>
-            }
-        </MudTreeViewItem>
-        <MudTreeViewItem Value='"audio"'>
-            @foreach (var audioFile in StorageService.FilterBy([".mp3", ".wav"]))
-            {
-                <MudTreeViewItem Text="@audioFile" Value="@audioFile" OnClick="() => Preview(audioFile)"/>
-            }
-        </MudTreeViewItem>            
-        <MudTreeViewItem Value='"video"'>
-            @foreach (var videoFile in StorageService.FilterBy([".mp4", ".mkv", ".webm"]))
-            {
-                <MudTreeViewItem Text="@videoFile" Value="@videoFile" OnClick="() => PlayVideo(videoFile)"/>
-            }
-        </MudTreeViewItem>    
+        }
     </MudTreeView>
 
     @if (_isPreviewPanelActive)
@@ -95,11 +72,101 @@
     private string? _selectedFile;
     private string? _selectedContentType;
     private bool _isPreviewPanelActive;
-    
+    private List<AssetNode> _tree = [];
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        StorageService.FilesLoaded += OnFilesLoaded;
+        if (StorageService.FilePaths.Count > 0)
+        {
+            RebuildTree(StorageService.FilePaths);
+        }
+    }
+
+    private void OnFilesLoaded(List<string> files) => InvokeAsync(() =>
+    {
+        RebuildTree(files);
+        StateHasChanged();
+    });
+
     private async Task OpenProject()
     {
         await StorageService.PickProjectFolderAsync();
         StorageService.SetFilePathsAsync();
+    }
+
+    /// <summary>Turns the flat relative paths into a nested folder/file tree.</summary>
+    private void RebuildTree(IEnumerable<string> paths)
+    {
+        var root = new AssetNode { IsDirectory = true };
+        foreach (var path in paths.Where(p => !string.IsNullOrWhiteSpace(p)))
+        {
+            var parts = path.Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries);
+            var current = root;
+            for (var i = 0; i < parts.Length; i++)
+            {
+                var isFile = i == parts.Length - 1;
+                var name = parts[i];
+                var existing = current.Children
+                    .FirstOrDefault(c => c.Name == name && c.IsDirectory == !isFile);
+                if (existing is null)
+                {
+                    existing = new AssetNode
+                    {
+                        Name = name,
+                        IsDirectory = !isFile,
+                        Path = string.Join('/', parts.Take(i + 1))
+                    };
+                    current.Children.Add(existing);
+                }
+                current = existing;
+            }
+        }
+        SortNode(root);
+        _tree = root.Children;
+    }
+
+    /// <summary>Folders first, then files, each group alphabetical.</summary>
+    private static void SortNode(AssetNode node)
+    {
+        node.Children.Sort((a, b) => a.IsDirectory != b.IsDirectory
+            ? (a.IsDirectory ? -1 : 1)
+            : string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+        foreach (var child in node.Children)
+        {
+            SortNode(child);
+        }
+    }
+
+    /// <summary>Dispatches a clicked file to the right viewer by extension.</summary>
+    private async Task OnFileActivated(string relativePath)
+    {
+        var ext = System.IO.Path.GetExtension(relativePath).ToLowerInvariant();
+        switch (ext)
+        {
+            case ".ink":
+                SelectInkScript(relativePath);
+                break;
+            case ".md":
+                SelectMarkdown(relativePath);
+                break;
+            case ".pdf":
+                await OpenPdf(relativePath);
+                break;
+            case ".mp4" or ".mkv" or ".webm" or ".mov":
+                PlayVideo(relativePath);
+                break;
+            default:
+                Preview(relativePath);
+                break;
+        }
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
+        StorageService.FilesLoaded -= OnFilesLoaded;
     }
     
     private async Task OpenPdf(string filePath)

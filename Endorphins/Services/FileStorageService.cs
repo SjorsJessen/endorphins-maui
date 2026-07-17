@@ -10,6 +10,9 @@ public class FileStorageService : IFileStorageService
 
     private List<string> _filePaths = [];
 
+    /// <summary>All loaded file paths, relative to <see cref="Root"/>.</summary>
+    public IReadOnlyList<string> FilePaths => _filePaths;
+
     public async Task<string?> PickProjectFolderAsync()
     {
         var result = await MainThread.InvokeOnMainThreadAsync(() => FolderPicker.Default.PickAsync());

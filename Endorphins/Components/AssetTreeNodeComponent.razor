@@ -1,0 +1,57 @@
+@using Endorphins.Models
+@using MudBlazor
+
+@* Renders a single asset node and recurses into its children, so the tree
+   nests as deeply as the loaded files require. Folders get an expand arrow
+   automatically (they have child content); files invoke OnFileActivated. *@
+
+<MudTreeViewItem T="string"
+                 Value="@Node.Path"
+                 Text="@Node.Name"
+                 Icon="@Icon"
+                 CanExpand="Node.IsDirectory"
+                 ExpandButtonIcon="@(Node.IsDirectory ? Icons.Material.Filled.ChevronRight : string.Empty)"
+                 OnClick="HandleClick">
+    @if (Node.IsDirectory)
+    {
+        @foreach (var child in Node.Children)
+        {
+            <AssetTreeNodeComponent Node="child" OnFileActivated="OnFileActivated" />
+        }
+    }
+</MudTreeViewItem>
+
+@code {
+    [Parameter, EditorRequired] public AssetNode Node { get; set; } = default!;
+
+    [Parameter] public EventCallback<string> OnFileActivated { get; set; }
+
+    private string Icon => Node.IsDirectory
+        ? Icons.Material.Sharp.Folder
+        : ExtensionIcon(Node.Name);
+
+    private async Task HandleClick()
+    {
+        // Directories just expand/collapse (handled by MudTreeView); only
+        // files trigger activation.
+        if (!Node.IsDirectory)
+        {
+            await OnFileActivated.InvokeAsync(Node.Path);
+        }
+    }
+
+    private static string ExtensionIcon(string name)
+    {
+        var ext = System.IO.Path.GetExtension(name).ToLowerInvariant();
+        return ext switch
+        {
+            ".ink" => Icons.Material.Sharp.Description,
+            ".md" => Icons.Material.Sharp.Article,
+            ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" => Icons.Material.Sharp.Image,
+            ".pdf" => Icons.Material.Sharp.PictureAsPdf,
+            ".mp3" or ".wav" or ".ogg" or ".flac" => Icons.Material.Sharp.AudioFile,
+            ".mp4" or ".mkv" or ".webm" or ".mov" => Icons.Material.Sharp.Movie,
+            _ => Icons.Material.Sharp.InsertDriveFile
+        };
+    }
+}

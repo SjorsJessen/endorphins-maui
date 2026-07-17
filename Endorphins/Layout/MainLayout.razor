@@ -2,7 +2,7 @@
 @using MudBlazor
 @inherits LayoutComponentBase
 
-<MudThemeProvider />
+<MudThemeProvider Theme="_theme" IsDarkMode="true" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -23,3 +23,45 @@
         </MudItem>
     </MudGrid>
 </div>
+
+@code {
+    // Palette mirrors the dark design tokens (--bg, --surface, --accent, …) from app.css
+    // so MudBlazor components (toolbars, buttons, tree view, tabs, lists) theme natively.
+    private readonly MudTheme _theme = new()
+    {
+        PaletteDark = new PaletteDark
+        {
+            Black             = "#111214",
+            Background        = "#111214",
+            BackgroundGray    = "#17191c",
+            Surface           = "#17191c",
+            DrawerBackground  = "#17191c",
+            DrawerText        = "#c8cdd5",
+            DrawerIcon        = "#8a929e",
+            AppbarBackground  = "#17191c",
+            AppbarText        = "#c8cdd5",
+            TextPrimary       = "#c8cdd5",
+            TextSecondary     = "#8a929e",
+            TextDisabled      = "#5a6070",
+            ActionDefault     = "#8a929e",
+            ActionDisabled    = "rgba(90,96,112,0.5)",
+            Primary           = "#4f9cf0",
+            Secondary         = "#e8a07a",
+            Tertiary          = "#4ec9a0",
+            Info              = "#4f9cf0",
+            Success           = "#4ec9a0",
+            Warning           = "#e8c97a",
+            Error             = "#e87a7a",
+            Divider           = "#2a2d32",
+            DividerLight      = "#363a40",
+            LinesDefault      = "#2a2d32",
+            LinesInputs       = "#363a40",
+            TableLines        = "#2a2d32",
+            HoverOpacity      = 0.08,
+        },
+        Typography = new Typography
+        {
+            Default = new DefaultTypography { FontFamily = new[] { "Inter", "sans-serif" } }
+        }
+    };
+}

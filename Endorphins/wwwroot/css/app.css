@@ -1,13 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;1,400&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
 
 @font-face {
     font-family: "Horizon";
-    src: url("../Fonts/horizon.otf");
+    src: url("../Fonts/horizon.otf") format("opentype");
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: "RobotoMono";
+    src: url("../Fonts/RobotoMono.ttf") format("truetype");
+    font-weight: normal;
+}
+
+/* ── DESIGN TOKENS (dark) ──
+   Mirrors the palette wired into MudTheme (MainLayout.razor) so custom,
+   non-MudBlazor markup (story runner, dialogue, choices) shares the same colours. */
+:root {
+    --bg:           #111214;
+    --surface:      #17191c;
+    --surface2:     #1e2124;
+    --border:       #2a2d32;
+    --border2:      #363a40;
+    --text:         #c8cdd5;
+    --text-dim:     #5a6070;
+    --text-mid:     #8a929e;
+    --accent:       #4f9cf0;
+    --accent-dim:   #1e3a5f;
+    --green:        #4ec9a0;
+    --yellow:       #e8c97a;
+    --red:          #e87a7a;
+    --orange:       #e8a07a;
+    --choice-bg:    #1a1d21;
+    --choice-hover: #232830;
 }
 
 html,
 body {
     font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
     overflow: hidden !important;
 }
 
@@ -23,12 +54,14 @@ a,
 .app-name {
     font-family: "Horizon", sans-serif !important;
     font-size: 16px;
-    color: white;
+    letter-spacing: 0.06em;
+    color: var(--accent);
 }
 
 .asset-panel {
-    border-right: thin solid white;
+    border-right: 1px solid var(--border);
     height: 100%;
+    background: var(--surface);
 }
 
 .markdown-editor {
@@ -42,7 +75,7 @@ a,
 .editor-toolbar {
     border-top: none !important;
     border-bottom: none !important;
-    border-right: thin white solid !important;
+    border-right: 1px solid var(--border) !important;
 }
 
 .workspace {
@@ -56,8 +89,8 @@ a,
 .diagram-container {
     width: 100%;
     height: 400px;
-    border: 1px solid black;
-    /* Just visual */
+    border: 1px solid var(--border);
+    background: var(--surface);
 }
 
 .btn-primary {
@@ -172,10 +205,321 @@ code {
 
 .ink-editor {
     height: 100%;
-    font-size: 20px;
-    color: red;
 }
 
 .ink-editor .minimap {
     display: none;
+}
+
+/* ── INK STORY RUNNER ── */
+.ink-story-runner {
+    background: var(--bg) !important;
+    padding: 20px 22px 8px;
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.75;
+    color: var(--text);
+}
+
+/* Dialogue line: portrait + bubble */
+.dialogue-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+.dialogue-line--right {
+    justify-content: flex-end;
+}
+.dialogue-portrait {
+    width: 44px;
+    height: 44px;
+    border-radius: 4px;
+    object-fit: cover;
+    object-position: top center;
+    flex-shrink: 0;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    padding: 4px;
+}
+.dialogue-bubble {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.dialogue-line--right .dialogue-bubble {
+    align-items: flex-end;
+}
+.dialogue-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--orange);
+    opacity: 0.9;
+}
+.dialogue-line--right .dialogue-name,
+.dialogue-line--right .story-p {
+    text-align: right;
+}
+.story-p {
+    color: var(--text);
+    line-height: 1.5;
+    font-size: 18px;
+}
+
+/* Choices */
+.choices-panel {
+    padding: 10px 16px 14px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.choice-btn {
+    background: var(--choice-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 14px;
+    border-radius: 5px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.12s;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+}
+.choice-btn:hover,
+.choice-btn:active {
+    background: var(--choice-hover);
+    border-color: var(--border2);
+    color: var(--text-mid);
+}
+.choice-btn:active {
+    transform: scale(0.98);
+}
+.choice-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--text-dim);
+    opacity: 0.8;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   GLOBAL DARK THEME
+   MudBlazor components are themed via MudTheme (MainLayout.razor).
+   The rules below cover the structural containers and the NON-Mud
+   components (EasyMDE markdown editor, Blazor.Diagrams graph, PDF
+   canvas, video, photoshop) that MudTheme cannot reach.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Structural containers — no white gaps */
+#app,
+.page,
+.workspace {
+    background: var(--bg);
+}
+.page {
+    min-height: 100vh;
+}
+
+/* MudBlazor surfaces — belt-and-suspenders alignment with the palette */
+.mud-toolbar,
+.mud-tabs-toolbar {
+    background-color: var(--surface);
+}
+.mud-tabs-panels,
+.mud-tab-panel {
+    background-color: var(--bg);
+}
+.mud-treeview,
+.mud-list {
+    background-color: transparent;
+}
+
+/* ── EasyMDE markdown editor (PSC.Blazor MarkdownEditor) ── */
+.markdown-editor .EasyMDEContainer,
+.markdown-editor .CodeMirror,
+.markdown-editor .editor-preview,
+.markdown-editor .editor-preview-side {
+    background: var(--surface) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+.markdown-editor .editor-toolbar {
+    background: var(--surface);
+}
+.markdown-editor .editor-toolbar button {
+    color: var(--text-mid) !important;
+}
+.markdown-editor .editor-toolbar button:hover,
+.markdown-editor .editor-toolbar button.active {
+    background: var(--surface2) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+.markdown-editor .CodeMirror-cursor {
+    border-left-color: var(--text) !important;
+}
+.markdown-editor .CodeMirror-selected {
+    background: var(--accent-dim) !important;
+}
+.markdown-editor .cm-header,
+.markdown-editor .cm-strong {
+    color: var(--text) !important;
+}
+.markdown-editor .cm-link,
+.markdown-editor .cm-url {
+    color: var(--accent) !important;
+}
+.markdown-editor .cm-comment {
+    color: var(--accent) !important;
+}
+
+/* ── PDF viewer ── */
+.pdf-viewer {
+    background: var(--bg);
+    height: 100%;
+    overflow: auto;
+}
+
+/* ── Blazor.Diagrams graph nodes ── */
+.diagram-container .default-node,
+.diagram-container .node {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border2);
+}
+
+/* ── Video player ── */
+video {
+    width: 100%;
+    max-height: calc(100vh - 160px);
+    background: #000;
+    display: block;
+}
+
+/* ── Photoshop export button ── */
+.photoshop-export {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 5px;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    margin-top: 6px;
+}
+.photoshop-export:hover {
+    background: rgba(79, 156, 240, 0.12);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BORDERS & TEXT COLOURS
+   Forced overrides so every component's dividers, outlines and text
+   follow the palette even where MudBlazor's IsDarkMode does not reach.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Dividers & borders ── */
+.mud-divider {
+    border-color: var(--border) !important;
+}
+.mud-paper,
+.mud-card,
+.mud-table,
+.mud-list-item,
+.mud-nav-group,
+.mud-expand-panel {
+    border-color: var(--border) !important;
+}
+.mud-table-cell,
+.mud-table-row,
+.mud-tab {
+    border-color: var(--border) !important;
+}
+/* Outlined inputs / selects / text fields */
+.mud-input-outlined-border {
+    border-color: var(--border2) !important;
+}
+.mud-input-outlined:hover .mud-input-outlined-border {
+    border-color: var(--text-mid) !important;
+}
+.mud-input-outlined.mud-focused .mud-input-outlined-border {
+    border-color: var(--accent) !important;
+}
+/* Tabs underline / active indicator */
+.mud-tabs-toolbar {
+    border-bottom: 1px solid var(--border) !important;
+}
+.mud-tab-slider {
+    background-color: var(--accent) !important;
+}
+
+/* ── Text colours ── */
+.mud-typography,
+.mud-input-root,
+.mud-input,
+.mud-select,
+.mud-nav-link,
+.mud-list-item-text,
+.mud-treeview-item-content,
+.mud-table-cell {
+    color: var(--text) !important;
+}
+/* Secondary / muted text: headers, placeholders, disabled, icons-as-text */
+.mud-input-label,
+.mud-input-helper-text,
+.mud-form-help-text,
+.file-section-label,
+.mud-table-head .mud-table-cell {
+    color: var(--text-mid) !important;
+}
+/* Toolbar / tab labels default to the mid tier, brighten on active */
+.mud-tab {
+    color: var(--text-mid) !important;
+}
+.mud-tab.mud-tab-active {
+    color: var(--text) !important;
+}
+/* Icon buttons & default-coloured icons */
+.mud-icon-button .mud-icon-root,
+.mud-icon-default {
+    color: var(--text-mid) !important;
+}
+/* Story-runner speaker name keeps the accent orange from the theme */
+.dialogue-name {
+    color: var(--orange) !important;
+}
+
+/* Links */
+a,
+.mud-link,
+.btn-link {
+    color: var(--accent) !important;
+}
+a:hover,
+.mud-link:hover {
+    color: #7bb6f5 !important;
+}
+
+/* ── EasyMDE markdown editor text tiers ── */
+.markdown-editor .CodeMirror,
+.markdown-editor .editor-preview,
+.markdown-editor .cm-variable-2,
+.markdown-editor .cm-quote {
+    color: var(--text) !important;
+}
+.markdown-editor .editor-preview h1,
+.markdown-editor .editor-preview h2,
+.markdown-editor .editor-preview h3 {
+    color: var(--text) !important;
+    border-color: var(--border) !important;
 }

@@ -5,45 +5,44 @@
 
 @inherits DevHotReloadComponentBase
 
-<div id="test"></div>
-<div style="background-color: #1A1A1A;height: 100%; max-height: calc(100vh - 120px);" class="ink-story-runner overflow-auto overflow-scroll">
+<div class="ink-story-runner overflow-auto overflow-scroll" style="height: 100%; max-height: calc(100vh - 120px);">
     @if (StoryService.DialogLines != null)
     {
         foreach (var line in StoryService.DialogLines)
         {
             if (@line.IsMainCharacter)
             {
-                <div style="color: white; margin-left: 1rem; display: flex; gap: 1rem; justify-content: left; align-items: center; padding: 1rem; text-align: left;" class="dialog-line mb-6">
-                    <img srcset="Assets/endorphins-icon.svg" alt="logo" width="36px" height="36px" />
-                    <div style="display: flex; flex-direction: row; gap: 0.5rem;">
-                        <MudText Style="font-size: 13px; font-weight: 500; text-transform: uppercase; color: orange;">@line.Speaker</MudText>
-                        <MudText Style="font-size: 20px;">@line.Line</MudText>
+                <div class="dialogue-line">
+                    <img class="dialogue-portrait" srcset="Assets/endorphins-icon.svg" alt="portrait" />
+                    <div class="dialogue-bubble">
+                        <span class="dialogue-name">@line.Speaker</span>
+                        <span class="story-p">@line.Line</span>
                     </div>
                 </div>
             }
             else
             {
-                <div style="color: white; margin-right: 1rem; display: flex; gap: 1rem; justify-content: right; align-items: center; padding: 1rem; text-align: right;"
-                     class="dialog-line mb-2">
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <MudText Style="font-size: 13px; font-weight: 500; text-transform: uppercase; color: orange;">@line.Speaker</MudText>
-                        <MudText Style="font-size: 20px; font-family: 'Crimson Text'">@line.Line</MudText>
+                <div class="dialogue-line dialogue-line--right">
+                    <div class="dialogue-bubble">
+                        <span class="dialogue-name">@line.Speaker</span>
+                        <span class="story-p">@line.Line</span>
                     </div>
-                    <img srcset="Assets/endorphins-icon.svg" alt="logo" width="50px" height="50px" style="border: thin white solid; border-radius: 4px; padding: 4px;" />
+                    <img class="dialogue-portrait" srcset="Assets/endorphins-icon.svg" alt="portrait" />
                 </div>
             }
         }
     }
     @if (StoryService.Choices.Count > 0)
     {
-        <MudPaper>
-            <MudList T="string">
-                @foreach (var choice in StoryService.Choices)
-                {
-                    <MudListItem Text="@choice.text" OnClick="() => StoryService.MakeChoice(choice.index)" />
-                }
-            </MudList>
-        </MudPaper>
+        <div class="choices-panel">
+            @foreach (var choice in StoryService.Choices)
+            {
+                <button class="choice-btn" @onclick="() => StoryService.MakeChoice(choice.index)">
+                    <span class="choice-num">@(choice.index + 1)</span>
+                    <span>@choice.text</span>
+                </button>
+            }
+        </div>
     }
 </div>
 

@@ -82,9 +82,10 @@ else
 
     private bool IsScripts => Node.IsDirectory && string.Equals(Node.Name, "scripts", StringComparison.OrdinalIgnoreCase);
     private bool IsNotes => Node.IsDirectory && string.Equals(Node.Name, "notes", StringComparison.OrdinalIgnoreCase);
-    private bool IsCreatable => IsScripts || IsNotes;
+    private bool IsDiagrams => Node.IsDirectory && string.Equals(Node.Name, "diagrams", StringComparison.OrdinalIgnoreCase);
+    private bool IsCreatable => IsScripts || IsNotes || IsDiagrams;
     private bool UseCustomRow => IsCreatable || !Node.IsDirectory;
-    private string CreateTooltip => IsScripts ? "New Ink script" : "New note";
+    private string CreateTooltip => IsScripts ? "New Ink script" : IsDiagrams ? "New diagram" : "New note";
 
     private string Icon => Node.IsDirectory
         ? Icons.Material.Sharp.Folder
@@ -161,6 +162,7 @@ else
         {
             ".ink" => Icons.Material.Sharp.Description,
             ".md" => Icons.Material.Sharp.Article,
+            ".diagram" => Icons.Material.Sharp.AccountTree,
             ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" => Icons.Material.Sharp.Image,
             ".pdf" => Icons.Material.Sharp.PictureAsPdf,
             ".mp3" or ".wav" or ".ogg" or ".flac" => Icons.Material.Sharp.AudioFile,

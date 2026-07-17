@@ -6,6 +6,7 @@
 @inject PdfService PdfService;
 @inject EditorService EditorService;
 @inject FileStorageService StorageService;
+@inject DiagramService DiagramService;
 @inherits DevHotReloadComponentBase;
 
 <div class="asset-panel">
@@ -130,6 +131,7 @@
         }
         EnsureCategory(root, "scripts");
         EnsureCategory(root, "notes");
+        EnsureCategory(root, "diagrams");
         SortNode(root);
         _tree = root.Children;
     }
@@ -168,6 +170,9 @@
                 break;
             case ".md":
                 SelectMarkdown(relativePath);
+                break;
+            case ".diagram":
+                await SelectDiagram(relativePath);
                 break;
             case ".pdf":
                 await OpenPdf(relativePath);
@@ -259,23 +264,44 @@
 
         var ext = string.Equals(folder.Name, "scripts", StringComparison.OrdinalIgnoreCase) ? ".ink"
                 : string.Equals(folder.Name, "notes", StringComparison.OrdinalIgnoreCase) ? ".md"
+                : string.Equals(folder.Name, "diagrams", StringComparison.OrdinalIgnoreCase) ? ".diagram"
                 : null;
         if (ext is null) return;
 
         var relPath = $"{folder.Path}/{UniqueFileName(folder.Path, ext)}";
+        var initial = ext == ".diagram" ? "{\"nodes\":[],\"links\":[]}" : string.Empty;
         try
         {
-            await StorageService.WriteFileAsync(relPath, string.Empty);
+            await StorageService.WriteFileAsync(relPath, initial);
             StorageService.SetFilePathsAsync();     // re-enumerate → FilesLoaded → tree rebuild
 
-            if (ext == ".ink")
+            switch (ext)
             {
-                SelectInkScript(relPath);
+                case ".ink":
+                    SelectInkScript(relPath);
+                    break;
+                case ".md":
+                    SelectMarkdown(relPath);
+                    break;
+                case ".diagram":
+                    await SelectDiagram(relPath);
+                    break;
             }
-            else
-            {
-                SelectMarkdown(relPath);
-            }
+        }
+        catch (Exception exc)
+        {
+            Console.Error.WriteLine(exc);
+        }
+    }
+
+    /// <summary>Opens a diagram file for editing in the Graph tab.</summary>
+    private async Task SelectDiagram(string filePath)
+    {
+        try
+        {
+            var content = await StorageService.ReadFileAsTextAsync(filePath);
+            DiagramService.ActiveDiagramPath = filePath;
+            DiagramService.DiagramFileSelected?.Invoke(filePath, content);
         }
         catch (Exception exc)
         {

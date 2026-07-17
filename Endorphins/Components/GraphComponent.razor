@@ -1,61 +1,238 @@
+@using System.Text.Json
 @using Blazor.Diagrams
 @using Blazor.Diagrams.Components
 @using Blazor.Diagrams.Core.Anchors
+@using Blazor.Diagrams.Core.Geometry
+@using Blazor.Diagrams.Core.Models
+@using Blazor.Diagrams.Core.Models.Base
 @using Blazor.Diagrams.Core.PathGenerators
 @using Blazor.Diagrams.Core.Routers
 @using Blazor.Diagrams.Options
-@using Blazor.Diagrams.Core.Geometry
-@using Blazor.Diagrams.Core.Models
-@inherits DevHotReloadComponentBase;
+@using Endorphins.Models
+@inject DiagramService DiagramService
+@inject FileStorageService StorageService
+@inherits DevHotReloadComponentBase
 
-<div class="diagram-container">
-    <CascadingValue Value="Diagram" IsFixed="true">
-        <DiagramCanvas></DiagramCanvas>
-    </CascadingValue>
+<div class="graph-pane">
+    <div class="graph-toolbar">
+        <button class="graph-tb-btn" @onclick="AddNode" disabled="@(_activePath is null)">
+            <MudIcon Icon="@Icons.Material.Sharp.Add" Size="MudBlazor.Size.Small"/> Node
+        </button>
+        <button class="graph-tb-btn" @onclick="SaveNow" disabled="@(_activePath is null)">
+            <MudIcon Icon="@Icons.Material.Sharp.Save" Size="MudBlazor.Size.Small"/> Save
+        </button>
+        <span class="graph-tb-name">
+            @(_activePath is null ? "No diagram open" : System.IO.Path.GetFileName(_activePath))
+        </span>
+    </div>
+    <div class="diagram-container">
+        <CascadingValue Value="Diagram" IsFixed="true">
+            <DiagramCanvas></DiagramCanvas>
+        </CascadingValue>
+    </div>
 </div>
 
 @code {
-    private BlazorDiagram Diagram { get; set; } = null!;
-
-    protected override void OnInitialized()
+    private static readonly JsonSerializerOptions JsonOpts = new()
     {
-        var options = new BlazorDiagramOptions
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true
+    };
+
+    private BlazorDiagram Diagram { get; set; } = null!;
+    private string? _activePath;
+    private bool _suppressSave;
+    private CancellationTokenSource? _saveCts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Diagram = new BlazorDiagram(new BlazorDiagramOptions
         {
             AllowMultiSelection = true,
-            Zoom =
-            {
-                Enabled = false,
-            },
+            Zoom = { Enabled = true },
             Links =
             {
                 DefaultRouter = new NormalRouter(),
                 DefaultPathGenerator = new SmoothPathGenerator()
             },
-        };
+        });
 
-        Diagram = new BlazorDiagram(options);
-        AddNodes();
+        Diagram.Nodes.Added += OnNodeAdded;
+        Diagram.Nodes.Removed += OnNodeRemoved;
+        Diagram.Links.Added += OnLinkChanged;
+        Diagram.Links.Removed += OnLinkChanged;
+        Diagram.PointerUp += OnPointerUp;
+
+        DiagramService.DiagramFileSelected += OnDiagramSelected;
+
+        // The Graph tab is created lazily, often after the diagram was selected,
+        // so pick up the already-active diagram (freshest copy from disk) on init.
+        if (DiagramService.ActiveDiagramPath is { } path)
+        {
+            _activePath = path;
+            try
+            {
+                var content = await StorageService.ReadFileAsTextAsync(path);
+                LoadDiagram(content);
+            }
+            catch (Exception exc)
+            {
+                Console.Error.WriteLine($"Failed to open active diagram: {exc}");
+            }
+        }
     }
 
-    private void AddNodes()
+    private void OnNodeAdded(NodeModel node)
     {
-        var firstNode = Diagram.Nodes.Add(new NodeModel(position: new Point(50, 50))
+        node.Moved += OnNodeMoved;
+        SaveSoon();
+    }
+
+    private void OnNodeRemoved(NodeModel node)
+    {
+        node.Moved -= OnNodeMoved;
+        SaveSoon();
+    }
+
+    private void OnNodeMoved(MovableModel _) => SaveSoon();
+    private void OnLinkChanged(BaseLinkModel _) => SaveSoon();
+    private void OnPointerUp(Model? _, Blazor.Diagrams.Core.Events.PointerEventArgs __) => SaveSoon();
+
+    private void OnDiagramSelected(string path, string content) => InvokeAsync(() =>
+    {
+        _activePath = path;
+        LoadDiagram(content);
+        StateHasChanged();
+    });
+
+    private void LoadDiagram(string content)
+    {
+        _suppressSave = true;
+        try
         {
-            Title = "Node 1"
-        });
-        var secondNode = Diagram.Nodes.Add(new NodeModel(position: new Point(200, 100))
+            Diagram.Links.Clear();
+            Diagram.Nodes.Clear();
+
+            var model = string.IsNullOrWhiteSpace(content)
+                ? new DiagramFile()
+                : JsonSerializer.Deserialize<DiagramFile>(content, JsonOpts) ?? new DiagramFile();
+
+            var map = new Dictionary<string, NodeModel>();
+            foreach (var nd in model.Nodes)
+            {
+                var node = MakeNode(nd.Id, new Point(nd.X, nd.Y), nd.Title);
+                Diagram.Nodes.Add(node);
+                map[nd.Id] = node;
+            }
+            foreach (var ld in model.Links)
+            {
+                if (map.TryGetValue(ld.Source, out var s) && map.TryGetValue(ld.Target, out var t))
+                {
+                    Diagram.Links.Add(new LinkModel(s, t));
+                }
+            }
+        }
+        catch (Exception exc)
         {
-            Title = "Node 2"
+            Console.Error.WriteLine($"Failed to load diagram: {exc}");
+        }
+        finally
+        {
+            _suppressSave = false;
+        }
+    }
+
+    private static NodeModel MakeNode(string id, Point pos, string title)
+    {
+        var node = new NodeModel(id, pos) { Title = title };
+        node.AddPort(PortAlignment.Top);
+        node.AddPort(PortAlignment.Bottom);
+        node.AddPort(PortAlignment.Left);
+        node.AddPort(PortAlignment.Right);
+        return node;
+    }
+
+    private void AddNode()
+    {
+        if (_activePath is null) return;
+        var count = Diagram.Nodes.Count;
+        var node = MakeNode(
+            Guid.NewGuid().ToString("N"),
+            new Point(80 + count % 5 * 150, 80 + count / 5 * 120),
+            $"Node {count + 1}");
+        Diagram.Nodes.Add(node);   // fires Added → SaveSoon
+    }
+
+    private async Task SaveNow() => await SaveAsync();
+
+    private void SaveSoon()
+    {
+        if (_suppressSave || _activePath is null) return;
+        _saveCts?.Cancel();
+        _saveCts = new CancellationTokenSource();
+        var token = _saveCts.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(400, token);
+                if (!token.IsCancellationRequested) await SaveAsync();
+            }
+            catch (TaskCanceledException) { /* superseded */ }
         });
-        var leftPort = secondNode.AddPort(PortAlignment.Left);
-        var rightPort = secondNode.AddPort(PortAlignment.Right);
-        
-        // The connection point will be the intersection of
-        // a line going from the target to the center of the source
-        
-        var sourceAnchor = new ShapeIntersectionAnchor(firstNode);
-        // The connection point will be the port's position
-        var targetAnchor = new SinglePortAnchor(leftPort);
-        var link = Diagram.Links.Add(new LinkModel(sourceAnchor, targetAnchor));
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_activePath is null) return;
+        string json = string.Empty;
+        await InvokeAsync(() => json = Serialize());
+        try
+        {
+            await StorageService.WriteFileAsync(_activePath, json);
+        }
+        catch (Exception exc)
+        {
+            Console.Error.WriteLine($"Failed to save diagram: {exc}");
+        }
+    }
+
+    private string Serialize()
+    {
+        var model = new DiagramFile();
+        foreach (var n in Diagram.Nodes)
+        {
+            model.Nodes.Add(new DiagramNodeData
+            {
+                Id = n.Id,
+                Title = n.Title ?? string.Empty,
+                X = n.Position.X,
+                Y = n.Position.Y
+            });
+        }
+        foreach (var l in Diagram.Links)
+        {
+            var s = NodeOf(l.Source);
+            var t = NodeOf(l.Target);
+            if (s is not null && t is not null)
+            {
+                model.Links.Add(new DiagramLinkData { Source = s.Id, Target = t.Id });
+            }
+        }
+        return JsonSerializer.Serialize(model, JsonOpts);
+    }
+
+    private static NodeModel? NodeOf(Blazor.Diagrams.Core.Anchors.Anchor anchor) => anchor switch
+    {
+        ShapeIntersectionAnchor s => s.Node,
+        SinglePortAnchor sp => sp.Port.Parent,
+        _ => anchor?.Model as NodeModel
+    };
+
+    public override void Dispose()
+    {
+        base.Dispose();
+        DiagramService.DiagramFileSelected -= OnDiagramSelected;
+        _saveCts?.Cancel();
     }
 }

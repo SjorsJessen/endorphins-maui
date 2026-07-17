@@ -1,0 +1,4 @@
+- I want the toolbar from markdown editor be hidden/removed
+- I want the different columns in the workspace to be able to dragged and collapsed. They need a thick border to show that they are collapsible and can easily be selected.
+- I want the assets window to be divided into static assets and dynamic assets. Dynamic has a header with a divider underneath called 'workspace' where static has 'assets' as header. The tree's categories need to be laid out correctly, now some are further to the left due to the create button
+- I want the PDF preview to be scrollable properly and have a hierarchy and toolbar to make it easier to navigate

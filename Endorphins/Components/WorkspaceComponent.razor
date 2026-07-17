@@ -2,6 +2,7 @@
 @inject InkStoryService InkStoryService;
 @inject AssetsService AssetsService;
 @inject PdfService PdfService;
+@inject DiagramService DiagramService;
 @inherits DevHotReloadComponentBase;
 
 <MudSplitPanel @ref="_splitPanel" Class="mud-width-full mud-height-full">
@@ -70,6 +71,7 @@
     private const int StoryIndex = 0;
     private const int NotesIndex = 1;
     private const int ReaderIndex = 2;
+    private const int GraphIndex = 3;
 
     private bool AnyTabOpen =>
         _storyOpen || _notesOpen || _readerOpen || _graphOpen || _photoshopOpen || _moodboardOpen;
@@ -81,12 +83,14 @@
         InkStoryService.ChoicesAdded += OnChoices;
         AssetsService.MarkdownFileSelected += OnMarkdownSelected;
         PdfService.PdfFileSelected += OnPdfSelected;
+        DiagramService.DiagramFileSelected += OnDiagramSelected;
     }
 
     private void OnStoryContent(Endorphins.Models.DialogLine _) => OpenTab(() => _storyOpen = true, StoryIndex);
     private void OnChoices(List<Ink.Runtime.Choice> _) => OpenTab(() => _storyOpen = true, StoryIndex);
     private void OnMarkdownSelected(string _, string __) => OpenTab(() => _notesOpen = true, NotesIndex);
     private void OnPdfSelected(Endorphins.Models.PdfFile _) => OpenTab(() => _readerOpen = true, ReaderIndex);
+    private void OnDiagramSelected(string _, string __) => OpenTab(() => _graphOpen = true, GraphIndex);
 
     private void OpenTab(Action open, int index) => InvokeAsync(() =>
     {
@@ -121,5 +125,6 @@
         InkStoryService.ChoicesAdded -= OnChoices;
         AssetsService.MarkdownFileSelected -= OnMarkdownSelected;
         PdfService.PdfFileSelected -= OnPdfSelected;
+        DiagramService.DiagramFileSelected -= OnDiagramSelected;
     }
 }

@@ -136,6 +136,17 @@ a,
 .graph-tb-btn .mud-icon-root {
     font-size: 15px;
 }
+.graph-rename-input {
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 5px;
+    padding: 3px 8px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    outline: none;
+    min-width: 120px;
+}
 .graph-tb-name {
     margin-left: auto;
     font-size: 12px;

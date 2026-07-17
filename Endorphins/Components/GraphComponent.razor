@@ -18,6 +18,24 @@
         <button class="graph-tb-btn" @onclick="AddNode" disabled="@(_activePath is null)">
             <MudIcon Icon="@Icons.Material.Sharp.Add" Size="MudBlazor.Size.Small"/> Node
         </button>
+        @if (_renamingNode is not null)
+        {
+            <input class="graph-rename-input" @ref="_renameInput"
+                   value="@_renameText"
+                   placeholder="Node name"
+                   @oninput="e => _renameText = e.Value?.ToString() ?? string.Empty"
+                   @onkeydown="OnRenameKey"
+                   @onblur="CommitRename"/>
+        }
+        else
+        {
+            <button class="graph-tb-btn" @onclick="RenameSelected" disabled="@(_selectedNode is null)">
+                <MudIcon Icon="@Icons.Material.Sharp.Edit" Size="MudBlazor.Size.Small"/> Rename
+            </button>
+            <button class="graph-tb-btn" @onclick="DeleteSelected" disabled="@(_selectedNode is null)">
+                <MudIcon Icon="@Icons.Material.Sharp.Delete" Size="MudBlazor.Size.Small"/> Delete
+            </button>
+        }
         <button class="graph-tb-btn" @onclick="SaveNow" disabled="@(_activePath is null)">
             <MudIcon Icon="@Icons.Material.Sharp.Save" Size="MudBlazor.Size.Small"/> Save
         </button>
@@ -44,6 +62,12 @@
     private bool _suppressSave;
     private CancellationTokenSource? _saveCts;
 
+    private NodeModel? _selectedNode;
+    private NodeModel? _renamingNode;
+    private string _renameText = string.Empty;
+    private bool _focusRename;
+    private ElementReference _renameInput;
+
     protected override async Task OnInitializedAsync()
     {
         Diagram = new BlazorDiagram(new BlazorDiagramOptions
@@ -62,6 +86,8 @@
         Diagram.Links.Added += OnLinkChanged;
         Diagram.Links.Removed += OnLinkChanged;
         Diagram.PointerUp += OnPointerUp;
+        Diagram.SelectionChanged += OnSelectionChanged;
+        Diagram.PointerDoubleClick += OnDoubleClick;
 
         DiagramService.DiagramFileSelected += OnDiagramSelected;
 
@@ -97,6 +123,75 @@
     private void OnNodeMoved(MovableModel _) => SaveSoon();
     private void OnLinkChanged(BaseLinkModel _) => SaveSoon();
     private void OnPointerUp(Model? _, Blazor.Diagrams.Core.Events.PointerEventArgs __) => SaveSoon();
+
+    private void OnSelectionChanged(SelectableModel _) => InvokeAsync(() =>
+    {
+        _selectedNode = Diagram.Nodes.FirstOrDefault(n => n.Selected);
+        StateHasChanged();
+    });
+
+    private void OnDoubleClick(Model? model, Blazor.Diagrams.Core.Events.PointerEventArgs _)
+    {
+        if (model is NodeModel node)
+        {
+            InvokeAsync(() => { StartRename(node); StateHasChanged(); });
+        }
+    }
+
+    private void RenameSelected()
+    {
+        if (_selectedNode is not null) StartRename(_selectedNode);
+    }
+
+    private void StartRename(NodeModel node)
+    {
+        _renamingNode = node;
+        _renameText = node.Title ?? string.Empty;
+        _focusRename = true;
+    }
+
+    private async Task OnRenameKey(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await CommitRename();
+        else if (e.Key == "Escape") { _renamingNode = null; StateHasChanged(); }
+    }
+
+    private Task CommitRename()
+    {
+        if (_renamingNode is null) return Task.CompletedTask;
+        var node = _renamingNode;
+        _renamingNode = null;
+
+        var name = _renameText.Trim();
+        if (!string.IsNullOrEmpty(name) && name != node.Title)
+        {
+            node.Title = name;
+            node.Refresh();   // re-render the node widget
+            SaveSoon();
+        }
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private void DeleteSelected()
+    {
+        var selected = Diagram.Nodes.Where(n => n.Selected).ToList();
+        foreach (var node in selected)
+        {
+            Diagram.Nodes.Remove(node);   // also drops its links → Removed → SaveSoon
+        }
+        _selectedNode = null;
+        _renamingNode = null;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusRename)
+        {
+            _focusRename = false;
+            try { await _renameInput.FocusAsync(); } catch { /* not mounted */ }
+        }
+    }
 
     private void OnDiagramSelected(string path, string content) => InvokeAsync(() =>
     {
@@ -233,6 +328,11 @@
     {
         base.Dispose();
         DiagramService.DiagramFileSelected -= OnDiagramSelected;
+        if (Diagram is not null)
+        {
+            Diagram.SelectionChanged -= OnSelectionChanged;
+            Diagram.PointerDoubleClick -= OnDoubleClick;
+        }
         _saveCts?.Cancel();
     }
 }

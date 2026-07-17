@@ -952,6 +952,103 @@ a:hover,
     opacity: 1;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   WORKSPACE 3-COLUMN RESIZABLE LAYOUT (asset · editor · preview)
+   ══════════════════════════════════════════════════════════════════ */
+.ws-layout {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+.ws-col {
+    height: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+.ws-col.collapsed {
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    overflow: hidden;
+}
+.ws-asset {
+    background: var(--surface);
+}
+.ws-editor {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+}
+/* Let the code / markdown editor fill the editor column */
+.ws-editor .ink-editor,
+.ws-editor .markdown-editor {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+}
+.ws-preview {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+}
+
+/* Thick, obviously-grabbable divider */
+.ws-divider {
+    flex: 0 0 8px;
+    width: 8px;
+    background: var(--border2);
+    cursor: col-resize;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    transition: background 0.12s;
+    z-index: 5;
+}
+.ws-divider:hover,
+.ws-divider.dragging {
+    background: var(--accent);
+}
+/* Collapse chevron, always visible so the column reads as collapsible */
+.ws-divider-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    background: var(--surface2);
+    color: var(--text-mid);
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.ws-divider-btn:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.ws-divider-btn .mud-icon-root {
+    font-size: 16px;
+}
+
+/* Full-viewport catcher active only while dragging */
+.ws-drag-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    cursor: col-resize;
+    user-select: none;
+    background: transparent;
+}
+
 /* Empty-state hint when no tab is open */
 .workspace-empty {
     padding: 24px 20px;

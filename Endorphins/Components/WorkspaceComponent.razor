@@ -1,3 +1,4 @@
+@using Microsoft.AspNetCore.Components.Web
 @inject EditorService EditorService;
 @inject InkStoryService InkStoryService;
 @inject AssetsService AssetsService;
@@ -5,8 +6,26 @@
 @inject DiagramService DiagramService;
 @inherits DevHotReloadComponentBase;
 
-<MudSplitPanel @ref="_splitPanel" Class="mud-width-full mud-height-full">
-    <FirstPanel>
+<div class="ws-layout">
+
+    <!-- ── ASSET COLUMN ── -->
+    <div class="ws-col ws-asset @(_assetCollapsed ? "collapsed" : null)" style="@AssetStyle">
+        <AssetPanelComponent/>
+    </div>
+
+    <!-- ── ASSET / EDITOR DIVIDER ── -->
+    <div class="ws-divider @(_dragTarget == DragTarget.Asset ? "dragging" : null)"
+         @onpointerdown="e => StartDrag(e, DragTarget.Asset)"
+         title="Drag to resize">
+        <button class="ws-divider-btn" title="@(_assetCollapsed ? "Show assets" : "Hide assets")"
+                @onclick="ToggleAsset" @onclick:stopPropagation="true" @onpointerdown:stopPropagation="true">
+            <MudIcon Icon="@(_assetCollapsed ? Icons.Material.Sharp.ChevronRight : Icons.Material.Sharp.ChevronLeft)"
+                     Size="MudBlazor.Size.Small"/>
+        </button>
+    </div>
+
+    <!-- ── EDITOR COLUMN ── -->
+    <div class="ws-col ws-editor">
         @switch (EditorService.ActiveEditor)
         {
             case EditorType.Ink:
@@ -21,8 +40,21 @@
                 </MudAlert>
                 break;
         }
-    </FirstPanel>
-    <SecondPanel>
+    </div>
+
+    <!-- ── EDITOR / PREVIEW DIVIDER ── -->
+    <div class="ws-divider @(_dragTarget == DragTarget.Preview ? "dragging" : null)"
+         @onpointerdown="e => StartDrag(e, DragTarget.Preview)"
+         title="Drag to resize">
+        <button class="ws-divider-btn" title="@(_previewCollapsed ? "Show preview" : "Hide preview")"
+                @onclick="TogglePreview" @onclick:stopPropagation="true" @onpointerdown:stopPropagation="true">
+            <MudIcon Icon="@(_previewCollapsed ? Icons.Material.Sharp.ChevronLeft : Icons.Material.Sharp.ChevronRight)"
+                     Size="MudBlazor.Size.Small"/>
+        </button>
+    </div>
+
+    <!-- ── PREVIEW COLUMN ── -->
+    <div class="ws-col ws-preview @(_previewCollapsed ? "collapsed" : null)" style="@PreviewStyle">
         @if (!AnyTabOpen)
         {
             <div class="workspace-empty">
@@ -49,27 +81,84 @@
                 <MoodboardComponent/>
             </MudTabPanel>
         </MudTabs>
-        <MudDivider/>
-    </SecondPanel>
-</MudSplitPanel>
+    </div>
+
+    <!-- Full-viewport catcher so dragging keeps tracking outside the divider -->
+    @if (_dragTarget != DragTarget.None)
+    {
+        <div class="ws-drag-overlay"
+             @onpointermove="OnDrag"
+             @onpointerup="EndDrag"
+             @onpointerleave="EndDrag"></div>
+    }
+</div>
 
 @code {
-    private MudSplitPanel? _splitPanel;
     private int _activeIndex;
 
-    // Content-driven tabs — hidden until their source loads.
+    // ── Column sizing / collapse ──
+    private double _assetWidth = 240;
+    private double _previewWidth = 460;
+    private bool _assetCollapsed;
+    private bool _previewCollapsed;
+
+    private enum DragTarget { None, Asset, Preview }
+    private DragTarget _dragTarget = DragTarget.None;
+    private double _dragStartX;
+    private double _dragStartAsset;
+    private double _dragStartPreview;
+
+    private const double MinCol = 140;
+    private const double MaxCol = 900;
+
+    private string AssetStyle => _assetCollapsed
+        ? "flex: 0 0 0; width: 0; min-width: 0;"
+        : $"flex: 0 0 {_assetWidth.ToString(System.Globalization.CultureInfo.InvariantCulture)}px; width: {_assetWidth.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;";
+
+    private string PreviewStyle => _previewCollapsed
+        ? "flex: 0 0 0; width: 0; min-width: 0;"
+        : $"flex: 0 0 {_previewWidth.ToString(System.Globalization.CultureInfo.InvariantCulture)}px; width: {_previewWidth.ToString(System.Globalization.CultureInfo.InvariantCulture)}px;";
+
+    private void StartDrag(PointerEventArgs e, DragTarget target)
+    {
+        // A collapsed side can't be dragged; use its chevron to reopen first.
+        if (target == DragTarget.Asset && _assetCollapsed) return;
+        if (target == DragTarget.Preview && _previewCollapsed) return;
+        _dragTarget = target;
+        _dragStartX = e.ClientX;
+        _dragStartAsset = _assetWidth;
+        _dragStartPreview = _previewWidth;
+    }
+
+    private void OnDrag(PointerEventArgs e)
+    {
+        if (_dragTarget == DragTarget.None) return;
+        var dx = e.ClientX - _dragStartX;
+        if (_dragTarget == DragTarget.Asset)
+        {
+            _assetWidth = Math.Clamp(_dragStartAsset + dx, MinCol, MaxCol);
+        }
+        else if (_dragTarget == DragTarget.Preview)
+        {
+            _previewWidth = Math.Clamp(_dragStartPreview - dx, MinCol, MaxCol);
+        }
+    }
+
+    private void EndDrag(PointerEventArgs e) => _dragTarget = DragTarget.None;
+
+    private void ToggleAsset() => _assetCollapsed = !_assetCollapsed;
+    private void TogglePreview() => _previewCollapsed = !_previewCollapsed;
+
+    // ── Content-driven tabs — hidden until their source loads ──
     private bool _storyOpen;
     private bool _notesOpen;
     private bool _readerOpen;
-
-    // Graph is content-driven — opens when a diagram file is selected.
-    private bool _graphOpen;
+    private bool _graphOpen;   // opens when a diagram file is selected
 
     // Tool tabs — available by default, still closeable.
     private bool _photoshopOpen = true;
     private bool _moodboardOpen = true;
 
-    // Declaration-order indices, used to activate a tab when it opens.
     private const int StoryIndex = 0;
     private const int NotesIndex = 1;
     private const int ReaderIndex = 2;
@@ -97,13 +186,13 @@
     private void OpenTab(Action open, int index) => InvokeAsync(() =>
     {
         open();
-        _activeIndex = index;      // bring the freshly-loaded preview to the front
+        _previewCollapsed = false;   // make sure the preview column is visible
+        _activeIndex = index;        // bring the freshly-loaded preview to the front
         StateHasChanged();
     });
 
     private void OnStateChanged() => InvokeAsync(StateHasChanged);
 
-    // Custom tab header: label + a close button that hides the panel.
     private RenderFragment Header(string label, Action close) =>
         @<span class="wtab">
             <span class="wtab-label">@label</span>

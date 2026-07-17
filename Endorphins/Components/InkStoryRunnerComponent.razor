@@ -7,9 +7,9 @@
 
 <div id="test"></div>
 <div style="background-color: #1A1A1A;height: 100%; max-height: calc(100vh - 120px);" class="ink-story-runner overflow-auto overflow-scroll">
-    @if (_dialogLines != null)
+    @if (StoryService.DialogLines != null)
     {
-        foreach (var line in _dialogLines)
+        foreach (var line in StoryService.DialogLines)
         {
             if (@line.IsMainCharacter)
             {
@@ -24,21 +24,21 @@
             else
             {
                 <div style="color: white; margin-right: 1rem; display: flex; gap: 1rem; justify-content: right; align-items: center; padding: 1rem; text-align: right;"
-                     class="dialog-line mb-6">
+                     class="dialog-line mb-2">
                     <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                         <MudText Style="font-size: 13px; font-weight: 500; text-transform: uppercase; color: orange;">@line.Speaker</MudText>
-                        <MudText Style="font-size: 20px;">@line.Line</MudText>
+                        <MudText Style="font-size: 20px; font-family: 'Crimson Text'">@line.Line</MudText>
                     </div>
-                    <img srcset="Assets/endorphins-icon.svg" alt="logo" width="40px" height="40px" style="border: thin yellow solid; border-radius: 4px; padding: 4px;" />
+                    <img srcset="Assets/endorphins-icon.svg" alt="logo" width="50px" height="50px" style="border: thin white solid; border-radius: 4px; padding: 4px;" />
                 </div>
             }
         }
     }
-    @if (_choices != null)
+    @if (StoryService.Choices.Count > 0)
     {
         <MudPaper>
             <MudList T="string">
-                @foreach (var choice in _choices)
+                @foreach (var choice in StoryService.Choices)
                 {
                     <MudListItem Text="@choice.text" OnClick="() => StoryService.MakeChoice(choice.index)" />
                 }
@@ -48,70 +48,29 @@
 </div>
 
 @code {
-    private const string InkScriptsDirectory = "scripts";
-    private const string MainInkScriptPath = $"{InkScriptsDirectory}/main.ink";
-    private List<Choice>? _choices = [];
-    private readonly List<DialogLine>? _dialogLines = [];
-
     protected override void OnInitialized()
     {
         base.OnInitialized();
 
-        StorageService.FilesLoaded += LoadMainInkScript;
-        
-        StoryService.ChoicesAdded += OnChoicesAdded;
-        StoryService.DialogUpdated += OnDialogUpdated;
-        StoryService.StoryReset += OnStoryReset;
-        StoryService.ChoicesReset += OnChoicesReset;
+        StoryService.ChoicesAdded += OnStateChanged;
+        StoryService.DialogUpdated += OnStateChanged;
+        StoryService.StoryReset += OnStateChanged;
+        StoryService.ChoicesReset += OnStateChanged;
     }
 
-    private async void LoadMainInkScript(IEnumerable<string> files)
-    {
-        var filePath = files.Single<string>(file => file == MainInkScriptPath);
-        if(ScriptExists(filePath))
-        {
-            var root = StorageService.Root;
-            StoryService.Run(root);
-        }
-    }
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
 
-    private void OnDialogUpdated(DialogLine dialogLine)
-    {
-        _dialogLines?.Add(dialogLine);
-        StateHasChanged();
-    }
+    private void OnStateChanged(DialogLine _) => OnStateChanged();
 
-    private void OnChoicesAdded(List<Choice> choices)
-    {
-        _choices = choices;
-        StateHasChanged();
-    }
-
-    private void OnStoryReset()
-    {
-        _dialogLines?.Clear();
-        _choices?.Clear();
-        StateHasChanged();
-    }
-
-    private void OnChoicesReset()
-    {
-        _choices?.Clear();
-        StateHasChanged();
-    }
-
-    private bool ScriptExists(string scriptPath)
-    {
-        return !string.IsNullOrEmpty(scriptPath) && !string.IsNullOrWhiteSpace(scriptPath);
-    }
+    private void OnStateChanged(List<Choice> _) => OnStateChanged();
 
     public override void Dispose()
     {
         base.Dispose();
-        StoryService.ChoicesAdded -= OnChoicesAdded;
-        StoryService.DialogUpdated -= OnDialogUpdated;
-        StoryService.StoryReset -= OnStoryReset;
-        StoryService.ChoicesReset -= OnChoicesReset;
+        StoryService.ChoicesAdded -= OnStateChanged;
+        StoryService.DialogUpdated -= OnStateChanged;
+        StoryService.StoryReset -= OnStateChanged;
+        StoryService.ChoicesReset -= OnStateChanged;
     }
 }
 

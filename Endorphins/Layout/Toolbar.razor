@@ -23,11 +23,10 @@
                Size="Size.Small" Class="mr-4" OnClick="Run">
         Run
     </MudButton>
-
     @if (StoryService.HasStoryStarted)
-    {
+    {    
         <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Sharp.PlayArrow" Color="Color.Info"
-                   Size="Size.Small" Class="mr-4" OnClick="StoryService.ContinueStory">
+                Size="Size.Small" Class="mr-4" OnClick="StoryService.ContinueStory">
             Continue
         </MudButton>
     }
@@ -40,6 +39,6 @@
     public void Run()
     {
         var root = StorageService.Root;
-        StoryService.Run(root);
+        StoryService.Run(root, StoryService.ActiveScriptPath);
     }
 }

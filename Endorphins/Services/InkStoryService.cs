@@ -22,8 +22,13 @@ public sealed class InkStoryService
 {
     public bool HasStoryStarted { get; private set; }
     public string? EditorContent => _editorContent;
-    public string ActiveScriptPath { get; set; }
-    
+    public string ActiveScriptPath { get; set; } = string.Empty;
+
+    // Story playback state lives here (singleton) so it survives the runner
+    // component being torn down and recreated on tab switches.
+    public IReadOnlyList<DialogLine> DialogLines => _dialogLines;
+    public IReadOnlyList<Choice> Choices => _choices;
+
     public Action<string>? InkScriptSelected { get; set; }
     public Action<DialogLine>? DialogUpdated { get; set; }
     public Action? StoryReset { get; set; }
@@ -34,18 +39,24 @@ public sealed class InkStoryService
     private Story? _activeStory;
     private const string MainCharacter = "Aiden";
     private string? _editorContent;
+    private readonly List<DialogLine> _dialogLines = [];
+    private List<Choice> _choices = [];
 
-    public void Run(string? root)
+    public void Run(string root, string scriptPath)
     {
         if(_editorContent == null) return;
-        _activeStory = ParseEditorContentToStory(root, _editorContent);
-        Setup(_activeStory);
-        ContinueStory();
-        HasStoryStarted = true;
+        _activeStory = ParseEditorContentToStory(root, scriptPath, _editorContent);
+        if (_activeStory)
+        {
+            ClearHistory();
+            Setup(_activeStory);
+            ContinueStory();
+        }
     }
 
     public void ContinueStory()
     {
+        HasStoryStarted = true;
         if (CanContinue())
         {
             var nextLine = _activeStory.Continue();
@@ -55,6 +66,7 @@ public sealed class InkStoryService
                 Line = nextLine,
                 IsMainCharacter = nextLine.Contains(MainCharacter),
             };
+            _dialogLines.Add(dialogueLine);
             DialogUpdated?.Invoke(dialogueLine);
         }
         else if(HasChoices())
@@ -70,15 +82,23 @@ public sealed class InkStoryService
     public void ResetStory()
     {
         _activeStory?.ResetState();
+        ClearHistory();
         StoryReset?.Invoke();
     }
-    
+
     public void MakeChoice(int index)
     {
         if (_activeStory?.currentChoices.Count <= 0) return;
         _activeStory?.ChooseChoiceIndex(index);
+        _choices.Clear();
         ContinueStory();
         ChoicesReset?.Invoke();
+    }
+
+    private void ClearHistory()
+    {
+        _dialogLines.Clear();
+        _choices.Clear();
     }
 
     public void SetContent(string newContent)
@@ -92,15 +112,14 @@ public sealed class InkStoryService
         BindExternalFunctions(story);
     }
     
-    private Story? ParseEditorContentToStory(string filesRoot, string editorContent)
+    private Story? ParseEditorContentToStory(string filesRoot, string scriptPath, string editorContent)
     {
         var fileHandler = new ProjectFileHandler(filesRoot);
         var parser = new InkParser(
             str: editorContent,
-            filenameForMetadata: ActiveScriptPath,
+            filenameForMetadata: scriptPath,
             fileHandler: fileHandler
         );
-
         var parsed = parser.Parse();
         var story = parsed.ExportRuntime();
         return story;
@@ -114,7 +133,8 @@ public sealed class InkStoryService
     private void AddChoices()
     {
         if (!HasChoices()) return;
-        ChoicesAdded?.Invoke(_activeStory.currentChoices);
+        _choices = [.._activeStory.currentChoices];
+        ChoicesAdded?.Invoke(_choices);
     }
     
     private bool CanContinue()

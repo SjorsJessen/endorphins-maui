@@ -1,25 +1,28 @@
 @inject IJSRuntime JS
 @inject InkStoryService InkStoryService;
 @inject FileStorageService StorageService;
-
 @inherits DevHotReloadComponentBase;
 
-<MudToolBar Class="justify-space-between" Dense>
-    <MudButton
-        Icon="@Icons.Material.Sharp.FolderOpen"
-        Variant="Variant.Text"
-        Color="Color.Inherit"
-        Size="Size.Small"
-        HtmlTag="label"
-        OnClick="() => AddKnot(_knotPlaceholder)"
-    >=== Knot ===</MudButton>
+<MudToolBar Dense Style="display: flex; align-items: center; gap: 10px">
+    @foreach (var element in InkElements)
+    {
+        <MudButton
+            Variant="Variant.Text"
+            Color="Color.Inherit"
+            Size="Size.Small"
+            HtmlTag="label"
+            OnClick="() => AddInkElement(element.Value)">
+            @element.Key
+        </MudButton>
+    }
 </MudToolBar>
-<StandaloneCodeEditor 
-    @ref="_editor" 
-    CssClass="ink-editor" 
+
+<StandaloneCodeEditor
+    @ref="_editor"
+    CssClass="ink-editor"
     ConstructionOptions="EditorConstructionOptions"
     OnDidChangeModelContent="OnModelContentChanged"
-    OnDidChangeCursorPosition="EditorDidChangeCursorPosition"
+    OnDidChangeCursorPosition="EditorDidChangeCursorPosition" 
 />
 
 @code {
@@ -27,21 +30,21 @@
     private const string MainInkScriptPath = $"{InkScriptsDirectory}/main.ink";
     private StandaloneCodeEditor? _editor;
     private BlazorMonaco.Position _currentCursorPosition = new();
-    private string _knotPlaceholder = "Knot";
+    private Dictionary<string, string> InkElements = new()
+    {
+        { "=== knot", "=== knot === \n" },
+        { "= stitch", "= stitch = \n " },
+        { "-> divert", "-> divert \n" },
+        { "* choice", "* choice \n" },
+        { "VAR variable ", "VAR " },
+        { "# Tag ", "# Tag " }
+    };
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
         InkStoryService.InkScriptSelected += UpdateEditorContent;
         StorageService.FilesLoaded += LoadMainInkScript;
-    }
-
-    private async Task AddKnot(string knotName)
-    {
-        if (_editor is null) return;
-        await _editor.SetPosition(_currentCursorPosition, knotName);            // just move caret
-        await _editor.Trigger("addKnot", "type", new { text = $"=== {knotName} ===\n" });
-        await _editor.Focus();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -52,10 +55,14 @@
         }
     }
 
-    // Subscribed to StorageService.FilesLoaded (a plain Action), so this must return void.
-    // Route the async work through InvokeAsync: it runs on the renderer's sync context and
-    // any exception is caught here. An unhandled exception in an async void tears down the
-    // whole app (it surfaces as an ArgumentNullException at UIApplicationMain).
+    private async Task AddInkElement(string element)
+    {
+        if (_editor is null) return;
+        await _editor.SetPosition(_currentCursorPosition, element);
+        await _editor.Trigger("addInkElement", "type", new { text = $"{element}" });
+        await _editor.Focus();
+    }
+
     private void LoadMainInkScript(IEnumerable<string> files)
     {
         _ = InvokeAsync(async () =>
@@ -66,7 +73,9 @@
                 if (ScriptExists(filePath))
                 {
                     var content = await StorageService.ReadFileAsTextAsync(filePath!);
+                    InkStoryService.ActiveScriptPath = MainInkScriptPath;
                     await ApplyContentAsync(content);
+                    InkStoryService.InkScriptSelected?.Invoke(content);
                 }
             }
             catch (Exception ex)
@@ -85,7 +94,6 @@
         StateHasChanged();
     }
 
-    // Subscribed to InkStoryService.InkScriptSelected (a plain Action<string>) -> must be void.
     private void UpdateEditorContent(string content)
     {
         _ = InvokeAsync(() => ApplyContentAsync(content));
@@ -96,8 +104,6 @@
         try
         {
             InkStoryService.SetContent(content ?? string.Empty);
-            // The editor may not be constructed yet (content imported before first render);
-            // in that case EditorConstructionOptions.Value seeds it from EditorContent instead.
             if (_editor is not null)
             {
                 await _editor.SetValue(content ?? string.Empty);
@@ -117,7 +123,6 @@
 
     private void EditorDidChangeCursorPosition(CursorPositionChangedEvent eventArgs)
     {
-        Console.WriteLine("EditorDidChangeCursorPosition", eventArgs);
         _currentCursorPosition = eventArgs.Position;
     }
 

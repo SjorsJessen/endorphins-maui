@@ -463,7 +463,7 @@ code {
     border-color: var(--border) !important;
 }
 .markdown-editor .editor-toolbar {
-    background: var(--surface);
+    display: none !important;   /* hide EasyMDE's formatting toolbar */
 }
 .markdown-editor .editor-toolbar button {
     color: var(--text-mid) !important;

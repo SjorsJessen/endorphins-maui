@@ -1,42 +1,156 @@
 @using Endorphins.Models
 @using MudBlazor
+@using Microsoft.AspNetCore.Components.Web
 
-@* Renders a single asset node and recurses into its children, so the tree
-   nests as deeply as the loaded files require. Folders get an expand arrow
-   automatically (they have child content); files invoke OnFileActivated. *@
+@* Renders a single asset node and recurses into its children. Files and the
+   scripts/notes category folders use a custom row (BodyContent) so they can
+   carry action buttons — a + create button on the categories and an inline
+   rename on files. Plain folders keep the default MudTreeViewItem rendering. *@
 
-<MudTreeViewItem T="string"
-                 Value="@Node.Path"
-                 Text="@Node.Name"
-                 Icon="@Icon"
-                 CanExpand="Node.IsDirectory"
-                 ExpandButtonIcon="@(Node.IsDirectory ? Icons.Material.Filled.ChevronRight : string.Empty)"
-                 OnClick="HandleClick">
-    @if (Node.IsDirectory)
-    {
-        @foreach (var child in Node.Children)
-        {
-            <AssetTreeNodeComponent Node="child" OnFileActivated="OnFileActivated" />
-        }
-    }
-</MudTreeViewItem>
+@if (UseCustomRow)
+{
+    <MudTreeViewItem T="string"
+                     Value="@Node.Path"
+                     CanExpand="Node.IsDirectory"
+                     ExpandButtonIcon="@(Node.IsDirectory ? Icons.Material.Filled.ChevronRight : string.Empty)"
+                     OnClick="HandleClick">
+        <BodyContent>
+            <div class="asset-row">
+                <MudIcon Icon="@Icon" Class="asset-row-icon" Size="Size.Small"/>
+                @if (_isRenaming)
+                {
+                    <input class="asset-row-input" @ref="_renameInput"
+                           value="@_editName"
+                           @oninput="e => _editName = e.Value?.ToString() ?? string.Empty"
+                           @onkeydown="OnRenameKey"
+                           @onblur="CommitRename"
+                           @onclick:stopPropagation="true"/>
+                }
+                else
+                {
+                    <span class="asset-row-name">@Node.Name</span>
+                    <span class="asset-row-actions">
+                        @if (IsCreatable)
+                        {
+                            <button class="asset-row-btn asset-row-btn--create" title="@CreateTooltip"
+                                    @onclick="Create" @onclick:stopPropagation="true">
+                                <MudIcon Icon="@Icons.Material.Sharp.Add" Size="Size.Small"/>
+                            </button>
+                        }
+                        @if (!Node.IsDirectory)
+                        {
+                            <button class="asset-row-btn" title="Rename"
+                                    @onclick="StartRename" @onclick:stopPropagation="true">
+                                <MudIcon Icon="@Icons.Material.Sharp.Edit" Size="Size.Small"/>
+                            </button>
+                        }
+                    </span>
+                }
+            </div>
+        </BodyContent>
+        <ChildContent>@Children</ChildContent>
+    </MudTreeViewItem>
+}
+else
+{
+    <MudTreeViewItem T="string"
+                     Value="@Node.Path"
+                     Text="@Node.Name"
+                     Icon="@Icon"
+                     CanExpand="Node.IsDirectory"
+                     ExpandButtonIcon="@(Node.IsDirectory ? Icons.Material.Filled.ChevronRight : string.Empty)"
+                     OnClick="HandleClick">
+        @Children
+    </MudTreeViewItem>
+}
 
 @code {
     [Parameter, EditorRequired] public AssetNode Node { get; set; } = default!;
 
     [Parameter] public EventCallback<string> OnFileActivated { get; set; }
 
+    /// <summary>Raised with the target folder node when its + button is clicked.</summary>
+    [Parameter] public EventCallback<AssetNode> OnCreateFile { get; set; }
+
+    /// <summary>Raised with (oldRelativePath, newName) when a file rename is committed.</summary>
+    [Parameter] public EventCallback<(string OldPath, string NewName)> OnRenameFile { get; set; }
+
+    private bool _isRenaming;
+    private bool _focusPending;
+    private string _editName = string.Empty;
+    private ElementReference _renameInput;
+
+    private bool IsScripts => Node.IsDirectory && string.Equals(Node.Name, "scripts", StringComparison.OrdinalIgnoreCase);
+    private bool IsNotes => Node.IsDirectory && string.Equals(Node.Name, "notes", StringComparison.OrdinalIgnoreCase);
+    private bool IsCreatable => IsScripts || IsNotes;
+    private bool UseCustomRow => IsCreatable || !Node.IsDirectory;
+    private string CreateTooltip => IsScripts ? "New Ink script" : "New note";
+
     private string Icon => Node.IsDirectory
         ? Icons.Material.Sharp.Folder
         : ExtensionIcon(Node.Name);
 
+    private RenderFragment Children => __builder =>
+    {
+        if (Node.IsDirectory)
+        {
+            foreach (var child in Node.Children)
+            {
+                <AssetTreeNodeComponent Node="child"
+                                        OnFileActivated="OnFileActivated"
+                                        OnCreateFile="OnCreateFile"
+                                        OnRenameFile="OnRenameFile"/>
+            }
+        }
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusPending)
+        {
+            _focusPending = false;
+            try { await _renameInput.FocusAsync(); } catch { /* not mounted */ }
+        }
+    }
+
     private async Task HandleClick()
     {
-        // Directories just expand/collapse (handled by MudTreeView); only
-        // files trigger activation.
+        if (_isRenaming) return;
         if (!Node.IsDirectory)
         {
             await OnFileActivated.InvokeAsync(Node.Path);
+        }
+    }
+
+    private Task Create() => OnCreateFile.InvokeAsync(Node);
+
+    private void StartRename()
+    {
+        _editName = Node.Name;
+        _isRenaming = true;
+        _focusPending = true;
+    }
+
+    private async Task OnRenameKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await CommitRename();
+        }
+        else if (e.Key == "Escape")
+        {
+            _isRenaming = false;
+        }
+    }
+
+    private async Task CommitRename()
+    {
+        if (!_isRenaming) return;
+        _isRenaming = false;
+        var newName = (_editName ?? string.Empty).Trim();
+        if (!string.IsNullOrEmpty(newName) && newName != Node.Name)
+        {
+            await OnRenameFile.InvokeAsync((Node.Path, newName));
         }
     }
 

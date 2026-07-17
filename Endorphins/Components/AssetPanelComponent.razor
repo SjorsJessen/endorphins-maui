@@ -33,7 +33,10 @@
         {
             @foreach (var node in _tree)
             {
-                <AssetTreeNodeComponent Node="node" OnFileActivated="OnFileActivated"/>
+                <AssetTreeNodeComponent Node="node"
+                                        OnFileActivated="OnFileActivated"
+                                        OnCreateFile="CreateFileInFolder"
+                                        OnRenameFile="RenameFile"/>
             }
         }
     </MudTreeView>
@@ -125,8 +128,21 @@
                 current = existing;
             }
         }
+        EnsureCategory(root, "scripts");
+        EnsureCategory(root, "notes");
         SortNode(root);
         _tree = root.Children;
+    }
+
+    /// <summary>Guarantees a top-level category folder exists so its + button is always available.</summary>
+    private static void EnsureCategory(AssetNode root, string name)
+    {
+        var exists = root.Children.Any(c =>
+            c.IsDirectory && string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (!exists)
+        {
+            root.Children.Add(new AssetNode { Name = name, IsDirectory = true, Path = name });
+        }
     }
 
     /// <summary>Folders first, then files, each group alphabetical.</summary>
@@ -236,6 +252,84 @@
         StateHasChanged();
     }
     
+    /// <summary>Creates a new .ink (scripts) or .md (notes) file in the given category folder and opens it.</summary>
+    private async Task CreateFileInFolder(AssetNode folder)
+    {
+        if (StorageService.Root is null) return;
+
+        var ext = string.Equals(folder.Name, "scripts", StringComparison.OrdinalIgnoreCase) ? ".ink"
+                : string.Equals(folder.Name, "notes", StringComparison.OrdinalIgnoreCase) ? ".md"
+                : null;
+        if (ext is null) return;
+
+        var relPath = $"{folder.Path}/{UniqueFileName(folder.Path, ext)}";
+        try
+        {
+            await StorageService.WriteFileAsync(relPath, string.Empty);
+            StorageService.SetFilePathsAsync();     // re-enumerate → FilesLoaded → tree rebuild
+
+            if (ext == ".ink")
+            {
+                SelectInkScript(relPath);
+            }
+            else
+            {
+                SelectMarkdown(relPath);
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.Error.WriteLine(exc);
+        }
+    }
+
+    /// <summary>Renames a file in place, preserving its extension if the new name omits one.</summary>
+    private async Task RenameFile((string OldPath, string NewName) req)
+    {
+        if (StorageService.Root is null) return;
+
+        var oldPath = req.OldPath.Replace('\\', '/');
+        var dir = System.IO.Path.GetDirectoryName(oldPath)?.Replace('\\', '/') ?? string.Empty;
+        var oldExt = System.IO.Path.GetExtension(oldPath);
+
+        var finalName = System.IO.Path.HasExtension(req.NewName) ? req.NewName : req.NewName + oldExt;
+        var newPath = string.IsNullOrEmpty(dir) ? finalName : $"{dir}/{finalName}";
+        if (string.Equals(newPath, oldPath, StringComparison.OrdinalIgnoreCase)) return;
+
+        try
+        {
+            StorageService.RenameFile(oldPath, newPath);
+            StorageService.SetFilePathsAsync();     // re-enumerate → tree rebuild
+
+            // Keep the editor pointed at the renamed ink script if it was active.
+            if (string.Equals(InkStoryService.ActiveScriptPath.Replace('\\', '/'), oldPath, StringComparison.OrdinalIgnoreCase))
+            {
+                InkStoryService.ActiveScriptPath = newPath;
+            }
+        }
+        catch (Exception exc)
+        {
+            Console.Error.WriteLine(exc);
+        }
+    }
+
+    /// <summary>Picks an unused "untitled" name within a folder (untitled.ink, untitled-1.ink, …).</summary>
+    private string UniqueFileName(string folderPath, string ext)
+    {
+        var existing = new HashSet<string>(
+            StorageService.FilePaths.Select(p => p.Replace('\\', '/')),
+            StringComparer.OrdinalIgnoreCase);
+
+        for (var i = 0; ; i++)
+        {
+            var candidate = i == 0 ? $"untitled{ext}" : $"untitled-{i}{ext}";
+            if (!existing.Contains($"{folderPath}/{candidate}"))
+            {
+                return candidate;
+            }
+        }
+    }
+
     /// <summary>Loads an image/audio/JSON file into the themed preview panel.</summary>
     private async Task PreviewAsync(string filePath)
     {

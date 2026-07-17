@@ -1,4 +1,5 @@
 @using Endorphins.Models
+@using Endorphins.Shared
 
 @inject AssetsService AssetsService;
 @inject InkStoryService InkStoryService;
@@ -39,39 +40,40 @@
 
     @if (_isPreviewPanelActive)
     {
-        <MudCard Outlined>
-            <MudCardHeader>
-                <CardHeaderActions>
-                    <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Default"
-                                   OnClick="() => _isPreviewPanelActive = false"/>
-                </CardHeaderActions>
-            </MudCardHeader>
-            <MudCardContent>
-                @switch (_selectedContentType)
+        <div class="asset-preview">
+            <div class="asset-preview-header">
+                <span class="asset-preview-name">@_previewName</span>
+                <button class="asset-preview-close" @onclick="ClosePreview" title="Close">&#10005;</button>
+            </div>
+            <div class="asset-preview-body">
+                @switch (_previewKind)
                 {
-                    case "png":
-                    case "jpeg":
-                    case "gif":
-                        <MudImage Src="@_selectedFile"/>
+                    case PreviewKind.Image:
+                        <img class="asset-preview-img" src="@_previewData" alt="@_previewName"/>
                         break;
-                    case "mpeg":
-                        <audio controls autoplay src="@_selectedFile"></audio>
+                    case PreviewKind.Audio:
+                        <audio class="asset-preview-audio" controls autoplay src="@_previewData"></audio>
+                        break;
+                    case PreviewKind.Json:
+                        <pre class="asset-preview-json">@((MarkupString)_previewJsonHtml)</pre>
                         break;
                     default:
-                        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" NoIcon="true" Class="my-2">
-                            Failed to load content of type @_selectedContentType"
-                        </MudAlert>
+                        <span class="asset-preview-empty">No preview available.</span>
                         break;
                 }
-            </MudCardContent>
-        </MudCard>
+            </div>
+        </div>
     }
 </div>
 
 @code {
-    private string? _selectedFile;
-    private string? _selectedContentType;
+    private enum PreviewKind { None, Image, Audio, Json }
+
     private bool _isPreviewPanelActive;
+    private PreviewKind _previewKind;
+    private string? _previewName;
+    private string? _previewData;      // data: URI for image / audio
+    private string _previewJsonHtml = string.Empty;
     private List<AssetNode> _tree = [];
 
     protected override void OnInitialized()
@@ -158,7 +160,7 @@
                 PlayVideo(relativePath);
                 break;
             default:
-                Preview(relativePath);
+                await PreviewAsync(relativePath);
                 break;
         }
     }
@@ -234,13 +236,69 @@
         StateHasChanged();
     }
     
-    private void Preview(string filePath)
+    /// <summary>Loads an image/audio/JSON file into the themed preview panel.</summary>
+    private async Task PreviewAsync(string filePath)
     {
-        _selectedFile = filePath;
-        _selectedContentType = filePath.Split('.').Last();
-        _isPreviewPanelActive = true;
-        Console.WriteLine($"Previewing {_selectedFile} of {_selectedContentType}");
+        _previewName = System.IO.Path.GetFileName(filePath);
+        var ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+        try
+        {
+            switch (ext)
+            {
+                case ".json":
+                    var json = await StorageService.ReadFileAsTextAsync(filePath);
+                    _previewJsonHtml = JsonPreview.Highlight(json);
+                    _previewKind = PreviewKind.Json;
+                    break;
+                case ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" or ".bmp":
+                    _previewData = await ReadAsDataUriAsync(filePath, ext);
+                    _previewKind = PreviewKind.Image;
+                    break;
+                case ".mp3" or ".wav" or ".ogg" or ".m4a" or ".flac":
+                    _previewData = await ReadAsDataUriAsync(filePath, ext);
+                    _previewKind = PreviewKind.Audio;
+                    break;
+                default:
+                    _previewKind = PreviewKind.None;
+                    break;
+            }
+            _isPreviewPanelActive = true;
+            StateHasChanged();
+        }
+        catch (Exception exc)
+        {
+            Console.Error.WriteLine(exc);
+        }
     }
+
+    private async Task<string> ReadAsDataUriAsync(string filePath, string ext)
+    {
+        var bytes = await StorageService.ReadFileAsBytesAsync(filePath);
+        return $"data:{MimeType(ext)};base64,{Convert.ToBase64String(bytes)}";
+    }
+
+    private void ClosePreview()
+    {
+        _isPreviewPanelActive = false;
+        _previewData = null;
+        _previewJsonHtml = string.Empty;
+        _previewKind = PreviewKind.None;
+    }
+
+    private static string MimeType(string ext) => ext switch
+    {
+        ".png" => "image/png",
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".gif" => "image/gif",
+        ".webp" => "image/webp",
+        ".bmp" => "image/bmp",
+        ".mp3" => "audio/mpeg",
+        ".wav" => "audio/wav",
+        ".ogg" => "audio/ogg",
+        ".m4a" => "audio/mp4",
+        ".flac" => "audio/flac",
+        _ => "application/octet-stream"
+    };
 
 }
 

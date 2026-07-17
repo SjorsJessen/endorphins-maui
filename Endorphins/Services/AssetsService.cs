@@ -5,6 +5,10 @@ namespace Endorphins.Services;
 public sealed class AssetsService
 {
     public Action<string, string>? MarkdownFileSelected { get; set; }
+
+    /// <summary>Raised as the markdown editor content changes, for live preview.</summary>
+    public Action<string>? MarkdownContentChanged { get; set; }
+
     public Action<string>? VideoSelected { get; set; }
     
     private List<IBrowserFile> Assets { get; } = [];

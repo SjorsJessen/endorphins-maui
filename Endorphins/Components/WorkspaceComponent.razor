@@ -1,5 +1,7 @@
-@implements IDisposable;
 @inject EditorService EditorService;
+@inject InkStoryService InkStoryService;
+@inject AssetsService AssetsService;
+@inject PdfService PdfService;
 @inherits DevHotReloadComponentBase;
 
 <MudSplitPanel @ref="_splitPanel" Class="mud-width-full mud-height-full">
@@ -20,38 +22,104 @@
         }
     </FirstPanel>
     <SecondPanel>
-        <MudTabs Color="Color.Inherit" MinimumTabWidth="80px">
-            <MudTabPanel Text="Story">
+        @if (!AnyTabOpen)
+        {
+            <div class="workspace-empty">
+                Run a story, open a note, or open a file to preview it here.
+            </div>
+        }
+        <MudTabs Color="Color.Inherit" MinimumTabWidth="60px" @bind-ActivePanelIndex="_activeIndex">
+            <MudTabPanel Visible="_storyOpen" TabContent="@Header("Story", () => _storyOpen = false)">
                 <InkStoryRunnerComponent/>
             </MudTabPanel>
-            <MudTabPanel Text="Reader">
+            <MudTabPanel Visible="_notesOpen" TabContent="@Header("Notes", () => _notesOpen = false)">
+                <MarkdownPreviewComponent/>
+            </MudTabPanel>
+            <MudTabPanel Visible="_readerOpen" TabContent="@Header("Reader", () => _readerOpen = false)">
                 <PdfViewerComponent/>
             </MudTabPanel>
-            <MudTabPanel Text="Graph">
+            <MudTabPanel Visible="_graphOpen" TabContent="@Header("Graph", () => _graphOpen = false)">
                 <GraphComponent/>
-            </MudTabPanel>            
-            <MudTabPanel Text="Photoshop">
+            </MudTabPanel>
+            <MudTabPanel Visible="_photoshopOpen" TabContent="@Header("Photoshop", () => _photoshopOpen = false)">
                 <PhotoshopComponent/>
-            </MudTabPanel>            
-            <MudTabPanel Text="Moodboard">
+            </MudTabPanel>
+            <MudTabPanel Visible="_moodboardOpen" TabContent="@Header("Moodboard", () => _moodboardOpen = false)">
                 <MoodboardComponent/>
             </MudTabPanel>
         </MudTabs>
         <MudDivider/>
     </SecondPanel>
 </MudSplitPanel>
-   
+
 @code {
     private MudSplitPanel? _splitPanel;
+    private int _activeIndex;
+
+    // Content-driven tabs — hidden until their source loads.
+    private bool _storyOpen;
+    private bool _notesOpen;
+    private bool _readerOpen;
+
+    // Tool tabs — available by default, still closeable.
+    private bool _graphOpen = true;
+    private bool _photoshopOpen = true;
+    private bool _moodboardOpen = true;
+
+    // Declaration-order indices, used to activate a tab when it opens.
+    private const int StoryIndex = 0;
+    private const int NotesIndex = 1;
+    private const int ReaderIndex = 2;
+
+    private bool AnyTabOpen =>
+        _storyOpen || _notesOpen || _readerOpen || _graphOpen || _photoshopOpen || _moodboardOpen;
 
     protected override void OnInitialized()
     {
-        EditorService.EditorChanged += StateHasChanged;
+        EditorService.EditorChanged += OnStateChanged;
+        InkStoryService.DialogUpdated += OnStoryContent;
+        InkStoryService.ChoicesAdded += OnChoices;
+        AssetsService.MarkdownFileSelected += OnMarkdownSelected;
+        PdfService.PdfFileSelected += OnPdfSelected;
     }
 
-    public void Dispose()
+    private void OnStoryContent(Endorphins.Models.DialogLine _) => OpenTab(() => _storyOpen = true, StoryIndex);
+    private void OnChoices(List<Ink.Runtime.Choice> _) => OpenTab(() => _storyOpen = true, StoryIndex);
+    private void OnMarkdownSelected(string _, string __) => OpenTab(() => _notesOpen = true, NotesIndex);
+    private void OnPdfSelected(Endorphins.Models.PdfFile _) => OpenTab(() => _readerOpen = true, ReaderIndex);
+
+    private void OpenTab(Action open, int index) => InvokeAsync(() =>
     {
-        EditorService.EditorChanged -= StateHasChanged;
+        open();
+        _activeIndex = index;      // bring the freshly-loaded preview to the front
+        StateHasChanged();
+    });
+
+    private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    // Custom tab header: label + a close button that hides the panel.
+    private RenderFragment Header(string label, Action close) =>
+        @<span class="wtab">
+            <span class="wtab-label">@label</span>
+            <span class="wtab-close" title="Close"
+                  @onclick="@(() => CloseTab(close))" @onclick:stopPropagation="true">
+                &#10005;
+            </span>
+        </span>;
+
+    private void CloseTab(Action close)
+    {
+        close();
+        StateHasChanged();
     }
 
+    public override void Dispose()
+    {
+        base.Dispose();
+        EditorService.EditorChanged -= OnStateChanged;
+        InkStoryService.DialogUpdated -= OnStoryContent;
+        InkStoryService.ChoicesAdded -= OnChoices;
+        AssetsService.MarkdownFileSelected -= OnMarkdownSelected;
+        PdfService.PdfFileSelected -= OnPdfSelected;
+    }
 }

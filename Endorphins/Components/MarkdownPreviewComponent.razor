@@ -1,0 +1,51 @@
+@using Markdig
+@inject AssetsService AssetsService
+@inherits DevHotReloadComponentBase
+
+@* Rendered preview of the markdown editor's content — the markdown counterpart
+   of InkStoryRunnerComponent. Updates when a note is selected and live as the
+   editor content changes. *@
+
+<div class="markdown-preview">
+    @if (string.IsNullOrWhiteSpace(_html))
+    {
+        <div class="markdown-preview-empty">No note to preview.</div>
+    }
+    else
+    {
+        <div class="md-body">@((MarkupString)_html)</div>
+    }
+</div>
+
+@code {
+    private static readonly MarkdownPipeline Pipeline =
+        new MarkdownPipelineBuilder().UseAdvancedExtensions().UseSoftlineBreakAsHardlineBreak().Build();
+
+    private string _html = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        AssetsService.MarkdownFileSelected += OnMarkdownSelected;
+        AssetsService.MarkdownContentChanged += OnMarkdownChanged;
+    }
+
+    private void OnMarkdownSelected(string _, string content) => Render(content);
+
+    private void OnMarkdownChanged(string content) => Render(content);
+
+    private void Render(string content) => InvokeAsync(() =>
+    {
+        _html = string.IsNullOrWhiteSpace(content)
+            ? string.Empty
+            : Markdown.ToHtml(content, Pipeline);
+        StateHasChanged();
+    });
+
+    public override void Dispose()
+    {
+        base.Dispose();
+        AssetsService.MarkdownFileSelected -= OnMarkdownSelected;
+        AssetsService.MarkdownContentChanged -= OnMarkdownChanged;
+    }
+}

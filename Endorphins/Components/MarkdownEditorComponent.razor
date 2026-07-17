@@ -42,6 +42,7 @@
     {
         Content = newContent;
         StorageService.WriteFileAsync(relativePath: _activeFile, content: newContent);
+        AssetsService.MarkdownContentChanged?.Invoke(newContent);
     }
 
     public void Dispose()

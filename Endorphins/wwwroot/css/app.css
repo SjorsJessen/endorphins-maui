@@ -523,3 +523,58 @@ a:hover,
     color: var(--text) !important;
     border-color: var(--border) !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   MUDBUTTON — drop the default uppercase everywhere
+   ══════════════════════════════════════════════════════════════════ */
+.mud-button-root,
+.mud-button-label {
+    text-transform: none !important;
+}
+
+/* ── INK EDITOR SNIPPET TOOLBAR BUTTONS ──
+   Styled as .ink-tb-btn while remaining MudButtons. Compound selectors
+   raise specificity above MudBlazor's own .mud-button-* rules (which load
+   after app.css) without needing !important on the interactive states. */
+.mud-button-root.ink-tb-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    background: none;
+    border: 1px solid transparent;
+    color: var(--text-mid);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.1s, color 0.1s, border-color 0.1s;
+    height: 26px;
+}
+.mud-button-root.ink-tb-btn:hover {
+    background: var(--surface2);
+    border-color: var(--border);
+    color: var(--text);
+}
+.mud-button-root.ink-tb-btn:active {
+    transform: scale(0.96);
+}
+/* MudButton nests content in .mud-button-label — carry the gap through */
+.mud-button-root.ink-tb-btn .mud-button-label {
+    gap: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+.ink-tb-icon {
+    font-family: 'RobotoMono', monospace;
+    font-size: 10px;
+    opacity: 0.7;
+    color: var(--accent);
+    min-width: 14px;
+    text-align: center;
+    flex-shrink: 0;
+}

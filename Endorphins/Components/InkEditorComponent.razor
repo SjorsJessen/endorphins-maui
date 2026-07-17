@@ -3,17 +3,19 @@
 @inject FileStorageService StorageService;
 @inherits DevHotReloadComponentBase;
 
-<MudToolBar Dense Style="display: flex; align-items: center; gap: 10px">
+<MudToolBar Dense Style="display: flex; align-items: center; gap: 2px">
     @foreach (var element in InkElements)
     {
-        <MudButton
-            Variant="Variant.Text"
-            Color="Color.Inherit"
-            Size="Size.Small"
-            HtmlTag="label"
-            OnClick="() => AddInkElement(element.Value)">
-            @element.Key
-        </MudButton>
+        <MudTooltip Text="@element.Tooltip" Arrow="true" Placement="Placement.Bottom">
+            <MudButton
+                Class="ink-tb-btn"
+                Variant="Variant.Text"
+                Color="Color.Inherit"
+                Size="Size.Small"
+                OnClick="() => AddInkElement(element.Snippet)">
+                <span class="ink-tb-icon">@element.Icon</span>@element.Label
+            </MudButton>
+        </MudTooltip>
     }
 </MudToolBar>
 
@@ -30,14 +32,16 @@
     private const string MainInkScriptPath = $"{InkScriptsDirectory}/main.ink";
     private StandaloneCodeEditor? _editor;
     private BlazorMonaco.Position _currentCursorPosition = new();
-    private Dictionary<string, string> InkElements = new()
+    private sealed record InkSnippet(string Icon, string Label, string Tooltip, string Snippet);
+
+    private readonly List<InkSnippet> InkElements = new()
     {
-        { "=== knot", "=== knot === \n" },
-        { "= stitch", "= stitch = \n " },
-        { "-> divert", "-> divert \n" },
-        { "* choice", "* choice \n" },
-        { "VAR variable ", "VAR " },
-        { "# Tag ", "# Tag " }
+        new("===", "Knot",     "Named story section — diverts jump here.", "=== knot === \n"),
+        new("=",   "Stitch",   "Sub-section within a knot.",               "= stitch = \n "),
+        new("->",  "Divert",   "Jump to a knot, stitch or label.",         "-> divert \n"),
+        new("*",   "Choice",   "A choice the player can pick.",            "* choice \n"),
+        new("VAR", "Variable", "Declare a global variable.",              "VAR "),
+        new("#",   "Tag",      "Attach metadata to a line.",              "# Tag ")
     };
 
     protected override void OnInitialized()

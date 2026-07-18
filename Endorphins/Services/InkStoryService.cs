@@ -28,9 +28,39 @@ public enum InkCompileState
 
 public sealed record InkDiagnostic(string Message, ErrorType Type);
 
+/// <summary>Documentation entry for a function offered by the ink editor's Functions dropdown.</summary>
+public sealed record InkFunctionDoc(string Signature, string Description, string Snippet);
+
 public sealed class InkStoryService
 {
     public const string MainScriptPath = "scripts/main.ink";
+
+    /// <summary>External functions this runtime binds (see <see cref="BindExternalFunctions"/>) —
+    /// keep the two in sync when adding a binding.</summary>
+    public static readonly IReadOnlyList<InkFunctionDoc> ExternalFunctions =
+    [
+        new("updateSpeaker(name)",  "Set the active speaker's name and portrait.", "~ updateSpeaker(\"speaker\")\n"),
+        new("setImage(name)",       "Display an image asset by name.",             "~ setImage(\"image\")\n"),
+        new("setBackground(name)",  "Set the background image by asset name.",     "~ setBackground(\"background\")\n"),
+        new("playAudio(name)",      "Play an audio asset by name.",                "~ playAudio(\"audio\")\n"),
+        new("addDivider()",         "Insert a section break between passages.",    "~ addDivider()\n"),
+        new("transition(title)",    "Display a centered bold header.",             "~ transition(\"title\")\n"),
+    ];
+
+    /// <summary>Built-in ink functions available in any story.</summary>
+    public static readonly IReadOnlyList<InkFunctionDoc> BuiltInFunctions =
+    [
+        new("RANDOM(min, max)",       "Random integer between min and max (inclusive).", "RANDOM(1, 6)"),
+        new("SEED_RANDOM(seed)",      "Seed the random number generator.",               "~ SEED_RANDOM(1)\n"),
+        new("CHOICE_COUNT()",         "Number of choices generated so far this turn.",   "CHOICE_COUNT()"),
+        new("TURNS()",                "Number of game turns since the story began.",     "TURNS()"),
+        new("TURNS_SINCE(-> knot)",   "Turns since the knot/stitch was last visited.",   "TURNS_SINCE(-> knot)"),
+        new("POW(x, y)",              "x raised to the power y.",                        "POW(2, 3)"),
+        new("FLOOR(x)",               "Round down to an integer.",                       "FLOOR(x)"),
+        new("CEILING(x)",             "Round up to an integer.",                         "CEILING(x)"),
+        new("INT(x)",                 "Truncate to an integer.",                         "INT(x)"),
+        new("FLOAT(x)",               "Convert to a floating-point number.",             "FLOAT(x)"),
+    ];
 
     public bool HasStoryStarted { get; private set; }
     public string? EditorContent => _editorContent;

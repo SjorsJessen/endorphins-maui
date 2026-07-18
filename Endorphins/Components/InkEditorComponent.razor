@@ -6,7 +6,7 @@
 <MudToolBar Dense Class="ink-editor-toolbar">
     @foreach (var element in InkElements)
     {
-        <MudTooltip Text="@element.Tooltip" Arrow="true" Placement="Placement.Bottom">
+        <MudTooltip Text="@ElementTooltip(element)" Arrow="true" Placement="Placement.Bottom">
             <MudButton
                 Class="ink-tb-btn"
                 Variant="Variant.Text"
@@ -17,12 +17,46 @@
             </MudButton>
         </MudTooltip>
     }
+
+    <div class="ink-fn-dropdown">
+        <MudButton
+            Class="ink-tb-btn"
+            Variant="Variant.Text"
+            Color="Color.Inherit"
+            Size="Size.Small"
+            OnClick="() => _functionsOpen = !_functionsOpen">
+            <span class="ink-tb-icon">ƒ</span>Functions<span class="ink-fn-caret">▾</span>
+        </MudButton>
+        @if (_functionsOpen)
+        {
+            <div class="ink-fn-backdrop" @onclick="() => _functionsOpen = false"></div>
+            <div class="ink-fn-menu">
+                <div class="ink-fn-group">External</div>
+                @foreach (var fn in InkStoryService.ExternalFunctions)
+                {
+                    <button class="ink-fn-item" @onclick="() => InsertFunction(fn.Snippet)">
+                        <span class="ink-fn-sig">@fn.Signature</span>
+                        <span class="ink-fn-desc">@fn.Description</span>
+                    </button>
+                }
+                <div class="ink-fn-group">Built-in</div>
+                @foreach (var fn in InkStoryService.BuiltInFunctions)
+                {
+                    <button class="ink-fn-item" @onclick="() => InsertFunction(fn.Snippet)">
+                        <span class="ink-fn-sig">@fn.Signature</span>
+                        <span class="ink-fn-desc">@fn.Description</span>
+                    </button>
+                }
+            </div>
+        }
+    </div>
 </MudToolBar>
 
 <StandaloneCodeEditor
     @ref="_editor"
     CssClass="ink-editor"
     ConstructionOptions="EditorConstructionOptions"
+    OnDidInit="RegisterEditorShortcuts"
     OnDidChangeModelContent="OnModelContentChanged"
     OnDidChangeCursorPosition="EditorDidChangeCursorPosition"
 />
@@ -48,17 +82,53 @@
     private StandaloneCodeEditor? _editor;
     private CancellationTokenSource? _compileCts;
     private BlazorMonaco.Position _currentCursorPosition = new();
-    private sealed record InkSnippet(string Icon, string Label, string Tooltip, string Snippet);
+    private sealed record InkSnippet(
+        string Icon, string Label, string Tooltip, string Snippet,
+        string? Shortcut = null, int? Keybinding = null);
 
+    private const int Cmd = (int)BlazorMonaco.KeyMod.CtrlCmd;
+    private const int CmdShift = (int)BlazorMonaco.KeyMod.CtrlCmd | (int)BlazorMonaco.KeyMod.Shift;
+
+    // ⌘C / ⌘V stay copy & paste, so Choice and Variable take the shifted chord.
     private readonly List<InkSnippet> InkElements = new()
     {
-        new("===", "Knot",     "Named story section — diverts jump here.", "=== knot === \n"),
-        new("==",   "Stitch",   "Sub-section within a knot.",               "= stitch = \n "),
-        new("->",  "Divert",   "Jump to a knot, stitch or label.",         "-> divert \n"),
-        new("*",   "Choice",   "A choice the player can pick.",            "* choice \n"),
-        new("VAR", "Variable", "Declare a global variable.",              "VAR "),
-        new("#",   "Tag",      "Attach metadata to a line.",              "# Tag ")
+        new("===", "Knot",     "Named story section — diverts jump here.", "=== knot === \n", "⌘K",  Cmd | (int)BlazorMonaco.KeyCode.KeyK),
+        new("==",  "Stitch",   "Sub-section within a knot.",               "= stitch = \n ",  "⌘S",  Cmd | (int)BlazorMonaco.KeyCode.KeyS),
+        new("->",  "Divert",   "Jump to a knot, stitch or label.",         "-> divert \n",    "⌘D",  Cmd | (int)BlazorMonaco.KeyCode.KeyD),
+        new("*",   "Choice",   "A choice the player can pick.",            "* choice \n",     "⌘⇧C", CmdShift | (int)BlazorMonaco.KeyCode.KeyC),
+        new("VAR", "Variable", "Declare a global variable.",               "VAR ",            "⌘⇧V", CmdShift | (int)BlazorMonaco.KeyCode.KeyV),
+        new("#",   "Tag",      "Attach metadata to a line.",               "# Tag ",          "⌘T",  Cmd | (int)BlazorMonaco.KeyCode.KeyT)
     };
+
+    private bool _functionsOpen;
+
+    private async Task InsertFunction(string snippet)
+    {
+        _functionsOpen = false;
+        await AddInkElement(snippet);
+    }
+
+    private static string ElementTooltip(InkSnippet element) =>
+        element.Shortcut is null ? element.Tooltip : $"{element.Tooltip} ({element.Shortcut})";
+
+    /// <summary>Binds the toolbar snippets to editor-scoped shortcuts. Monaco actions
+    /// only fire while the editor has focus, so they never shadow app-wide keys.</summary>
+    private async Task RegisterEditorShortcuts()
+    {
+        if (_editor is null) return;
+        foreach (var element in InkElements)
+        {
+            if (element.Keybinding is not int keybinding) continue;
+            await _editor.AddAction(new ActionDescriptor
+            {
+                Id = $"ink-insert-{element.Label.ToLowerInvariant()}",
+                Label = $"Insert {element.Label}",
+                Keybindings = [keybinding],
+                ContextMenuGroupId = "ink",
+                Run = editor => _ = InvokeAsync(() => AddInkElement(element.Snippet))
+            });
+        }
+    }
 
     protected override void OnInitialized()
     {

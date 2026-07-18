@@ -4,6 +4,7 @@
 @inject AssetsService AssetsService;
 @inject PdfService PdfService;
 @inject DiagramService DiagramService;
+@inject MoodboardService MoodboardService;
 @inherits DevHotReloadComponentBase;
 
 <div class="ws-layout">
@@ -153,16 +154,17 @@
     private bool _storyOpen;
     private bool _notesOpen;
     private bool _readerOpen;
-    private bool _graphOpen;   // opens when a diagram file is selected
+    private bool _graphOpen;       // opens when a diagram file is selected
+    private bool _moodboardOpen;   // opens when a moodboard file is selected
 
     // Tool tabs — available by default, still closeable.
     private bool _photoshopOpen = true;
-    private bool _moodboardOpen = true;
 
     private const int StoryIndex = 0;
     private const int NotesIndex = 1;
     private const int ReaderIndex = 2;
     private const int GraphIndex = 3;
+    private const int MoodboardIndex = 5;   // declaration order: Photoshop is 4
 
     private bool AnyTabOpen =>
         _storyOpen || _notesOpen || _readerOpen || _graphOpen || _photoshopOpen || _moodboardOpen;
@@ -175,6 +177,7 @@
         AssetsService.MarkdownFileSelected += OnMarkdownSelected;
         PdfService.PdfFileSelected += OnPdfSelected;
         DiagramService.DiagramFileSelected += OnDiagramSelected;
+        MoodboardService.MoodboardFileSelected += OnMoodboardSelected;
     }
 
     private void OnStoryContent(Endorphins.Models.DialogLine _) => OpenTab(() => _storyOpen = true, StoryIndex);
@@ -182,6 +185,7 @@
     private void OnMarkdownSelected(string _, string __) => OpenTab(() => _notesOpen = true, NotesIndex);
     private void OnPdfSelected(Endorphins.Models.PdfFile _) => OpenTab(() => _readerOpen = true, ReaderIndex);
     private void OnDiagramSelected(string _, string __) => OpenTab(() => _graphOpen = true, GraphIndex);
+    private void OnMoodboardSelected(string _, string __) => OpenTab(() => _moodboardOpen = true, MoodboardIndex);
 
     private void OpenTab(Action open, int index) => InvokeAsync(() =>
     {
@@ -217,5 +221,6 @@
         AssetsService.MarkdownFileSelected -= OnMarkdownSelected;
         PdfService.PdfFileSelected -= OnPdfSelected;
         DiagramService.DiagramFileSelected -= OnDiagramSelected;
+        MoodboardService.MoodboardFileSelected -= OnMoodboardSelected;
     }
 }

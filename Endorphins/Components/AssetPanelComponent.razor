@@ -7,6 +7,7 @@
 @inject EditorService EditorService;
 @inject FileStorageService StorageService;
 @inject DiagramService DiagramService;
+@inject MoodboardService MoodboardService;
 @inherits DevHotReloadComponentBase;
 
 <div class="asset-panel">
@@ -111,7 +112,7 @@
     private List<AssetNode> _assetsTree = [];
 
     // Dynamic (editable) categories shown under "Workspace", in this order.
-    private static readonly string[] WorkspaceCategories = ["scripts", "notes", "diagrams"];
+    private static readonly string[] WorkspaceCategories = ["scripts", "notes", "diagrams", "moodboards"];
 
     protected override void OnInitialized()
     {
@@ -221,6 +222,9 @@
             case ".diagram":
                 await SelectDiagram(relativePath);
                 break;
+            case ".moodboard":
+                await SelectMoodboard(relativePath);
+                break;
             case ".pdf":
                 await OpenPdf(relativePath);
                 break;
@@ -312,11 +316,17 @@
         var ext = string.Equals(folder.Name, "scripts", StringComparison.OrdinalIgnoreCase) ? ".ink"
                 : string.Equals(folder.Name, "notes", StringComparison.OrdinalIgnoreCase) ? ".md"
                 : string.Equals(folder.Name, "diagrams", StringComparison.OrdinalIgnoreCase) ? ".diagram"
+                : string.Equals(folder.Name, "moodboards", StringComparison.OrdinalIgnoreCase) ? ".moodboard"
                 : null;
         if (ext is null) return;
 
         var relPath = $"{folder.Path}/{UniqueFileName(folder.Path, ext)}";
-        var initial = ext == ".diagram" ? "{\"nodes\":[],\"links\":[]}" : string.Empty;
+        var initial = ext switch
+        {
+            ".diagram" => "{\"nodes\":[],\"links\":[]}",
+            ".moodboard" => "{\"items\":[],\"nextZ\":1}",
+            _ => string.Empty
+        };
         try
         {
             await StorageService.WriteFileAsync(relPath, initial);
@@ -332,6 +342,9 @@
                     break;
                 case ".diagram":
                     await SelectDiagram(relPath);
+                    break;
+                case ".moodboard":
+                    await SelectMoodboard(relPath);
                     break;
             }
         }
@@ -349,6 +362,21 @@
             var content = await StorageService.ReadFileAsTextAsync(filePath);
             DiagramService.ActiveDiagramPath = filePath;
             DiagramService.DiagramFileSelected?.Invoke(filePath, content);
+        }
+        catch (Exception exc)
+        {
+            Console.Error.WriteLine(exc);
+        }
+    }
+
+    /// <summary>Opens a moodboard file for editing in the Moodboard tab.</summary>
+    private async Task SelectMoodboard(string filePath)
+    {
+        try
+        {
+            var content = await StorageService.ReadFileAsTextAsync(filePath);
+            MoodboardService.ActiveMoodboardPath = filePath;
+            MoodboardService.MoodboardFileSelected?.Invoke(filePath, content);
         }
         catch (Exception exc)
         {

@@ -294,6 +294,39 @@ a,
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+/* ── MOODBOARD EDITOR (shares .graph-toolbar button styling) ── */
+.moodboard-pane {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 150px);
+    min-height: 360px;
+    background: var(--bg);
+}
+.moodboard-viewport {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    touch-action: none;
+}
+.moodboard-hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    font-size: 12px;
+    font-style: italic;
+    color: var(--text-dim);
+}
+.moodboard-exported {
+    color: var(--green);
+    font-style: normal;
+}
+
 .graph-pane .diagram-container {
     flex: 1 1 auto;
     height: auto;

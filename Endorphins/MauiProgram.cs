@@ -23,6 +23,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<EditorService>();
         builder.Services.AddSingleton<FileStorageService>();
         builder.Services.AddSingleton<DiagramService>();
+        builder.Services.AddSingleton<MoodboardService>();
         builder.Services.AddMudServices();
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();

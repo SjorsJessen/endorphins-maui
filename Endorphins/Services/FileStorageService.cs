@@ -59,6 +59,14 @@ public class FileStorageService : IFileStorageService
         return File.WriteAllTextAsync(full, content);   // overwrites in place
     }
 
+    public Task WriteFileBytesAsync(string relativePath, byte[] bytes)
+    {
+        EnsureRoot();
+        var full = Path.Combine(Root!, relativePath);
+        Directory.CreateDirectory(Path.GetDirectoryName(full)!);
+        return File.WriteAllBytesAsync(full, bytes);
+    }
+
     /// <summary>Renames/moves a file within the project. Throws if the destination already exists.</summary>
     public void RenameFile(string relativeOld, string relativeNew)
     {

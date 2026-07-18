@@ -1,51 +1,85 @@
+@using System.Text.Json
 @using Endorphins.Models
 
 @inject IJSRuntime JS
+@inject MoodboardService MoodboardService
+@inject FileStorageService StorageService
 @implements IAsyncDisposable
 @inherits DevHotReloadComponentBase;
 
-<div @ref="_viewport" class="viewport"
-     style="position:relative;width:100%;height:600px;overflow:hidden;
-            background:#1e1e1e;touch-action:none;"
-     @onpointerdown="StartPan"
-     @onpointermove="OnMove"
-     @onpointerup="EndInteraction"
-     @onpointerleave="EndInteraction"
-     @onwheel="OnWheel" @onwheel:preventDefault="true">
+<div class="moodboard-pane">
+    <div class="graph-toolbar">
+        <button class="graph-tb-btn" @onclick="SaveNow" disabled="@(_activePath is null)">
+            <MudIcon Icon="@Icons.Material.Sharp.Save" Size="MudBlazor.Size.Small"/> Save
+        </button>
+        <button class="graph-tb-btn" @onclick="ExportPng" disabled="@(_activePath is null || _model.Items.Count == 0)">
+            <MudIcon Icon="@Icons.Material.Sharp.Image" Size="MudBlazor.Size.Small"/> Export PNG
+        </button>
+        <span class="graph-tb-name">
+            @(_activePath is null ? "No moodboard open" : System.IO.Path.GetFileName(_activePath))
+            @if (_exportedName is not null)
+            {
+                <span class="moodboard-exported"> — exported @_exportedName</span>
+            }
+        </span>
+    </div>
 
-    <div class="world"
-         style="position:absolute;left:0;top:0;transform-origin:0 0;
-             transform:translate(@(_panX)px,@(_panY)px) scale(@_scale);">
+    <div @ref="_viewport" class="viewport moodboard-viewport"
+         @onpointerdown="StartPan"
+         @onpointermove="OnMove"
+         @onpointerup="EndInteraction"
+         @onpointerleave="EndInteraction"
+         @onwheel="OnWheel" @onwheel:preventDefault="true">
 
-        @foreach (var item in _model.Items)
-        {
-            <div style="position:absolute;
-                left:@(item.X)px;top:@(item.Y)px;
-            width:@(item.Width)px;height:@(item.Height)px;
-            z-index:@item.ZIndex;transform:rotate(@(item.Rotation)deg);
-            cursor:move;"
-                 @onpointerdown:stopPropagation="true"
-                 @onpointerdown="e => StartDrag(e, item)">
+        <div class="world"
+             style="position:absolute;left:0;top:0;transform-origin:0 0;
+                 transform:translate(@(_panX)px,@(_panY)px) scale(@_scale);">
 
-                <img src="@item.ImageUrl"
-                     alt="moodboard"
-                     style="width:100%;height:100%;object-fit:cover;
-                            pointer-events:none;user-select:none;"/>
-
-                <div style="position:absolute;right:0;bottom:0;width:14px;height:14px;
-                            background:#4af;cursor:nwse-resize;"
+            @foreach (var item in _model.Items)
+            {
+                <div style="position:absolute;
+                    left:@(item.X)px;top:@(item.Y)px;
+                width:@(item.Width)px;height:@(item.Height)px;
+                z-index:@item.ZIndex;transform:rotate(@(item.Rotation)deg);
+                cursor:move;"
                      @onpointerdown:stopPropagation="true"
-                     @onpointerdown="e => StartResize(e, item)"></div>
-            </div>
+                     @onpointerdown="e => StartDrag(e, item)">
+
+                    <img src="@item.ImageUrl"
+                         alt="moodboard"
+                         style="width:100%;height:100%;object-fit:cover;
+                                pointer-events:none;user-select:none;"/>
+
+                    <div style="position:absolute;right:0;bottom:0;width:14px;height:14px;
+                                background:var(--accent);cursor:nwse-resize;"
+                         @onpointerdown:stopPropagation="true"
+                         @onpointerdown="e => StartResize(e, item)"></div>
+                </div>
+            }
+        </div>
+
+        @if (_activePath is not null && _model.Items.Count == 0)
+        {
+            <div class="moodboard-hint">Drop or paste images here.</div>
         }
     </div>
 </div>
 
 @code {
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true
+    };
+
     private MoodboardModel _model = new();
     private ElementReference _viewport;
     private IJSObjectReference? _module;
     private double _rectLeft, _rectTop;
+
+    private string? _activePath;
+    private string? _exportedName;
+    private CancellationTokenSource? _saveCts;
 
     // viewport
     private double _panX, _panY, _scale = 1.0;
@@ -62,21 +96,50 @@
     private Mode _mode = Mode.None;
     private MoodboardItem? _active;
     private double _lastX, _lastY;
-    private DotNetObjectReference<MoodboardComponent> _self;
+    private DotNetObjectReference<MoodboardComponent>? _self;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _model.Items.Add(new MoodboardItem
+        MoodboardService.MoodboardFileSelected += OnMoodboardSelected;
+
+        // The Moodboard tab is created lazily, often after the file was selected,
+        // so pick up the already-active moodboard on init.
+        if (MoodboardService.ActiveMoodboardPath is { } path)
         {
-            ImageUrl = "https://picsum.photos/300/200", X = 60, Y = 60, ZIndex = 1
-        });
-        _model.Items.Add(new MoodboardItem
-        {
-            ImageUrl = "https://picsum.photos/250/250", X = 260, Y = 180, ZIndex = 2
-        });
-        _model.NextZ = 3;
+            _activePath = path;
+            try
+            {
+                LoadModel(await StorageService.ReadFileAsTextAsync(path));
+            }
+            catch (Exception exc)
+            {
+                Console.Error.WriteLine($"Failed to open active moodboard: {exc}");
+            }
+        }
     }
 
+    private void OnMoodboardSelected(string path, string content) => InvokeAsync(() =>
+    {
+        _activePath = path;
+        _exportedName = null;
+        LoadModel(content);
+        StateHasChanged();
+    });
+
+    private void LoadModel(string content)
+    {
+        try
+        {
+            _model = string.IsNullOrWhiteSpace(content)
+                ? new MoodboardModel()
+                : JsonSerializer.Deserialize<MoodboardModel>(content, JsonOpts) ?? new MoodboardModel();
+        }
+        catch (Exception exc)
+        {
+            Console.Error.WriteLine($"Failed to load moodboard: {exc}");
+            _model = new MoodboardModel();
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool first)
     {
@@ -117,6 +180,7 @@
             AddAt(url, wx, wy);
             wx += 24; wy += 24;             // cascade multiples
         }
+        SaveSoon();
         StateHasChanged();
     }
 
@@ -131,6 +195,7 @@
             AddAt(url, wx, wy);
             wx += 24; wy += 24;
         }
+        SaveSoon();
         StateHasChanged();
     }
 
@@ -193,8 +258,10 @@
 
     private void EndInteraction(PointerEventArgs e)
     {
+        var wasModelEdit = _mode is Mode.Drag or Mode.Resize;
         _mode = Mode.None;
         _active = null;
+        if (wasModelEdit) SaveSoon();
     }
 
     // zoom toward cursor
@@ -213,8 +280,68 @@
         _scale = next;
     }
 
+    // ── Persistence ──
+    private async Task SaveNow() => await SaveAsync();
+
+    private void SaveSoon()
+    {
+        if (_activePath is null) return;
+        _saveCts?.Cancel();
+        _saveCts = new CancellationTokenSource();
+        var token = _saveCts.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(500, token);
+                if (!token.IsCancellationRequested) await SaveAsync();
+            }
+            catch (TaskCanceledException) { /* superseded */ }
+        });
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_activePath is null) return;
+        try
+        {
+            await StorageService.WriteFileAsync(_activePath, JsonSerializer.Serialize(_model, JsonOpts));
+        }
+        catch (Exception exc)
+        {
+            Console.Error.WriteLine($"Failed to save moodboard: {exc}");
+        }
+    }
+
+    // ── PNG export: render items to canvas, save next to the .moodboard file ──
+    private async Task ExportPng()
+    {
+        if (_activePath is null || _module is null || _model.Items.Count == 0) return;
+        try
+        {
+            var base64 = await _module.InvokeAsync<string?>("exportBoardPng", _model.Items, "#111214");
+            if (base64 is null) return;
+
+            var dir = System.IO.Path.GetDirectoryName(_activePath)?.Replace('\\', '/');
+            var name = System.IO.Path.GetFileNameWithoutExtension(_activePath) + ".png";
+            var pngPath = string.IsNullOrEmpty(dir) ? name : $"{dir}/{name}";
+
+            await StorageService.WriteFileBytesAsync(pngPath, Convert.FromBase64String(base64));
+            StorageService.SetFilePathsAsync();   // show the new PNG in the assets tree
+
+            _exportedName = name;
+            StateHasChanged();
+        }
+        catch (Exception exc)
+        {
+            Console.Error.WriteLine($"Failed to export moodboard: {exc}");
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
+        MoodboardService.MoodboardFileSelected -= OnMoodboardSelected;
+        _saveCts?.Cancel();
         if (_module is not null) await _module.DisposeAsync();
         _self?.Dispose();
     }

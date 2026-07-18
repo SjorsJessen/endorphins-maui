@@ -99,7 +99,7 @@ a,
     text-align: center;
     color: var(--text-dim);
     font-style: italic;
-    font-size: 12px;
+    font-size: 14px;
 }
 .pdf-toolbar {
     display: flex;
@@ -146,7 +146,7 @@ a,
 }
 .pdf-page-label,
 .pdf-zoom-label {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--text-mid);
     min-width: 46px;
     text-align: center;
@@ -176,7 +176,7 @@ a,
     width: 100%;
     text-align: left;
     padding: 5px 10px;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.4;
     color: var(--text-mid);
     background: none;
@@ -202,15 +202,15 @@ a,
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
-    padding: 16px 12px;
+    gap: 14px;
+    padding: 16px 14px;
     min-width: 0;
 }
 .pdf-pages-container::-webkit-scrollbar { width: 8px; height: 8px; }
 .pdf-pages-container::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
 .pdf-pages-container::-webkit-scrollbar-track { background: transparent; }
 .pdf-page-wrapper {
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
     line-height: 0;
     flex-shrink: 0;
     background: #ffffff;
@@ -248,7 +248,7 @@ a,
     padding: 3px 10px;
     border-radius: 5px;
     font-family: 'Inter', sans-serif;
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.12s;
 }
@@ -271,13 +271,13 @@ a,
     padding: 3px 8px;
     color: var(--text);
     font-family: 'Inter', sans-serif;
-    font-size: 12px;
+    font-size: 14px;
     outline: none;
     min-width: 120px;
 }
 .graph-tb-name {
     margin-left: auto;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--text-dim);
     font-style: italic;
     overflow: hidden;
@@ -308,7 +308,7 @@ a,
     align-items: center;
     justify-content: center;
     pointer-events: none;
-    font-size: 12px;
+    font-size: 14px;
     font-style: italic;
     color: var(--text-dim);
 }
@@ -500,7 +500,7 @@ code {
     display: flex;
     align-items: flex-start;
     gap: 16px;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 .dialogue-line--right {
     justify-content: flex-end;
@@ -580,7 +580,7 @@ code {
 }
 .choice-num {
     font-family: 'Inter', sans-serif;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--text-dim);
     opacity: 0.8;
     margin-top: 2px;
@@ -815,18 +815,18 @@ a:hover,
    raise specificity above MudBlazor's own .mud-button-* rules (which load
    after app.css) without needing !important on the interactive states. */
 .mud-button-root.ink-tb-btn {
+    font-family: 'Inter', sans-serif;
     display: inline-flex;
     align-items: center;
     gap: 4px;
     min-width: 0;
     background: none;
     border: 1px solid transparent;
-    color: var(--text-mid);
+    color: var(--text-mid) !important;
     padding: 3px 8px;
     border-radius: 4px;
     font-family: inherit;
-    font-size: 11px;
-    font-weight: 500;
+    font-size: 14px;
     cursor: pointer;
     white-space: nowrap;
     flex-shrink: 0;
@@ -843,13 +843,23 @@ a:hover,
 }
 /* MudButton nests content in .mud-button-label — carry the gap through */
 .mud-button-root.ink-tb-btn .mud-button-label {
-    gap: 4px;
+    gap: 8px;
     display: inline-flex;
     align-items: center;
 }
+.mud-button-text.mud-button-text-inherit {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    color: var(--text-mid) !important;
+}
+.mud-button-outlined.mud-button-outlined-info {
+    color: var(--accent) !important;
+    border-color: var(--accent) !important;
+    font-size: 16px;
+}
 .ink-tb-icon {
     font-family: 'RobotoMono', monospace;
-    font-size: 10px;
+    font-size: 14px;
     opacity: 0.7;
     color: var(--accent);
     min-width: 14px;
@@ -876,15 +886,16 @@ a:hover,
     min-height: 36px;
     height: 36px;
     background: var(--surface);
-    padding-left: 12px;
+    padding-left: 14px;
     padding-right: 6px;
     flex-shrink: 0;
 }
 /* "Project" header label → uppercase, dim, letter-spaced (beats the global
    .mud-typography colour override via higher specificity + !important) */
 .asset-panel > .mud-toolbar .mud-typography {
-    font-size: 12px;
+    font-size: 14px;
     text-transform: uppercase;
+    font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--text-dim) !important;
 }
@@ -912,13 +923,13 @@ a:hover,
     align-items: center;
     gap: 6px;
     width: 100%;
-    padding: 6px 12px;
+    padding: 6px 14px;
     background: none;
     border: none;
     cursor: pointer;
     color: var(--text-mid);
     font-family: inherit;
-    font-size: 12px;
+    font-size: 14px;
     text-align: left;
     transition: background 0.1s, color 0.1s;
 }
@@ -950,9 +961,9 @@ a:hover,
 
 /* Section headers: "Workspace" / "Assets" */
 .asset-section-label {
-    padding: 9px 12px 6px;
-    font-size: 11px;
-    font-weight: 600;
+    padding: 9px 14px 6px;
+    font-size: 14px;
+    font-weight: 500;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-dim);
@@ -973,7 +984,7 @@ a:hover,
     color: var(--text) !important;
 }
 .asset-panel .mud-treeview-item-label {
-    font-size: 12px;
+    font-size: 14px;
 }
 .asset-panel .mud-treeview-item-icon {
     color: var(--text-dim) !important;
@@ -1061,7 +1072,7 @@ a:hover,
     padding: 1px 4px;
     color: var(--text);
     font-family: inherit;
-    font-size: 12px;
+    font-size: 14px;
     outline: none;
 }
 
@@ -1077,12 +1088,12 @@ a:hover,
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 5px 8px 5px 12px;
+    padding: 5px 8px 5px 14px;
     border-bottom: 1px solid var(--border);
 }
 .asset-preview-name {
     flex: 1;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--text-mid);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1093,7 +1104,7 @@ a:hover,
     border: none;
     color: var(--text-dim);
     cursor: pointer;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1;
     padding: 2px 5px;
     border-radius: 2px;
@@ -1121,7 +1132,7 @@ a:hover,
     width: 100%;
 }
 .asset-preview-empty {
-    font-size: 11px;
+    font-size: 14px;
     color: var(--text-dim);
     font-style: italic;
 }
@@ -1165,7 +1176,7 @@ a:hover,
     gap: 6px;
 }
 .wtab-label {
-    font-size: 12px;
+    font-size: 14px;
     letter-spacing: 0.04em;
 }
 .wtab-close {
@@ -1175,7 +1186,7 @@ a:hover,
     width: 16px;
     height: 16px;
     border-radius: 3px;
-    font-size: 11px;
+    font-size: 14px;
     line-height: 1;
     color: var(--text-dim);
     opacity: 0.6;
@@ -1292,8 +1303,8 @@ a:hover,
 /* Empty-state hint when no tab is open */
 .workspace-empty {
     padding: 24px 20px;
-    font-size: 12px;
-    font-style: italic;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
     color: var(--text-dim);
     text-align: center;
 }
@@ -1311,7 +1322,7 @@ a:hover,
 .markdown-preview::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 .markdown-preview::-webkit-scrollbar-track { background: transparent; }
 .markdown-preview-empty {
-    font-size: 12px;
+    font-size: 14px;
     font-style: italic;
     color: var(--text-dim);
 }
@@ -1360,7 +1371,7 @@ a:hover,
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 12px 14px;
+    padding: 14px 14px;
     overflow-x: auto;
     margin: 0.8em 0;
 }

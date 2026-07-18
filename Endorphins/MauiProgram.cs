@@ -15,7 +15,6 @@ public static class MauiProgram
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
             .ConfigureFonts(fonts => { 
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular"); 
                 fonts.AddFont("RobotoMono.ttf", "RobotoMono"); 
                 fonts.AddFont("Horizon.otf", "Horizon"); 
                 fonts.AddFont("Inter.ttf", "Inter"); 

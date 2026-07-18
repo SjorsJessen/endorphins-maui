@@ -26,7 +26,7 @@
                         break;
                     case DialogType.Main:
                         <div class="dialogue-line">
-                            <img class="dialogue-portrait" srcset="Assets/endorphins-icon.svg" alt="portrait" />
+                            <img class="dialogue-portrait" srcset="Assets/characters/Aiden.png" alt="portrait" />
                             <div class="dialogue-bubble">
                                 <span class="dialogue-name">@line.Speaker</span>
                                 <span class="story-p">@line.Line</span>
@@ -39,7 +39,7 @@
                                 <span class="dialogue-name">@line.Speaker</span>
                                 <span class="story-p">@line.Line</span>
                             </div>
-                            <img class="dialogue-portrait" srcset="Assets/endorphins-icon.svg" alt="portrait" />
+                            <img class="dialogue-portrait" srcset="Assets/characters/{@line.Speaker}.png" alt="portrait" />
                         </div>
                         break;
                     case DialogType.Title:

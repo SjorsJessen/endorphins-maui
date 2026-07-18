@@ -258,11 +258,11 @@
         }
     }
 
-    private async void PlayVideo(string filePath)
+    private void PlayVideo(string filePath)
     {
         try
         {
-            AssetsService.VideoSelected?.Invoke(filePath);
+            AssetsService.SelectVideo(filePath);
         }
         catch (Exception exc)
         {

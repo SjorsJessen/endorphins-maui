@@ -1,26 +1,84 @@
 @inject AssetsService AssetsService
-@implements IDisposable
+@inject FileStorageService StorageService
+@inject IJSRuntime JS
+@implements IAsyncDisposable
 @inherits DevHotReloadComponentBase;
 
-<video controls autoplay src="@_videoUrl"></video>
+<div class="video-player">
+    @if (_activeVideo is null)
+    {
+        <div class="video-empty">No video selected.</div>
+    }
+    else
+    {
+        <div class="video-title">@System.IO.Path.GetFileName(_activeVideo)</div>
+    }
+    <video @ref="_videoRef" controls playsinline class="video-element"></video>
+</div>
 
 @code {
-    private string _videoUrl = string.Empty;
-    
+    private ElementReference _videoRef;
+    private string? _activeVideo;      // project-relative path of the selected video
+    private string? _pendingVideo;     // set by the event, loaded in OnAfterRenderAsync
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
         AssetsService.VideoSelected += OnVideoSelected;
+
+        // Created lazily when the Video tab first opens — after the selection
+        // event has already fired — so seed from the persisted selection.
+        if (AssetsService.ActiveVideoPath is not null)
+        {
+            _pendingVideo = AssetsService.ActiveVideoPath;
+        }
     }
 
-    private void OnVideoSelected(string videoUrl)
+    private void OnVideoSelected(string relativePath) => InvokeAsync(() =>
     {
-        _videoUrl = videoUrl;
+        _pendingVideo = relativePath;
         StateHasChanged();
+    });
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingVideo is null || StorageService.Root is null) return;
+        var path = _pendingVideo;
+        _pendingVideo = null;
+        try
+        {
+            // The WebView can't address files outside wwwroot, so stream the bytes
+            // to JS and play them through a blob URL.
+            var bytes = await StorageService.ReadFileAsBytesAsync(path);
+            using var streamRef = new DotNetStreamReference(new MemoryStream(bytes));
+            var status = await JS.InvokeAsync<string>("playVideoStream", _videoRef, streamRef, MimeType(path));
+            Console.WriteLine($"[VideoPlayer] {path}: {status}");
+            _activeVideo = path;
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine(e);
+        }
     }
-    
-    public void Dispose()
+
+    private static string MimeType(string path) =>
+        System.IO.Path.GetExtension(path).ToLowerInvariant() switch
+        {
+            ".mp4" => "video/mp4",
+            ".webm" => "video/webm",
+            ".mkv" => "video/x-matroska",
+            ".mov" => "video/quicktime",
+            _ => "video/mp4"
+        };
+
+    public async ValueTask DisposeAsync()
     {
         AssetsService.VideoSelected -= OnVideoSelected;
+        try
+        {
+            await JS.InvokeVoidAsync("releaseVideoStream", _videoRef);
+        }
+        catch (JSDisconnectedException) { /* webview already gone */ }
     }
 }

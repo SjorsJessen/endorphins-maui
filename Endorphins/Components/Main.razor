@@ -1,4 +1,6 @@
 @namespace Endorphins.Components
+@inject Endorphins.Services.FileStorageService StorageService
+@inject Endorphins.Services.AssetsService AssetsService
 @inherits LayoutComponentBase
 
 <MudThemeProvider />
@@ -29,3 +31,27 @@
         <pre style="white-space:pre-wrap; color:red;">@ex.ToString()</pre>
     </ErrorContent>
 </ErrorBoundary>
+
+@code {
+    // Dev/test hook: auto-load a project (and optionally a video) at startup, so
+    // flows behind the native folder picker can be exercised from the command line:
+    //   ENDORPHINS_AUTO_PROJECT=/path/to/project ENDORPHINS_AUTO_VIDEO=videos/clip.mp4
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        var autoProject = System.Environment.GetEnvironmentVariable("ENDORPHINS_AUTO_PROJECT");
+        if (string.IsNullOrEmpty(autoProject) || !Directory.Exists(autoProject)) return;
+
+        Console.WriteLine($"[AutoLoad] project: {autoProject}");
+        StorageService.Root = autoProject;
+        StorageService.SetFilePathsAsync();
+
+        var autoVideo = System.Environment.GetEnvironmentVariable("ENDORPHINS_AUTO_VIDEO");
+        if (!string.IsNullOrEmpty(autoVideo))
+        {
+            await Task.Delay(3000);   // let the workspace finish initialising
+            Console.WriteLine($"[AutoLoad] video: {autoVideo}");
+            await InvokeAsync(() => AssetsService.SelectVideo(autoVideo));
+        }
+    }
+}

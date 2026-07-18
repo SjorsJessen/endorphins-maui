@@ -33,6 +33,16 @@ public sealed class AssetsService
 
     public Action<string>? VideoSelected { get; set; }
 
+    /// <summary>The currently-selected video, persisted for the lazily-created player (see markdown note above).</summary>
+    public string? ActiveVideoPath { get; private set; }
+
+    /// <summary>Records the active video and notifies listeners it was selected.</summary>
+    public void SelectVideo(string path)
+    {
+        ActiveVideoPath = path;
+        VideoSelected?.Invoke(path);
+    }
+
     /// <summary>Raised when the user launches the Photopea tool from the asset panel.</summary>
     public Action? PhotoshopRequested { get; set; }
     

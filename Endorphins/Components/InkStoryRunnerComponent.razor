@@ -5,43 +5,67 @@
 
 @inherits DevHotReloadComponentBase
 
-<div class="ink-story-runner overflow-auto overflow-scroll" style="height: 100%; max-height: calc(100vh - 120px);">
-    @if (StoryService.DialogLines != null)
-    {
-        foreach (var line in StoryService.DialogLines)
+<div class="ink-story-runner">
+    <div class="story-scroll overflow-auto">
+        @if (!StoryService.IsStoryLoaded && StoryService.DialogLines.Count == 0)
         {
-            if (@line.IsMainCharacter)
+            <div class="story-empty">No story has been loaded. Load a project.</div>
+        }
+        else
+        {
+            foreach (var line in StoryService.DialogLines)
             {
-                <div class="dialogue-line">
-                    <img class="dialogue-portrait" srcset="Assets/endorphins-icon.svg" alt="portrait" />
-                    <div class="dialogue-bubble">
-                        <span class="dialogue-name">@line.Speaker</span>
-                        <span class="story-p">@line.Line</span>
+                if (@line.IsMainCharacter)
+                {
+                    <div class="dialogue-line">
+                        <img class="dialogue-portrait" srcset="Assets/endorphins-icon.svg" alt="portrait" />
+                        <div class="dialogue-bubble">
+                            <span class="dialogue-name">@line.Speaker</span>
+                            <span class="story-p">@line.Line</span>
+                        </div>
                     </div>
-                </div>
+                }
+                else
+                {
+                    <div class="dialogue-line dialogue-line--right">
+                        <div class="dialogue-bubble">
+                            <span class="dialogue-name">@line.Speaker</span>
+                            <span class="story-p">@line.Line</span>
+                        </div>
+                        <img class="dialogue-portrait" srcset="Assets/endorphins-icon.svg" alt="portrait" />
+                    </div>
+                }
             }
-            else
+            @if (StoryService.Choices.Count > 0)
             {
-                <div class="dialogue-line dialogue-line--right">
-                    <div class="dialogue-bubble">
-                        <span class="dialogue-name">@line.Speaker</span>
-                        <span class="story-p">@line.Line</span>
-                    </div>
-                    <img class="dialogue-portrait" srcset="Assets/endorphins-icon.svg" alt="portrait" />
+                <div class="choices-panel">
+                    @foreach (var choice in StoryService.Choices)
+                    {
+                        <button class="choice-btn" @onclick="() => StoryService.MakeChoice(choice.index)">
+                            <span class="choice-num">@(choice.index + 1)</span>
+                            <span>@choice.text</span>
+                        </button>
+                    }
                 </div>
             }
         }
-    }
-    @if (StoryService.Choices.Count > 0)
+    </div>
+
+    @if (StoryService.IsMainScriptActive)
     {
-        <div class="choices-panel">
-            @foreach (var choice in StoryService.Choices)
-            {
-                <button class="choice-btn" @onclick="() => StoryService.MakeChoice(choice.index)">
-                    <span class="choice-num">@(choice.index + 1)</span>
-                    <span>@choice.text</span>
-                </button>
-            }
+        <div class="story-footer">
+            <MudTooltip Text="Compile and run from the beginning" Arrow="true" Placement="Placement.Top">
+                <MudIconButton Icon="@Icons.Material.Sharp.PlayArrow" Color="Color.Info" Size="Size.Small"
+                               OnClick="Run" />
+            </MudTooltip>
+            <MudTooltip Text="Continue" Arrow="true" Placement="Placement.Top">
+                <MudIconButton Icon="@Icons.Material.Sharp.FastForward" Color="Color.Inherit" Size="Size.Small"
+                               Disabled="!StoryService.IsStoryLoaded" OnClick="StoryService.ContinueStory" />
+            </MudTooltip>
+            <MudTooltip Text="Restart story" Arrow="true" Placement="Placement.Top">
+                <MudIconButton Icon="@Icons.Material.Sharp.Refresh" Color="Color.Inherit" Size="Size.Small"
+                               Disabled="!StoryService.IsStoryLoaded" OnClick="Restart" />
+            </MudTooltip>
         </div>
     }
 </div>
@@ -55,6 +79,19 @@
         StoryService.DialogUpdated += OnStateChanged;
         StoryService.StoryReset += OnStateChanged;
         StoryService.ChoicesReset += OnStateChanged;
+        StoryService.InkScriptSelected += OnScriptSelected;
+    }
+
+    private void Run()
+    {
+        if (StorageService.Root is null) return;
+        StoryService.Run(StorageService.Root, StoryService.ActiveScriptPath);
+    }
+
+    private void Restart()
+    {
+        StoryService.ResetStory();
+        StoryService.ContinueStory();
     }
 
     private void OnStateChanged() => InvokeAsync(StateHasChanged);
@@ -63,6 +100,8 @@
 
     private void OnStateChanged(List<Choice> _) => OnStateChanged();
 
+    private void OnScriptSelected(string _) => OnStateChanged();
+
     public override void Dispose()
     {
         base.Dispose();
@@ -70,6 +109,6 @@
         StoryService.DialogUpdated -= OnStateChanged;
         StoryService.StoryReset -= OnStateChanged;
         StoryService.ChoicesReset -= OnStateChanged;
+        StoryService.InkScriptSelected -= OnScriptSelected;
     }
 }
-

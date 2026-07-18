@@ -3,39 +3,57 @@
 
 @inject InkStoryService InkStoryService;
 @inherits DevHotReloadComponentBase;
-@implements IDisposable
 
 <MudToolBar Fixed="false" Dense>
     <div class="app-logo" style="display: flex; gap: 1rem; justify-items: center; align-self: center;">
-        <img srcset="Assets/endorphins-icon.svg" alt="logo" width="24px" height="24px"/>    
-        <span class="app-name">Endorphins_</span> 
+        <img srcset="Assets/endorphins-icon.svg" alt="logo" width="24px" height="24px"/>
+        <span class="app-name">Endorphins_</span>
     </div>
     <MudSpacer/>
-    <MudBadge Dot="true" Color="Color.Info" Class="mx-6 my-4">
-        <MudText>@_inkState</MudText>
+    <MudBadge Dot="true" Color="@StateColor" Class="mx-6 my-4">
+        <MudText Color="@StateColor">@StateLabel</MudText>
     </MudBadge>
 </MudToolBar>
 <MudDivider/>
 
 @code
 {
-    private string _inkState = "Test test!";
+    private Color StateColor => InkStoryService.CompileState switch
+    {
+        InkCompileState.Compiling => Color.Warning,
+        InkCompileState.Compiled => Color.Success,
+        InkCompileState.Error => Color.Error,
+        _ => Color.Default,
+    };
+
+    private string StateLabel => InkStoryService.CompileState switch
+    {
+        InkCompileState.Compiling => "Compiling…",
+        InkCompileState.Compiled => "Compiled",
+        InkCompileState.Error => ErrorLabel,
+        _ => "No story loaded",
+    };
+
+    private string ErrorLabel
+    {
+        get
+        {
+            var errors = InkStoryService.Diagnostics.Count(d => d.Type == Ink.ErrorType.Error);
+            return errors == 1 ? "1 error" : $"{errors} errors";
+        }
+    }
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        InkStoryService.InkCompileStateUpdated += OnInkCompileStateUpdated;
-        Console.WriteLine($"Ink compile state updated: {_inkState}");
+        InkStoryService.CompileStateChanged += OnCompileStateChanged;
     }
 
-    private void OnInkCompileStateUpdated(string newState)
-    {
-        _inkState = newState;
-        Console.WriteLine($"Ink compile state updated: {newState}");
-    }
+    private void OnCompileStateChanged() => InvokeAsync(StateHasChanged);
 
-    public void Dispose()
+    public override void Dispose()
     {
-        InkStoryService.InkCompileStateUpdated -= OnInkCompileStateUpdated;
+        base.Dispose();
+        InkStoryService.CompileStateChanged -= OnCompileStateChanged;
     }
 }

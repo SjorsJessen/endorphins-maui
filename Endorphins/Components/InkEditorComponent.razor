@@ -24,13 +24,29 @@
     CssClass="ink-editor"
     ConstructionOptions="EditorConstructionOptions"
     OnDidChangeModelContent="OnModelContentChanged"
-    OnDidChangeCursorPosition="EditorDidChangeCursorPosition" 
+    OnDidChangeCursorPosition="EditorDidChangeCursorPosition"
 />
 
+@if (InkStoryService.Diagnostics.Count > 0)
+{
+    <div class="ink-error-panel">
+        <div class="ink-error-panel-title">Problems (@InkStoryService.Diagnostics.Count)</div>
+        <div class="ink-error-panel-list">
+            @foreach (var diagnostic in InkStoryService.Diagnostics)
+            {
+                <div class="ink-error-item @(diagnostic.Type == Ink.ErrorType.Error ? "is-error" : "is-warning")">
+                    @diagnostic.Message
+                </div>
+            }
+        </div>
+    </div>
+}
+
 @code {
-    private const string InkScriptsDirectory = "scripts";
-    private const string MainInkScriptPath = $"{InkScriptsDirectory}/main.ink";
+    private const string MainInkScriptPath = InkStoryService.MainScriptPath;
+    private const int CompileDebounceMs = 700;
     private StandaloneCodeEditor? _editor;
+    private CancellationTokenSource? _compileCts;
     private BlazorMonaco.Position _currentCursorPosition = new();
     private sealed record InkSnippet(string Icon, string Label, string Tooltip, string Snippet);
 
@@ -48,8 +64,11 @@
     {
         base.OnInitialized();
         InkStoryService.InkScriptSelected += UpdateEditorContent;
+        InkStoryService.CompileStateChanged += OnCompileStateChanged;
         StorageService.FilesLoaded += LoadMainInkScript;
     }
+
+    private void OnCompileStateChanged() => InvokeAsync(StateHasChanged);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -80,6 +99,12 @@
                     InkStoryService.ActiveScriptPath = MainInkScriptPath;
                     await ApplyContentAsync(content);
                     InkStoryService.InkScriptSelected?.Invoke(content);
+
+                    // Auto-run the freshly imported project's main script in the runner.
+                    if (StorageService.Root is not null)
+                    {
+                        InkStoryService.Run(StorageService.Root, MainInkScriptPath);
+                    }
                 }
             }
             catch (Exception ex)
@@ -95,7 +120,31 @@
         var content = await _editor.GetValue();
         InkStoryService.SetContent(content);
         await SaveContentToFile(content);
+        ScheduleCompile();
         StateHasChanged();
+    }
+
+    /// <summary>Recompiles the script shortly after the user stops typing so state and errors stay live.</summary>
+    private void ScheduleCompile()
+    {
+        _compileCts?.Cancel();
+        var cts = _compileCts = new CancellationTokenSource();
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(CompileDebounceMs, cts.Token);
+            }
+            catch (TaskCanceledException)
+            {
+                return;
+            }
+            await InvokeAsync(() =>
+            {
+                if (StorageService.Root is null) return;
+                InkStoryService.Compile(StorageService.Root, InkStoryService.ActiveScriptPath);
+            });
+        });
     }
 
     private void UpdateEditorContent(string content)
@@ -157,8 +206,10 @@
     public override void Dispose()
     {
         base.Dispose();
+        _compileCts?.Cancel();
         _editor?.Dispose();
         InkStoryService.InkScriptSelected -= UpdateEditorContent;
+        InkStoryService.CompileStateChanged -= OnCompileStateChanged;
         StorageService.FilesLoaded -= LoadMainInkScript;
     }
 }

@@ -485,14 +485,77 @@ code {
     display: none;
 }
 
+/* ── INK ERROR OVERVIEW (bottom of the ink editor) ── */
+.ink-error-panel {
+    flex: 0 0 auto;
+    max-height: 180px;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    font-family: 'Inter', sans-serif;
+}
+.ink-error-panel-title {
+    padding: 6px 14px 4px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+.ink-error-panel-list {
+    overflow-y: auto;
+    padding: 0 8px 8px;
+}
+.ink-error-item {
+    padding: 4px 8px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    border-radius: 4px;
+    color: var(--text-mid);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.ink-error-item.is-error {
+    color: #f28b82;
+}
+.ink-error-item.is-warning {
+    color: #fdd663;
+}
+
 /* ── INK STORY RUNNER ── */
 .ink-story-runner {
     background: var(--bg) !important;
-    padding: 20px 22px 8px;
     font-family: 'Crimson Pro', Georgia, serif;
     font-size: 16px;
     line-height: 1.75;
     color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: calc(100vh - 120px);
+}
+.ink-story-runner .story-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 20px 22px 8px;
+}
+.ink-story-runner .story-empty {
+    padding: 24px 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: var(--text-dim);
+    text-align: center;
+}
+.ink-story-runner .story-footer {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
 }
 
 /* Dialogue line: portrait + bubble */

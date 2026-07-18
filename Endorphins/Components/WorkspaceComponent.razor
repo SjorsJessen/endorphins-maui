@@ -51,7 +51,7 @@
     <!-- ── PREVIEW COLUMN ── -->
     <div class="ws-col ws-preview @(_previewCollapsed ? "collapsed" : null)" style="@PreviewStyle">
         <MudTabs MinimumTabWidth="60px" KeepPanelsAlive="true" @bind-ActivePanelIndex="_activeIndex">
-            <MudTabPanel Visible="_storyOpen" TabContent="@Header("Story", () => _storyOpen = false)">
+            <MudTabPanel TabContent="@PinnedHeader("Story")">
                 <InkStoryRunnerComponent/>
             </MudTabPanel>
             <MudTabPanel Visible="_notesOpen" TabContent="@Header("Notes", () => _notesOpen = false)">
@@ -70,12 +70,6 @@
                 <MoodboardComponent/>
             </MudTabPanel>
         </MudTabs>
-        @if (!AnyTabOpen)
-        {
-            <div class="workspace-empty">
-                Run a story, open a note, or open a file to preview it here.
-            </div>
-        }
     </div>
 
     <!-- Full-viewport catcher so dragging keeps tracking outside the divider -->
@@ -144,8 +138,8 @@
     private void ToggleAsset() => _assetCollapsed = !_assetCollapsed;
     private void TogglePreview() => _previewCollapsed = !_previewCollapsed;
 
-    // ── Content-driven tabs — hidden until their source loads ──
-    private bool _storyOpen;
+    // ── Content-driven tabs — hidden until their source loads.
+    //    The Story tab is pinned: always open, no close button. ──
     private bool _notesOpen;
     private bool _readerOpen;
     private bool _graphOpen;       // opens when a diagram file is selected
@@ -159,9 +153,6 @@
     private const int PhotoshopIndex = 4;
     private const int MoodboardIndex = 5;
 
-    private bool AnyTabOpen =>
-        _storyOpen || _notesOpen || _readerOpen || _graphOpen || _photoshopOpen || _moodboardOpen;
-
     protected override void OnInitialized()
     {
         EditorService.EditorChanged += OnStateChanged;
@@ -174,8 +165,8 @@
         AssetsService.PhotoshopRequested += OnPhotoshopRequested;
     }
 
-    private void OnStoryContent(Endorphins.Models.DialogLine _) => OpenTab(() => _storyOpen = true, StoryIndex);
-    private void OnChoices(List<Ink.Runtime.Choice> _) => OpenTab(() => _storyOpen = true, StoryIndex);
+    private void OnStoryContent(Endorphins.Models.DialogLine _) => OpenTab(() => { }, StoryIndex);
+    private void OnChoices(List<Ink.Runtime.Choice> _) => OpenTab(() => { }, StoryIndex);
     private void OnMarkdownSelected(string _, string __) => OpenTab(() => _notesOpen = true, NotesIndex);
     private void OnPdfSelected(Endorphins.Models.PdfFile _) => OpenTab(() => _readerOpen = true, ReaderIndex);
     private void OnDiagramSelected(string _, string __) => OpenTab(() => _graphOpen = true, GraphIndex);
@@ -191,6 +182,11 @@
     });
 
     private void OnStateChanged() => InvokeAsync(StateHasChanged);
+
+    private RenderFragment PinnedHeader(string label) =>
+        @<span class="wtab">
+            <span class="wtab-label">@label</span>
+        </span>;
 
     private RenderFragment Header(string label, Action close) =>
         @<span class="wtab">

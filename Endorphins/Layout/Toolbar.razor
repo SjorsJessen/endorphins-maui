@@ -1,7 +1,5 @@
 @using Endorphins.Services
 @using MudBlazor
-@inject InkStoryService StoryService;
-@inject FileStorageService StorageService;
 
 <MudToolBar Dense>
     <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Sharp.Save" Color="Color.Inherit" Size="Size.Small"
@@ -12,33 +10,5 @@
                Class="ml-4">
         Export to JSON
     </MudButton>
-
-    <MudSpacer />
-
-    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Sharp.Replay" Color="Color.Inherit" Size="Size.Small"
-               Class="mr-4" OnClick="StoryService.ResetStory">
-        Restart
-    </MudButton>
-    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Sharp.PlayArrow" Color="Color.Info"
-               Size="Size.Small" Class="mr-4" OnClick="Run">
-        Run
-    </MudButton>
-    @if (StoryService.HasStoryStarted)
-    {    
-        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Sharp.PlayArrow" Color="Color.Info"
-                Size="Size.Small" Class="mr-4" OnClick="StoryService.ContinueStory">
-            Continue
-        </MudButton>
-    }
-
 </MudToolBar>
 <MudDivider />
-
-@code
-{
-    public void Run()
-    {
-        var root = StorageService.Root;
-        StoryService.Run(root, StoryService.ActiveScriptPath);
-    }
-}

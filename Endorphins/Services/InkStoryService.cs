@@ -18,11 +18,29 @@ public sealed class ProjectFileHandler : IFileHandler
         => File.ReadAllText(fullFilename);
 }
 
+public enum InkCompileState
+{
+    NotLoaded,
+    Compiling,
+    Compiled,
+    Error,
+}
+
+public sealed record InkDiagnostic(string Message, ErrorType Type);
+
 public sealed class InkStoryService
 {
+    public const string MainScriptPath = "scripts/main.ink";
+
     public bool HasStoryStarted { get; private set; }
     public string? EditorContent => _editorContent;
     public string ActiveScriptPath { get; set; } = string.Empty;
+    public bool IsMainScriptActive =>
+        string.Equals(ActiveScriptPath.Replace('\\', '/'), MainScriptPath, StringComparison.OrdinalIgnoreCase);
+    public bool IsStoryLoaded => _activeStory != null;
+
+    public InkCompileState CompileState { get; private set; } = InkCompileState.NotLoaded;
+    public IReadOnlyList<InkDiagnostic> Diagnostics => _diagnostics;
 
     // Story playback state lives here (singleton) so it survives the runner
     // component being torn down and recreated on tab switches.
@@ -33,25 +51,61 @@ public sealed class InkStoryService
     public Action<DialogLine>? DialogUpdated { get; set; }
     public Action? StoryReset { get; set; }
     public Action? ChoicesReset { get; set; }
-    public Action<string>? InkCompileStateUpdated { get; set; }
+    public Action? CompileStateChanged { get; set; }
     public Action<List<Choice>>? ChoicesAdded { get; set; }
 
     private Story? _activeStory;
     private const string MainCharacter = "Aiden";
     private string? _editorContent;
     private readonly List<DialogLine> _dialogLines = [];
+    private readonly List<InkDiagnostic> _diagnostics = [];
     private List<Choice> _choices = [];
 
     public void Run(string root, string scriptPath)
     {
-        if(_editorContent == null) return;
-        _activeStory = ParseEditorContentToStory(root, scriptPath, _editorContent);
-        if (_activeStory)
+        var story = Compile(root, scriptPath);
+        if (story is null) return;
+        _activeStory = story;
+        ClearHistory();
+        StoryReset?.Invoke();
+        Setup(_activeStory);
+        ContinueStory();
+    }
+
+    /// <summary>
+    /// Compiles the current editor content, capturing parser errors/warnings into
+    /// <see cref="Diagnostics"/> and updating <see cref="CompileState"/>.
+    /// Returns the runtime story on success, null when there are errors.
+    /// </summary>
+    public Story? Compile(string root, string scriptPath)
+    {
+        if (_editorContent == null) return null;
+        SetCompileState(InkCompileState.Compiling);
+        _diagnostics.Clear();
+
+        Story? story = null;
+        try
         {
-            ClearHistory();
-            Setup(_activeStory);
-            ContinueStory();
+            story = ParseEditorContentToStory(root, scriptPath, _editorContent);
         }
+        catch (Exception ex)
+        {
+            _diagnostics.Add(new InkDiagnostic(ex.Message, ErrorType.Error));
+        }
+
+        var hasErrors = _diagnostics.Any(d => d.Type == ErrorType.Error) || story is null;
+        if (hasErrors && _diagnostics.Count == 0)
+        {
+            _diagnostics.Add(new InkDiagnostic("Compilation produced no output.", ErrorType.Error));
+        }
+        SetCompileState(hasErrors ? InkCompileState.Error : InkCompileState.Compiled);
+        return hasErrors ? null : story;
+    }
+
+    private void SetCompileState(InkCompileState state)
+    {
+        CompileState = state;
+        CompileStateChanged?.Invoke();
     }
 
     public void ContinueStory()
@@ -118,11 +172,17 @@ public sealed class InkStoryService
         var parser = new InkParser(
             str: editorContent,
             filenameForMetadata: scriptPath,
+            externalErrorHandler: OnCompileDiagnostic,
             fileHandler: fileHandler
         );
         var parsed = parser.Parse();
-        var story = parsed.ExportRuntime();
+        var story = parsed?.ExportRuntime(OnCompileDiagnostic);
         return story;
+    }
+
+    private void OnCompileDiagnostic(string message, ErrorType type)
+    {
+        _diagnostics.Add(new InkDiagnostic(message, type));
     }
     
     private bool HasChoices()

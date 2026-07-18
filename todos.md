@@ -1,4 +1,2 @@
-
-
-- I want the assets window to be divided into static assets and dynamic assets. Dynamic has a header with a divider underneath called 'workspace' where static has 'assets' as header. The tree's categories need to be laid out correctly, now some are further to the left due to the create button
-- I want the PDF preview to be scrollable properly and have a hierarchy and toolbar to make it easier to navigate
+- Like the diagram editor I also want to be able to create moodboard files from the assets window, edit it there, save it and export is as a .png file
+- Want photopea to not be an iframe that opens in a new browser tab, but rather embedded in the app that can be launched from the assets window

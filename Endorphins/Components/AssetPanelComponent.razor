@@ -23,24 +23,52 @@
         />
     </MudToolBar>
     <MudDivider></MudDivider>
-    <MudTreeView T="string" Dense Hover ExpandOnClick>
-        @if (_tree.Count == 0)
-        {
-            <MudText Typo="Typo.body2" Class="pa-3" Style="color: var(--text-dim);">
-                No project loaded.
-            </MudText>
-        }
-        else
-        {
-            @foreach (var node in _tree)
-            {
-                <AssetTreeNodeComponent Node="node"
-                                        OnFileActivated="OnFileActivated"
-                                        OnCreateFile="CreateFileInFolder"
-                                        OnRenameFile="RenameFile"/>
-            }
-        }
-    </MudTreeView>
+
+    @if (!_projectLoaded)
+    {
+        <MudText Typo="Typo.body2" Class="pa-3" Style="color: var(--text-dim);">
+            No project loaded.
+        </MudText>
+    }
+    else
+    {
+        <div class="asset-scroll">
+            <!-- ── DYNAMIC (editable) assets ── -->
+            <div class="asset-section-label">Workspace</div>
+            <MudDivider/>
+            <MudTreeView T="string" Dense Hover ExpandOnClick>
+                @foreach (var node in _workspaceTree)
+                {
+                    <AssetTreeNodeComponent Node="node"
+                                            OnFileActivated="OnFileActivated"
+                                            OnCreateFile="CreateFileInFolder"
+                                            OnRenameFile="RenameFile"/>
+                }
+            </MudTreeView>
+
+            <!-- ── STATIC assets ── -->
+            <div class="asset-section-label">Assets</div>
+            <MudDivider/>
+            <MudTreeView T="string" Dense Hover ExpandOnClick>
+                @if (_assetsTree.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Class="px-3 py-2" Style="color: var(--text-dim); font-style: italic;">
+                        No assets.
+                    </MudText>
+                }
+                else
+                {
+                    @foreach (var node in _assetsTree)
+                    {
+                        <AssetTreeNodeComponent Node="node"
+                                                OnFileActivated="OnFileActivated"
+                                                OnCreateFile="CreateFileInFolder"
+                                                OnRenameFile="RenameFile"/>
+                    }
+                }
+            </MudTreeView>
+        </div>
+    }
 
     @if (_isPreviewPanelActive)
     {
@@ -78,13 +106,18 @@
     private string? _previewName;
     private string? _previewData;      // data: URI for image / audio
     private string _previewJsonHtml = string.Empty;
-    private List<AssetNode> _tree = [];
+    private bool _projectLoaded;
+    private List<AssetNode> _workspaceTree = [];
+    private List<AssetNode> _assetsTree = [];
+
+    // Dynamic (editable) categories shown under "Workspace", in this order.
+    private static readonly string[] WorkspaceCategories = ["scripts", "notes", "diagrams"];
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
         StorageService.FilesLoaded += OnFilesLoaded;
-        if (StorageService.FilePaths.Count > 0)
+        if (StorageService.Root is not null)
         {
             RebuildTree(StorageService.FilePaths);
         }
@@ -129,11 +162,25 @@
                 current = existing;
             }
         }
-        EnsureCategory(root, "scripts");
-        EnsureCategory(root, "notes");
-        EnsureCategory(root, "diagrams");
+        foreach (var category in WorkspaceCategories)
+        {
+            EnsureCategory(root, category);
+        }
         SortNode(root);
-        _tree = root.Children;
+
+        // Workspace = the dynamic categories (in preferred order); Assets = the rest.
+        _workspaceTree = WorkspaceCategories
+            .Select(name => root.Children.FirstOrDefault(c =>
+                c.IsDirectory && string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase)))
+            .Where(n => n is not null)
+            .Select(n => n!)
+            .ToList();
+
+        _assetsTree = root.Children
+            .Where(c => !WorkspaceCategories.Contains(c.Name, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+
+        _projectLoaded = true;
     }
 
     /// <summary>Guarantees a top-level category folder exists so its + button is always available.</summary>

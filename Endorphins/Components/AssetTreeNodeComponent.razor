@@ -84,7 +84,8 @@ else
     private bool IsNotes => Node.IsDirectory && string.Equals(Node.Name, "notes", StringComparison.OrdinalIgnoreCase);
     private bool IsDiagrams => Node.IsDirectory && string.Equals(Node.Name, "diagrams", StringComparison.OrdinalIgnoreCase);
     private bool IsCreatable => IsScripts || IsNotes || IsDiagrams;
-    private bool UseCustomRow => IsCreatable || !Node.IsDirectory;
+    // Every node uses the custom row so all rows align (folders + files + categories).
+    private bool UseCustomRow => true;
     private string CreateTooltip => IsScripts ? "New Ink script" : IsDiagrams ? "New diagram" : "New note";
 
     private string Icon => Node.IsDirectory

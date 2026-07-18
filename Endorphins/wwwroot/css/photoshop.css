@@ -1,0 +1,37 @@
+/* Split from app.css — photoshop-specific styles. Loaded before MudBlazor, in source order. */
+
+/* ── Photoshop export button ── */
+.photoshop-export {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 5px;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    margin-top: 6px;
+}
+.photoshop-export:hover {
+    background: rgba(79, 156, 240, 0.12);
+}
+
+/* Photopea tool pane */
+.photoshop-pane {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 150px);
+    min-height: 360px;
+    background: var(--bg);
+}
+.photopea-frame {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    border: 0;
+    display: block;
+    background: var(--bg);
+}
+.photoshop-pane .photoshop-export {
+    align-self: flex-start;
+    margin: 8px 10px;
+}

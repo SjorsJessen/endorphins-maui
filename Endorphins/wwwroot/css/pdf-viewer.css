@@ -1,0 +1,219 @@
+/* Split from app.css — pdf-viewer-specific styles. Loaded before MudBlazor, in source order. */
+
+.pdf-viewer {
+    pointer-events: all !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PDF VIEWER — toolbar + outline sidebar + scrollable pages
+   ══════════════════════════════════════════════════════════════════ */
+.pdf-preview {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: calc(100vh - 120px);
+    background: var(--bg);
+    overflow: hidden;
+    position: relative;
+}
+/* Loading overlay shown with the file's name while the document parses/renders */
+.pdf-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: rgba(17, 18, 20, 0.82);
+    backdrop-filter: blur(1px);
+}
+.pdf-loading-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--text-mid);
+    max-width: 80%;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pdf-empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--text-dim);
+    font-style: italic;
+    font-size: 14px;
+}
+.pdf-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 5px 10px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.pdf-tb-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.pdf-tb-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    color: var(--text-mid);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+}
+.pdf-tb-btn:hover:not(:disabled) {
+    background: var(--surface2);
+    color: var(--text);
+}
+.pdf-tb-btn.active {
+    background: var(--accent-dim);
+    color: var(--accent);
+}
+.pdf-tb-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+.pdf-tb-btn .mud-icon-root {
+    font-size: 18px;
+}
+.pdf-page-label,
+.pdf-zoom-label {
+    font-size: 14px;
+    color: var(--text-mid);
+    min-width: 46px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+}
+.pdf-content-area {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+.pdf-outline-panel {
+    width: 220px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    padding: 6px 0;
+}
+.pdf-outline-panel::-webkit-scrollbar { width: 4px; }
+.pdf-outline-panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.pdf-outline-panel::-webkit-scrollbar-track { background: transparent; }
+.pdf-outline-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 5px 10px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--text-mid);
+    background: none;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background 0.12s, color 0.12s;
+}
+.pdf-outline-item:hover:not(:disabled) {
+    background: var(--surface2);
+    color: var(--accent);
+}
+.pdf-outline-item:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+.pdf-pages-container {
+    flex: 1 1 auto;
+    overflow: auto;
+    background: var(--surface2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 14px;
+    min-width: 0;
+}
+.pdf-pages-container::-webkit-scrollbar { width: 8px; height: 8px; }
+.pdf-pages-container::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+.pdf-pages-container::-webkit-scrollbar-track { background: transparent; }
+.pdf-page-wrapper {
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+    line-height: 0;
+    flex-shrink: 0;
+    background: #ffffff;
+    border-radius: 2px;
+    position: relative;
+}
+.pdf-page-canvas {
+    display: block;
+    border-radius: 2px;
+}
+
+/* Transparent selectable text overlay (pdf.js text layer) */
+.pdf-text-layer {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    line-height: 1;
+    text-align: initial;
+    transform-origin: 0 0;
+    z-index: 2;
+    -webkit-text-size-adjust: none;
+    forced-color-adjust: none;
+    caret-color: transparent;
+}
+.pdf-text-layer :is(span, br) {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+}
+.pdf-text-layer ::selection {
+    background: rgba(79, 156, 240, 0.35);
+    color: transparent;
+}
+
+/* Saved highlights, drawn between the canvas and the text layer */
+.pdf-highlight-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+.pdf-highlight {
+    position: absolute;
+    background: rgba(232, 201, 122, 0.45);
+    mix-blend-mode: multiply;
+    border-radius: 2px;
+    pointer-events: auto;
+    cursor: pointer;
+}
+.pdf-highlight:hover {
+    background: rgba(232, 122, 122, 0.45);
+}
+
+/* ── PDF viewer ── */
+.pdf-viewer {
+    background: var(--bg);
+    height: 100%;
+    overflow: auto;
+}

@@ -1,0 +1,43 @@
+/* Split from app.css — video-specific styles. Loaded before MudBlazor, in source order. */
+
+/* ── VIDEO PREVIEW ── */
+.video-player {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    background: var(--bg);
+}
+.video-title {
+    padding: 8px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--text-mid);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.video-empty {
+    padding: 24px 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: var(--text-dim);
+    text-align: center;
+}
+.video-element {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    background: #000;
+    object-fit: contain;
+}
+
+/* ── Video player ── */
+video {
+    width: 100%;
+    max-height: calc(100vh - 160px);
+    background: #000;
+    display: block;
+}

@@ -1,0 +1,287 @@
+/* Split from app.css — asset-panel-specific styles. Loaded before MudBlazor, in source order. */
+
+.asset-panel {
+    border-right: 1px solid var(--border);
+    height: 100%;
+    background: var(--surface);
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    color: red;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ASSET PANEL — file-panel layout + tree styling + asset preview
+   Adapts the reference #file-panel / #asset-preview look onto the
+   MudBlazor tree + preview markup.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Panel is a column: header, scrolling tree, pinned preview */
+.asset-panel {
+    /* display: grid; */
+    /* flex-direction: column; */
+    height: calc(100vh - 150px);
+    min-height: 400px;
+    overflow: scroll;
+    background-color: var(--bg);
+}
+.asset-panel > .mud-toolbar {
+    min-height: 48px;
+    height: 48px;
+    background: var(--surface);
+    padding-left: 14px;
+    padding-right: 6px;
+    flex-shrink: 0;
+}
+/* "Project" header label → uppercase, dim, letter-spaced (beats the global
+   .mud-typography colour override via higher specificity + !important) */
+.asset-panel > .mud-toolbar .mud-typography {
+    font-size: 14px;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-dim) !important;
+}
+/* Scroll region holding the Workspace + Assets sections */
+.asset-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+}
+.asset-scroll::-webkit-scrollbar { width: 4px; }
+.asset-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.asset-scroll::-webkit-scrollbar-track { background: transparent; }
+.asset-scroll .mud-treeview {
+    padding: 4px 0 6px;
+}
+
+/* Pinned Tools section (Photopea launcher) */
+.asset-tools {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+}
+.asset-tool-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-mid);
+    font-family: inherit;
+    font-size: 14px;
+    text-align: left;
+    transition: background 0.1s, color 0.1s;
+}
+.asset-tool-item:hover {
+    background: var(--surface2);
+    color: var(--text);
+}
+
+/* Section headers: "Workspace" / "Assets" */
+.asset-section-label {
+    padding: 9px 14px 6px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    user-select: none;
+}
+
+/* File / folder rows — like .file-item */
+.asset-panel .mud-treeview-item-content {
+    min-height: 0 !important;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-left: 2px solid transparent;
+    color: var(--text-mid) !important;
+    transition: background 0.1s, color 0.1s;
+}
+.asset-panel .mud-treeview-item-content:hover {
+    background: var(--surface2);
+    color: var(--text) !important;
+}
+.asset-panel .mud-treeview-item-label {
+    font-size: 14px;
+}
+.asset-panel .mud-treeview-item-icon {
+    color: var(--text-dim) !important;
+    opacity: 0.8;
+}
+.asset-panel .mud-treeview-item-icon .mud-icon-root {
+    font-size: 16px;
+}
+.asset-panel .mud-treeview-item-arrow .mud-icon-root {
+    color: var(--text-dim) !important;
+    font-size: 18px;
+}
+/* Selected file — accent text, tinted row, accent left border */
+.asset-panel .mud-treeview-item-content.mud-treeview-item-selected {
+    color: var(--accent) !important;
+    background: var(--accent-dim);
+    border-left-color: var(--accent);
+}
+.asset-panel .mud-treeview-item-content.mud-treeview-item-selected .mud-treeview-item-icon {
+    color: var(--accent) !important;
+    opacity: 1;
+}
+
+/* Custom file / category rows with action buttons (create, rename) */
+.asset-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+}
+.asset-row-icon.mud-icon-root {
+    font-size: 16px;
+    color: var(--text-dim);
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+.asset-row-name {
+    flex: 1 1 auto;
+    font-size: 16px;
+    color: inherit;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.asset-row-actions {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+.asset-row-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 3px;
+    color: var(--text-dim);
+    opacity: 0;               /* hover-reveal */
+    transition: opacity 0.1s, color 0.1s, background 0.1s;
+}
+.mud-treeview-item-content:hover .asset-row-btn {
+    opacity: 1;
+}
+.asset-row-btn--create {
+    opacity: 0.7;             /* create stays visible for discoverability */
+}
+.asset-row-btn:hover {
+    color: var(--accent);
+    background: var(--surface2);
+}
+.asset-row-btn .mud-icon-root {
+    font-size: 15px;
+}
+.asset-row-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 1px 4px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+/* ── ASSET PREVIEW (#asset-preview) ── */
+.asset-preview {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border);
+    background: var(--surface2);
+    flex-shrink: 0;
+}
+.asset-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px 5px 14px;
+    border-bottom: 1px solid var(--border);
+}
+.asset-preview-name {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text-mid);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.asset-preview-close {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.asset-preview-close:hover {
+    color: var(--text);
+    background: var(--surface);
+}
+.asset-preview-body {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+.asset-preview-img {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 3px;
+    background: var(--bg);
+}
+.asset-preview-audio {
+    width: 100%;
+}
+.asset-preview-empty {
+    font-size: 14px;
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+/* ── JSON PREVIEW (#asset-preview-json) ── */
+.asset-preview-json {
+    width: 100%;
+    max-height: 220px;
+    overflow: auto;
+    font-family: 'RobotoMono', 'Menlo', monospace;
+    font-size: 10px;
+    line-height: 1.6;
+    white-space: pre;
+    color: var(--text);
+    background: var(--bg);
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin: 0;
+}
+.asset-preview-json::-webkit-scrollbar { width: 4px; height: 4px; }
+.asset-preview-json::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.asset-preview-json::-webkit-scrollbar-track { background: transparent; }
+.json-key     { color: #7db4e4; }
+.json-str     { color: #98c379; }
+.json-num     { color: #d19a66; }
+.json-bool    { color: #c678dd; }
+.json-null    { color: #c678dd; }
+.json-bracket { color: var(--text-dim); }
+.json-comma   { color: var(--text-dim); }
+.json-colon   { color: var(--text-dim); }
+.json-ellipsis { color: var(--text-dim); font-style: italic; padding: 0 2px; }

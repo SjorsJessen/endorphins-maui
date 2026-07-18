@@ -1,0 +1,164 @@
+/* Split from app.css — ink-runner-specific styles. Loaded before MudBlazor, in source order. */
+
+/* ── INK STORY RUNNER ── */
+/* Fill the preview column down through MudTabs' internal wrappers so the
+   runner's footer sticks to the bottom. MudBlazor renders the active panel
+   with `display: contents` (no box), so the runner is effectively a direct
+   flex child of .mud-tabs-panels — hence the flex column here rather than a
+   height:100% chain, which cannot resolve through a box-less panel. */
+.ws-preview .mud-tabs {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+/* Keep the tab bar above the panel and stacked in front, so panel content
+   (e.g. the PDF pages, which slide during MudTabs' tab-change transition)
+   can't render up behind or over the tab bar. */
+.ws-preview .mud-tabs-toolbar {
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 2;
+}
+.ws-preview .mud-tabs-panels {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+.ink-story-runner {
+    background: var(--bg) !important;
+    font-family: 'Crimson Pro', Georgia, serif;
+    line-height: 1.75;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.ink-story-runner .story-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 20px 22px 8px;
+}
+.ink-story-runner .story-empty {
+    padding: 24px 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: var(--text-dim);
+    text-align: center;
+}
+.ink-story-runner .story-footer {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+}
+.ink-story-runner .story-footer .mud-icon-button {
+    padding: 10px;
+}
+
+/* Dialogue line: portrait + bubble */
+.dialogue-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+.dialogue-line-npc {
+    justify-content: flex-end;
+}
+.dialogue-portrait {
+    width: 44px;
+    height: 44px;
+    border-radius: 4px;
+    object-fit: cover;
+    object-position: top center;
+    flex-shrink: 0;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    padding: 4px;
+}
+.dialogue-bubble {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.dialogue-line-npc .dialogue-bubble {
+    align-items: flex-end;
+}
+.dialogue-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--orange);
+    opacity: 0.9;
+}
+.dialogue-line-npc .dialogue-name,
+.dialogue-line-npc .story-p {
+    text-align: right;
+}
+.story-p {
+    color: var(--text);
+    line-height: 1.5;
+    font-size: 20px;
+    text-wrap: pretty;
+}
+
+/* Choices */
+.choices-panel {
+    padding: 10px 16px 14px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.choice-btn {
+    background: var(--choice-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 14px;
+    border-radius: 5px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.12s;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+}
+.choice-btn:hover,
+.choice-btn:active {
+    background: var(--choice-hover);
+    border-color: var(--border2);
+    color: var(--text-mid);
+}
+.choice-btn:active {
+    transform: scale(0.98);
+}
+.choice-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--text-dim);
+    opacity: 0.8;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+/* Story-runner speaker name keeps the accent orange from the theme */
+.dialogue-name {
+    color: var(--orange) !important;
+}

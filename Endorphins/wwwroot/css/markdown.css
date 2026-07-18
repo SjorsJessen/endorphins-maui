@@ -1,0 +1,157 @@
+/* Split from app.css — markdown-specific styles. Loaded before MudBlazor, in source order. */
+
+.markdown-editor {
+    height: 100%;
+}
+
+.editor-statusbar {
+    display: none;
+}
+
+.editor-toolbar {
+    border-top: none !important;
+    border-bottom: none !important;
+    border-right: 1px solid var(--border) !important;
+}
+
+/* ── EasyMDE markdown editor (PSC.Blazor MarkdownEditor) ── */
+.markdown-editor .EasyMDEContainer,
+.markdown-editor .CodeMirror,
+.markdown-editor .editor-preview,
+.markdown-editor .editor-preview-side {
+    background: var(--surface) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+.markdown-editor .editor-toolbar {
+    display: none !important;   /* hide EasyMDE's formatting toolbar */
+}
+.markdown-editor .editor-toolbar button {
+    color: var(--text-mid) !important;
+}
+.markdown-editor .editor-toolbar button:hover,
+.markdown-editor .editor-toolbar button.active {
+    background: var(--surface2) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+.markdown-editor .CodeMirror-cursor {
+    border-left-color: var(--text) !important;
+}
+.markdown-editor .CodeMirror-selected {
+    background: var(--accent-dim) !important;
+}
+.markdown-editor .cm-header,
+.markdown-editor .cm-strong {
+    color: var(--text) !important;
+}
+.markdown-editor .cm-link,
+.markdown-editor .cm-url {
+    color: var(--accent) !important;
+}
+.markdown-editor .cm-comment {
+    color: var(--accent) !important;
+}
+
+/* ── EasyMDE markdown editor text tiers ── */
+.markdown-editor .CodeMirror,
+.markdown-editor .editor-preview,
+.markdown-editor .cm-variable-2,
+.markdown-editor .cm-quote {
+    color: var(--text) !important;
+}
+.markdown-editor .editor-preview h1,
+.markdown-editor .editor-preview h2,
+.markdown-editor .editor-preview h3 {
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+/* ── MARKDOWN PREVIEW (markdown editor → rendered note) ── */
+.markdown-preview {
+    height: 100%;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--bg);
+    padding: 20px 24px 24px;
+}
+.markdown-preview::-webkit-scrollbar { width: 4px; }
+.markdown-preview::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.markdown-preview::-webkit-scrollbar-track { background: transparent; }
+.markdown-preview-empty {
+    font-size: 14px;
+    font-style: italic;
+    color: var(--text-dim);
+}
+
+.md-body {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text);
+    max-width: 680px;
+}
+.md-body h1, .md-body h2, .md-body h3,
+.md-body h4, .md-body h5, .md-body h6 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: var(--text);
+    margin: 1.4em 0 0.4em;
+    line-height: 1.3;
+}
+.md-body h1 { font-size: 2em; border-bottom: 1px solid var(--border); padding-bottom: 0.2em; }
+.md-body h2 { font-size: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.2em; }
+.md-body h3 { font-size: 1.25em; }
+.md-body h4 { font-size: 1.05em; }
+.md-body p { margin: 0.6em 0; }
+.md-body a { color: var(--accent); }
+.md-body strong { color: var(--text); font-weight: 700; }
+.md-body em { color: var(--text-mid); }
+.md-body ul, .md-body ol { padding-left: 1.5em; margin: 0.6em 0; }
+.md-body li { margin: 0.25em 0; }
+.md-body blockquote {
+    border-left: 3px solid var(--border2);
+    margin: 0.8em 0;
+    padding: 0.2em 0 0.2em 1em;
+    color: var(--text-mid);
+    font-style: italic;
+}
+.md-body code {
+    font-family: 'RobotoMono', monospace;
+    font-size: 0.88em;
+    color: var(--accent);
+    background: var(--surface2);
+    border-radius: 3px;
+    padding: 1px 4px;
+}
+.md-body pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 14px;
+    overflow-x: auto;
+    margin: 0.8em 0;
+}
+.md-body pre code {
+    background: none;
+    color: var(--text);
+    padding: 0;
+}
+.md-body hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.4em 0;
+}
+.md-body table {
+    border-collapse: collapse;
+    margin: 0.8em 0;
+    width: 100%;
+}
+.md-body th, .md-body td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    text-align: left;
+}
+.md-body th { background: var(--surface2); color: var(--text); }
+.md-body img { max-width: 100%; border-radius: 4px; }

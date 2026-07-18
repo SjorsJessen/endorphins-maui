@@ -14,7 +14,12 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
-            .ConfigureFonts(fonts => { fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular"); });
+            .ConfigureFonts(fonts => { 
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular"); 
+                fonts.AddFont("RobotoMono.ttf", "RobotoMono"); 
+                fonts.AddFont("Horizon.otf", "Horizon"); 
+                fonts.AddFont("Inter.ttf", "Inter"); 
+            });
 
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddSingleton<AssetsService>();

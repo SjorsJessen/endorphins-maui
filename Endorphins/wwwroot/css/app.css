@@ -1,17 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;1,400&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
 
-@font-face {
-    font-family: "Horizon";
-    src: url("../Fonts/horizon.otf") format("opentype");
-    font-weight: normal;
-}
-
-@font-face {
-    font-family: "RobotoMono";
-    src: url("../Fonts/RobotoMono.ttf") format("truetype");
-    font-weight: normal;
-}
-
 :root {
     --bg:           #111214;
     --surface:      #17191c;
@@ -34,6 +22,8 @@
 html,
 body {
     font-family: 'Inter', sans-serif;
+    color: red;
+    font-size: 16px;
     background: var(--bg);
     color: var(--text);
     overflow: hidden !important;
@@ -59,6 +49,9 @@ a,
     border-right: 1px solid var(--border);
     height: 100%;
     background: var(--surface);
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    color: red;
 }
 
 .markdown-editor {
@@ -1020,7 +1013,7 @@ a:hover,
 }
 .asset-row-name {
     flex: 1 1 auto;
-    font-size: 12px;
+    font-size: 16px;
     color: inherit;
     overflow: hidden;
     text-overflow: ellipsis;

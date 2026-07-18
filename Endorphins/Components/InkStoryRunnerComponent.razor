@@ -16,27 +16,44 @@
         {
             foreach (var line in StoryService.DialogLines)
             {
-                if (@line.IsMainCharacter)
-                {
-                    <div class="dialogue-line">
-                        <img class="dialogue-portrait" srcset="Assets/endorphins-icon.svg" alt="portrait" />
-                        <div class="dialogue-bubble">
-                            <span class="dialogue-name">@line.Speaker</span>
-                            <span class="story-p">@line.Line</span>
+                switch (line.Type){
+                    case DialogType.Narrator:
+                        <div class="dialogue-line">
+                            <div class="dialogue-bubble">
+                                <span class="story-p">@line.Line</span>
+                            </div>
                         </div>
-                    </div>
-                }
-                else
-                {
-                    <div class="dialogue-line dialogue-line--right">
-                        <div class="dialogue-bubble">
-                            <span class="dialogue-name">@line.Speaker</span>
-                            <span class="story-p">@line.Line</span>
+                        break;
+                    case DialogType.Main:
+                        <div class="dialogue-line">
+                            <img class="dialogue-portrait" srcset="Assets/endorphins-icon.svg" alt="portrait" />
+                            <div class="dialogue-bubble">
+                                <span class="dialogue-name">@line.Speaker</span>
+                                <span class="story-p">@line.Line</span>
+                            </div>
                         </div>
-                        <img class="dialogue-portrait" srcset="Assets/endorphins-icon.svg" alt="portrait" />
-                    </div>
+                        break;
+                    case DialogType.Npc:
+                        <div class="dialogue-line dialogue-line-npc">
+                            <div class="dialogue-bubble">
+                                <span class="dialogue-name">@line.Speaker</span>
+                                <span class="story-p">@line.Line</span>
+                            </div>
+                            <img class="dialogue-portrait" srcset="Assets/endorphins-icon.svg" alt="portrait" />
+                        </div>
+                        break;
+                    case DialogType.Title:
+                        <div class="dialogue-title justify-content-center" style="font-size: 28px; font-weight: bold; text-align: center; color: white; margin-top: 1rem; margin-bottom: 1rem;">
+                            <span>@line.Line</span>
+                        </div>
+                        break;
+                    case DialogType.Divider:
+                        <div class="dialogue-divider justify-content-center" style="font-size: 36px; font-weight: bold; text-align: center; color: lightgray; margin-top: 1rem; margin-bottom: 1rem;">
+                            <span>@line.Line</span>
+                        </div>
+                        break;
                 }
-            }
+            }   
             @if (StoryService.Choices.Count > 0)
             {
                 <div class="choices-panel">

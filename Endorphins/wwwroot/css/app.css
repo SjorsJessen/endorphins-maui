@@ -737,7 +737,7 @@ code {
     gap: 16px;
     margin-bottom: 14px;
 }
-.dialogue-line--right {
+.dialogue-line-npc {
     justify-content: flex-end;
 }
 .dialogue-portrait {
@@ -757,7 +757,7 @@ code {
     flex-direction: column;
     gap: 1rem;
 }
-.dialogue-line--right .dialogue-bubble {
+.dialogue-line-npc .dialogue-bubble {
     align-items: flex-end;
 }
 .dialogue-name {
@@ -768,8 +768,8 @@ code {
     color: var(--orange);
     opacity: 0.9;
 }
-.dialogue-line--right .dialogue-name,
-.dialogue-line--right .story-p {
+.dialogue-line-npc .dialogue-name,
+.dialogue-line-npc .story-p {
     text-align: right;
 }
 .story-p {

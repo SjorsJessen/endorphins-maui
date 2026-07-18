@@ -90,6 +90,7 @@ public sealed class InkStoryService
     private readonly List<DialogLine> _dialogLines = [];
     private readonly List<InkDiagnostic> _diagnostics = [];
     private List<Choice> _choices = [];
+    private string _currentSpeaker;
 
     public void Run(string root, string scriptPath)
     {
@@ -144,11 +145,17 @@ public sealed class InkStoryService
         if (CanContinue())
         {
             var nextLine = _activeStory.Continue();
+            var type = _currentSpeaker switch
+            {
+                "Narrator" => DialogType.Narrator,
+                MainCharacter => DialogType.Main,
+                _ => DialogType.Npc
+            };
             var dialogueLine = new DialogLine
             {
-                Speaker = "Speaker",
+                Speaker = _currentSpeaker,
                 Line = nextLine,
-                IsMainCharacter = nextLine.Contains(MainCharacter),
+                Type = type
             };
             _dialogLines.Add(dialogueLine);
             DialogUpdated?.Invoke(dialogueLine);
@@ -232,15 +239,31 @@ public sealed class InkStoryService
         return _activeStory != null && _activeStory.canContinue;
     }
 
+    private void AddDivider()
+    {
+        _dialogLines.Add(new DialogLine { Speaker = string.Empty, Line = "***", Type = DialogType.Divider });
+    }
+    
+    private void Transition(string title)
+    {
+        Console.WriteLine($"Setting title: {title}");
+        _dialogLines.Add(new DialogLine { Speaker = string.Empty, Line = title, Type = DialogType.Title });
+    }
+
+    private void UpdateSpeaker(string speakerName)
+    {
+        _currentSpeaker = speakerName;
+    }   
+    
     private void BindExternalFunctions(Story story)
     {
         Console.WriteLine($"Binding external functions to story: {story}");
         story.BindExternalFunction<string>("setImage", ServiceFunctions.SetImage, true);
         story.BindExternalFunction<string>("setBackground", ServiceFunctions.SetBackground, true);
-        story.BindExternalFunction<string>("updateSpeaker", ServiceFunctions.UpdateSpeaker, true);
+        story.BindExternalFunction<string>("updateSpeaker", UpdateSpeaker, true);
         story.BindExternalFunction<string>("playAudio", ServiceFunctions.PlayAudio, true);
-        story.BindExternalFunction("addDivider", ServiceFunctions.AddDivider, true);
-        story.BindExternalFunction<string>("transition", ServiceFunctions.Transition, true);
+        story.BindExternalFunction("addDivider", AddDivider, true);
+        story.BindExternalFunction<string>("transition", Transition, true);
     }
 
     private static void SetErrorHandling(Story story)
@@ -280,23 +303,10 @@ public static class ServiceFunctions
         Console.WriteLine($"Set background: {imageName}");
     }
     
-    public static void UpdateSpeaker(string speakerName)
-    {
-        Console.WriteLine($"Speaker: {speakerName}");
-    }   
     
     public static void PlayAudio(string audioName)
     {
         Console.WriteLine($"Playing: {audioName}");
     }    
-    
-    public static void AddDivider()
-    {
-        Console.WriteLine("Adding divider");
-    }
-    
-    public static void Transition(string title)
-    {
-        Console.WriteLine($"Setting title: {title}");
-    }
+
 }

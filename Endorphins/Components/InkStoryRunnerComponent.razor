@@ -2,11 +2,12 @@
 @using Ink.Runtime
 @inject FileStorageService StorageService
 @inject InkStoryService StoryService
+@inject IJSRuntime JS
 
 @inherits DevHotReloadComponentBase
 
 <div class="ink-story-runner">
-    <div class="story-scroll overflow-auto">
+    <div class="story-scroll overflow-auto" @ref="_scrollRef">
         @if (!StoryService.IsStoryLoaded && StoryService.DialogLines.Count == 0)
         {
             <div class="story-empty">No story has been loaded. Load a project.</div>
@@ -55,15 +56,15 @@
     {
         <div class="story-footer">
             <MudTooltip Text="Compile and run from the beginning" Arrow="true" Placement="Placement.Top">
-                <MudIconButton Icon="@Icons.Material.Sharp.PlayArrow" Color="Color.Info" Size="Size.Small"
+                <MudIconButton Icon="@Icons.Material.Sharp.PlayArrow" Color="Color.Info" Size="Size.Medium"
                                OnClick="Run" />
             </MudTooltip>
             <MudTooltip Text="Continue" Arrow="true" Placement="Placement.Top">
-                <MudIconButton Icon="@Icons.Material.Sharp.FastForward" Color="Color.Inherit" Size="Size.Small"
+                <MudIconButton Icon="@Icons.Material.Sharp.FastForward" Color="Color.Inherit" Size="Size.Medium"
                                Disabled="!StoryService.IsStoryLoaded" OnClick="StoryService.ContinueStory" />
             </MudTooltip>
             <MudTooltip Text="Restart story" Arrow="true" Placement="Placement.Top">
-                <MudIconButton Icon="@Icons.Material.Sharp.Refresh" Color="Color.Inherit" Size="Size.Small"
+                <MudIconButton Icon="@Icons.Material.Sharp.Refresh" Color="Color.Inherit" Size="Size.Medium"
                                Disabled="!StoryService.IsStoryLoaded" OnClick="Restart" />
             </MudTooltip>
         </div>
@@ -71,6 +72,9 @@
 </div>
 
 @code {
+    private ElementReference _scrollRef;
+    private int _renderedEntryCount;
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
@@ -80,6 +84,17 @@
         StoryService.StoryReset += OnStateChanged;
         StoryService.ChoicesReset += OnStateChanged;
         StoryService.InkScriptSelected += OnScriptSelected;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Keep the newest dialogue line / choices in view as the story advances.
+        var entryCount = StoryService.DialogLines.Count + StoryService.Choices.Count;
+        if (entryCount != _renderedEntryCount)
+        {
+            _renderedEntryCount = entryCount;
+            await JS.InvokeVoidAsync("scrollStoryToEnd", _scrollRef);
+        }
     }
 
     private void Run()

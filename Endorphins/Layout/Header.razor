@@ -10,20 +10,21 @@
         <span class="app-name">Endorphins_</span>
     </div>
     <MudSpacer/>
-    <MudBadge Dot="true" Color="@StateColor" Class="mx-6 my-4">
-        <MudText Color="@StateColor">@StateLabel</MudText>
-    </MudBadge>
+    <div class="ink-state @StateClass">
+        <span class="ink-state-dot"></span>
+        <span class="ink-state-text">@StateLabel</span>
+    </div>
 </MudToolBar>
 <MudDivider/>
 
 @code
 {
-    private Color StateColor => InkStoryService.CompileState switch
+    private string StateClass => InkStoryService.CompileState switch
     {
-        InkCompileState.Compiling => Color.Warning,
-        InkCompileState.Compiled => Color.Success,
-        InkCompileState.Error => Color.Error,
-        _ => Color.Default,
+        InkCompileState.Compiling => "is-compiling",
+        InkCompileState.Compiled => "is-compiled",
+        InkCompileState.Error => "is-error",
+        _ => "is-idle",
     };
 
     private string StateLabel => InkStoryService.CompileState switch

@@ -522,17 +522,52 @@ code {
     color: #fdd663;
 }
 
+/* ── INK COMPILE STATE (header) — soft, desaturated tones ── */
+.ink-state {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 24px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: var(--text-dim);
+}
+.ink-state-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}
+.ink-state.is-idle      { color: #8a8f98; }
+.ink-state.is-compiling { color: #cdb58a; }
+.ink-state.is-compiled  { color: #9dbfa1; }
+.ink-state.is-error     { color: #cf9494; }
+
 /* ── INK STORY RUNNER ── */
+/* Make the tab plumbing fill the preview column so the runner's
+   footer can stick to the bottom of the panel. */
+.ws-preview .mud-tabs {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+.ws-preview .mud-tabs-panels {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.ws-preview .mud-tab-panel {
+    height: 100%;
+}
 .ink-story-runner {
     background: var(--bg) !important;
     font-family: 'Crimson Pro', Georgia, serif;
-    font-size: 16px;
     line-height: 1.75;
     color: var(--text);
     display: flex;
     flex-direction: column;
     height: 100%;
-    max-height: calc(100vh - 120px);
 }
 .ink-story-runner .story-scroll {
     flex: 1 1 auto;
@@ -552,10 +587,13 @@ code {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 6px 12px;
+    gap: 18px;
+    padding: 12px 16px;
     border-top: 1px solid var(--border);
     background: var(--surface);
+}
+.ink-story-runner .story-footer .mud-icon-button {
+    padding: 10px;
 }
 
 /* Dialogue line: portrait + bubble */
@@ -590,7 +628,7 @@ code {
 }
 .dialogue-name {
     font-family: 'Inter', sans-serif;
-    font-size: 9px;
+    font-size: 12px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--orange);
@@ -603,7 +641,8 @@ code {
 .story-p {
     color: var(--text);
     line-height: 1.5;
-    font-size: 18px;
+    font-size: 20px;
+    text-wrap: pretty;
 }
 
 /* Choices */

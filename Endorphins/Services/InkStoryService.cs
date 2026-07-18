@@ -260,10 +260,14 @@ public sealed class InkStoryService
         Console.WriteLine($"Binding external functions to story: {story}");
         story.BindExternalFunction<string>("setImage", ServiceFunctions.SetImage, true);
         story.BindExternalFunction<string>("setBackground", ServiceFunctions.SetBackground, true);
-        story.BindExternalFunction<string>("updateSpeaker", UpdateSpeaker, true);
+        // lookaheadSafe must be false: UpdateSpeaker mutates _currentSpeaker, and the
+        // ink engine evaluates ahead of the current line to detect glue. If it were
+        // lookahead-safe, the next line's updateSpeaker would fire while the current
+        // line is still being emitted, attributing the current line to the wrong speaker.
+        story.BindExternalFunction<string>("updateSpeaker", UpdateSpeaker, false);
         story.BindExternalFunction<string>("playAudio", ServiceFunctions.PlayAudio, true);
-        story.BindExternalFunction("addDivider", AddDivider, true);
-        story.BindExternalFunction<string>("transition", Transition, true);
+        story.BindExternalFunction("addDivider", AddDivider, false);
+        story.BindExternalFunction<string>("transition", Transition, false);
     }
 
     private static void SetErrorHandling(Story story)

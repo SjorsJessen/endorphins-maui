@@ -12,6 +12,8 @@ let _pagesContainer = null;  // scroll container, for page tracking
 let _scrollHandler = null;   // throttled scroll listener reporting the current page
 let _scrollRaf = 0;
 let _lastReportedPage = 0;   // guards against redundant .NET round-trips
+let _highlights = [];        // [{id, page, rects:[{x,y,w,h}]}] — rects stored at scale 1
+let _highlightSeq = 1;
 
 // Load a document (bytes arrive as a .NET stream — no base64 inflation) and
 // create lightweight placeholders; pages render lazily as they scroll near.
@@ -19,6 +21,7 @@ export async function load(streamRef, pagesContainer, dotnetRef) {
     _dotnet = dotnetRef;
     _scale = 1.2;
     _lastReportedPage = 0;
+    _highlights = [];
     const buffer = await streamRef.arrayBuffer();
     _pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
     const page1 = await _pdf.getPage(1);
@@ -72,9 +75,130 @@ async function renderPage(wrapper) {
         await page.render({ canvasContext: canvas.getContext('2d'), transform, viewport }).promise;
 
         wrapper.replaceChildren(canvas);
+        renderHighlightLayer(wrapper, i);
+        await renderTextLayer(wrapper, page, viewport);
     } catch {
         wrapper.dataset.rendered = '';
     }
+}
+
+// Selectable (transparent) text overlay — enables text selection for highlighting.
+async function renderTextLayer(wrapper, page, viewport) {
+    const layer = document.createElement('div');
+    layer.className = 'pdf-text-layer';
+    layer.style.setProperty('--scale-factor', viewport.scale);
+    wrapper.appendChild(layer);
+    const textContent = await page.getTextContent();
+    await pdfjsLib.renderTextLayer({
+        textContentSource: textContent,
+        container: layer,
+        viewport,
+    }).promise;
+}
+
+// ── Highlights ──────────────────────────────────────────────────────
+
+function renderHighlightLayer(wrapper, pageNum) {
+    wrapper.querySelector('.pdf-highlight-layer')?.remove();
+    const layer = document.createElement('div');
+    layer.className = 'pdf-highlight-layer';
+    for (const h of _highlights.filter(h => h.page === pageNum)) {
+        for (const r of h.rects) {
+            const div = document.createElement('div');
+            div.className = 'pdf-highlight';
+            div.title = 'Click to remove highlight';
+            div.style.left = `${r.x * _scale}px`;
+            div.style.top = `${r.y * _scale}px`;
+            div.style.width = `${r.w * _scale}px`;
+            div.style.height = `${r.h * _scale}px`;
+            div.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeHighlight(h.id);
+            });
+            layer.appendChild(div);
+        }
+    }
+    wrapper.appendChild(layer);
+}
+
+function removeHighlight(id) {
+    const h = _highlights.find(x => x.id === id);
+    _highlights = _highlights.filter(x => x.id !== id);
+    if (h) rerenderHighlightsForPage(h.page);
+    notifyHighlightsChanged();
+}
+
+function rerenderHighlightsForPage(pageNum) {
+    const wrapper = _pagesContainer?.querySelector(`.pdf-page-wrapper[data-page="${pageNum}"]`);
+    if (wrapper && wrapper.dataset.rendered === '1') renderHighlightLayer(wrapper, pageNum);
+}
+
+function notifyHighlightsChanged() {
+    _dotnet?.invokeMethodAsync('OnHighlightsChanged', JSON.stringify(_highlights));
+}
+
+/** Restores previously saved highlights (JSON produced by OnHighlightsChanged). */
+export function setHighlights(json) {
+    try { _highlights = JSON.parse(json) ?? []; } catch { _highlights = []; }
+    _highlightSeq = Math.max(0, ..._highlights.map(h => h.id)) + 1;
+    for (const h of _highlights) rerenderHighlightsForPage(h.page);
+}
+
+/** Turns the current text selection into persistent highlights. Returns true if anything was added. */
+export function highlightSelection() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || sel.rangeCount === 0 || !_pagesContainer) return false;
+
+    // Collect selection rects per page, normalised to scale 1.
+    const perPage = new Map();
+    for (let i = 0; i < sel.rangeCount; i++) {
+        for (const rect of sel.getRangeAt(i).getClientRects()) {
+            if (rect.width < 1 || rect.height < 1) continue;
+            const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+            for (const wrapper of _pagesContainer.querySelectorAll('.pdf-page-wrapper')) {
+                const wr = wrapper.getBoundingClientRect();
+                if (cx < wr.left || cx > wr.right || cy < wr.top || cy > wr.bottom) continue;
+                const page = parseInt(wrapper.dataset.page, 10);
+                if (!perPage.has(page)) perPage.set(page, []);
+                perPage.get(page).push({
+                    x: (rect.left - wr.left) / _scale,
+                    y: (rect.top - wr.top) / _scale,
+                    w: rect.width / _scale,
+                    h: rect.height / _scale,
+                });
+                break;
+            }
+        }
+    }
+    if (perPage.size === 0) return false;
+
+    for (const [page, rects] of perPage) {
+        _highlights.push({ id: _highlightSeq++, page, rects: mergeLineRects(rects) });
+        rerenderHighlightsForPage(page);
+    }
+    sel.removeAllRanges();
+    notifyHighlightsChanged();
+    return true;
+}
+
+// Selections produce one sliver-rect per glyph run; merge rects sharing a line
+// so a highlight is a few clean bars instead of dozens of fragments.
+function mergeLineRects(rects) {
+    const sorted = [...rects].sort((a, b) => a.y - b.y || a.x - b.x);
+    const merged = [];
+    for (const r of sorted) {
+        const last = merged[merged.length - 1];
+        const sameLine = last && Math.abs(r.y - last.y) < last.h * 0.5;
+        if (sameLine && r.x <= last.x + last.w + 4) {
+            const right = Math.max(last.x + last.w, r.x + r.w);
+            const bottom = Math.max(last.y + last.h, r.y + r.h);
+            last.w = right - last.x;
+            last.h = bottom - last.y;
+        } else {
+            merged.push({ ...r });
+        }
+    }
+    return merged;
 }
 
 function setupObservers(pagesContainer) {

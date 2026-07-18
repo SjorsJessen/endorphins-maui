@@ -2,6 +2,7 @@
 @implements IAsyncDisposable
 @inject IJSRuntime Js
 @inject PdfService PdfService
+@inject FileStorageService StorageService
 @inherits DevHotReloadComponentBase;
 
 <div class="pdf-preview">
@@ -26,6 +27,9 @@
                 </button>
             </div>
             <div class="pdf-tb-group">
+                <button class="pdf-tb-btn" title="Highlight selected text" @onclick="HighlightSelection">
+                    <MudIcon Icon="@Icons.Material.Sharp.BorderColor" Size="Size.Small"/>
+                </button>
                 <button class="pdf-tb-btn" title="Zoom out" @onclick="() => Zoom(-0.2)">
                     <MudIcon Icon="@Icons.Material.Sharp.Remove" Size="Size.Small"/>
                 </button>
@@ -85,9 +89,17 @@
         }
     }
 
+    private string? _activePdfPath;
+
+    /// <summary>Sidecar file storing this PDF's highlights, hidden from the asset
+    /// tree because dot-folders are filtered out of enumeration.</summary>
+    private static string HighlightsPathFor(string pdfPath) =>
+        $".endorphins/highlights/{pdfPath.Replace('\\', '/').Replace('/', '_')}.json";
+
     private void OnPdfFileOpened(PdfFile pdfFile) => InvokeAsync(() =>
     {
         _pendingContent = pdfFile.Content;
+        _activePdfPath = pdfFile.Name;
         _pendingLoad = true;
         _isLoading = true;
         _loadingTitle = System.IO.Path.GetFileName(pdfFile.Name);
@@ -115,6 +127,7 @@
                 _zoom = 120;
                 _outline = (await _module.InvokeAsync<PdfOutlineNode[]>("getOutline")).ToList();
                 _showOutline = _outline.Count > 0;
+                await RestoreHighlightsAsync();
             }
             catch (Exception e)
             {
@@ -125,6 +138,38 @@
                 _isLoading = false;
                 StateHasChanged();
             }
+        }
+    }
+
+    private async Task RestoreHighlightsAsync()
+    {
+        if (_module is null || _activePdfPath is null || StorageService.Root is null) return;
+        try
+        {
+            var json = await StorageService.ReadFileAsTextAsync(HighlightsPathFor(_activePdfPath));
+            await _module.InvokeVoidAsync("setHighlights", json);
+        }
+        catch (FileNotFoundException) { /* no highlights saved yet */ }
+        catch (DirectoryNotFoundException) { /* no highlights saved yet */ }
+    }
+
+    private async Task HighlightSelection()
+    {
+        if (_module is null) return;
+        await _module.InvokeAsync<bool>("highlightSelection");
+    }
+
+    [JSInvokable]
+    public async Task OnHighlightsChanged(string json)
+    {
+        if (_activePdfPath is null || StorageService.Root is null) return;
+        try
+        {
+            await StorageService.WriteFileAsync(HighlightsPathFor(_activePdfPath), json);
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine(e);
         }
     }
 

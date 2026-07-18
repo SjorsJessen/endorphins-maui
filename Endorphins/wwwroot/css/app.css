@@ -256,10 +256,89 @@ a,
     flex-shrink: 0;
     background: #ffffff;
     border-radius: 2px;
+    position: relative;
 }
 .pdf-page-canvas {
     display: block;
     border-radius: 2px;
+}
+
+/* Transparent selectable text overlay (pdf.js text layer) */
+.pdf-text-layer {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    line-height: 1;
+    text-align: initial;
+    transform-origin: 0 0;
+    z-index: 2;
+    -webkit-text-size-adjust: none;
+    forced-color-adjust: none;
+    caret-color: transparent;
+}
+.pdf-text-layer :is(span, br) {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+}
+.pdf-text-layer ::selection {
+    background: rgba(79, 156, 240, 0.35);
+    color: transparent;
+}
+
+/* Saved highlights, drawn between the canvas and the text layer */
+.pdf-highlight-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+.pdf-highlight {
+    position: absolute;
+    background: rgba(232, 201, 122, 0.45);
+    mix-blend-mode: multiply;
+    border-radius: 2px;
+    pointer-events: auto;
+    cursor: pointer;
+}
+.pdf-highlight:hover {
+    background: rgba(232, 122, 122, 0.45);
+}
+
+/* ── VIDEO PREVIEW ── */
+.video-player {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    background: var(--bg);
+}
+.video-title {
+    padding: 8px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--text-mid);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.video-empty {
+    padding: 24px 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: var(--text-dim);
+    text-align: center;
+}
+.video-element {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    background: #000;
+    object-fit: contain;
 }
 
 /* ── GRAPH / DIAGRAM EDITOR ── */

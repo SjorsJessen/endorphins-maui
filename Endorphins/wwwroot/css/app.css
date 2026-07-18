@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;1,400&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
 
+@font-face {
+    font-family: "Horizon";
+    src: url('../Assets/fonts/horizon.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 :root {
     --bg:           #111214;
     --surface:      #17191c;
@@ -38,9 +45,16 @@ a,
     color: #0071c1;
 }
 
+.app-logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
 .app-name {
     font-family: "Horizon", sans-serif !important;
     font-size: 16px;
+    line-height: 32px;
     letter-spacing: 0.06em;
     color: white;
 }
@@ -68,8 +82,11 @@ a,
     border-right: 1px solid var(--border) !important;
 }
 
+/* Header is a single dense MudToolBar (48px) + MudDivider (1px). The old
+   100px budget also covered a Toolbar row that has since been removed, which
+   left an empty strip below the workspace. */
 .workspace {
-    height: calc(100vh - 100px);
+    height: calc(100vh - 49px);
 }
 
 .pdf-viewer {
@@ -545,8 +562,11 @@ code {
 .ink-state.is-error     { color: #cf9494; }
 
 /* ── INK STORY RUNNER ── */
-/* Make the tab plumbing fill the preview column so the runner's
-   footer can stick to the bottom of the panel. */
+/* Fill the preview column down through MudTabs' internal wrappers so the
+   runner's footer sticks to the bottom. MudBlazor renders the active panel
+   with `display: contents` (no box), so the runner is effectively a direct
+   flex child of .mud-tabs-panels — hence the flex column here rather than a
+   height:100% chain, which cannot resolve through a box-less panel. */
 .ws-preview .mud-tabs {
     flex: 1 1 auto;
     min-height: 0;
@@ -556,9 +576,8 @@ code {
 .ws-preview .mud-tabs-panels {
     flex: 1 1 auto;
     min-height: 0;
-}
-.ws-preview .mud-tab-panel {
-    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 .ink-story-runner {
     background: var(--bg) !important;
@@ -567,7 +586,8 @@ code {
     color: var(--text);
     display: flex;
     flex-direction: column;
-    height: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 .ink-story-runner .story-scroll {
     flex: 1 1 auto;

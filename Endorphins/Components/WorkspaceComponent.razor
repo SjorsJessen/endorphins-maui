@@ -9,20 +9,14 @@
 
 <div class="ws-layout">
 
-    <!-- ── ASSET COLUMN ── -->
-    <div class="ws-col ws-asset @(_assetCollapsed ? "collapsed" : null)" style="@AssetStyle">
-        <AssetPanelComponent/>
-    </div>
-
-    <!-- ── ASSET / EDITOR DIVIDER ── -->
     <div class="ws-divider @(_dragTarget == DragTarget.Asset ? "dragging" : null)"
          @onpointerdown="e => StartDrag(e, DragTarget.Asset)"
          title="Drag to resize">
-        <button class="ws-divider-btn" title="@(_assetCollapsed ? "Show assets" : "Hide assets")"
+        @* <button class="ws-divider-btn" title="@(_assetCollapsed ? "Show assets" : "Hide assets")"
                 @onclick="ToggleAsset" @onclick:stopPropagation="true" @onpointerdown:stopPropagation="true">
             <MudIcon Icon="@(_assetCollapsed ? Icons.Material.Sharp.ChevronRight : Icons.Material.Sharp.ChevronLeft)"
                      Size="MudBlazor.Size.Small"/>
-        </button>
+        </button> *@
     </div>
 
     <!-- ── EDITOR COLUMN ── -->

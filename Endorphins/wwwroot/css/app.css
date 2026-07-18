@@ -12,9 +12,6 @@
     font-weight: normal;
 }
 
-/* ── DESIGN TOKENS (dark) ──
-   Mirrors the palette wired into MudTheme (MainLayout.razor) so custom,
-   non-MudBlazor markup (story runner, dialogue, choices) shares the same colours. */
 :root {
     --bg:           #111214;
     --surface:      #17191c;
@@ -55,7 +52,7 @@ a,
     font-family: "Horizon", sans-serif !important;
     font-size: 16px;
     letter-spacing: 0.06em;
-    color: var(--accent);
+    color: white;
 }
 
 .asset-panel {
@@ -484,6 +481,11 @@ code {
 
 .ink-editor {
     height: 100%;
+    white-space: pre-wrap;
+    white-space: break-spaces;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    flex-shrink: 1;
 }
 
 .ink-editor .minimap {
@@ -1221,6 +1223,11 @@ a:hover,
     flex: 1 1 auto;
     min-height: 0;
     height: auto;
+    /* white-space: pre-wrap; */
+    white-space: break-spaces;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    flex-shrink: 1;
 }
 .ws-preview {
     display: flex;
@@ -1247,7 +1254,7 @@ a:hover,
     background: var(--accent);
 }
 /* Collapse chevron, always visible so the column reads as collapsible */
-.ws-divider-btn {
+/* .ws-divider-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1269,7 +1276,7 @@ a:hover,
 }
 .ws-divider-btn .mud-icon-root {
     font-size: 16px;
-}
+} */
 
 /* Full-viewport catcher active only while dragging */
 .ws-drag-overlay {

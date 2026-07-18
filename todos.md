@@ -1,3 +1,3 @@
-
-
-- 
+- When opening a Markdown file from the assets window the first time the content doesn't seem to be loaded, a second time and it works fine.
+- The page counter on the PDF reader is iffy and often displays the wrong page or its flashing between pages. Also, I would like a loading indicator with the title of the selected pdf while its loading. Also when opening the reader tab, sometimes the tabs container falls behind the toolbar above it.
+- When opening Photopea I would like it to start on the page where I can create a new file, not some promotional page.

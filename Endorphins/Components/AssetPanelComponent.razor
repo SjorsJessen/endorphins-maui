@@ -13,15 +13,8 @@
 <div class="asset-panel">
     <MudToolBar Class="justify-space-between" Dense>
         <MudText>Project</MudText>
-        <MudIconButton
-            Icon="@Icons.Material.Sharp.FolderOpen"
-            Variant="Variant.Text"
-            Color="Color.Inherit"
-            Size="Size.Small"
-            HtmlTag="label"
-            for="folderInput"
-            OnClick="OpenProject"
-        />
+        <MudIconButton Icon="@Icons.Material.Sharp.FolderOpen" Variant="Variant.Text" Color="Color.Inherit"
+                       Size="Size.Small" HtmlTag="label" for="folderInput" OnClick="OpenProject" />
     </MudToolBar>
     <MudDivider></MudDivider>
 
@@ -34,22 +27,18 @@
     else
     {
         <div class="asset-scroll">
-            <!-- ── DYNAMIC (editable) assets ── -->
             <div class="asset-section-label">Workspace</div>
-            <MudDivider/>
+            <MudDivider />
             <MudTreeView T="string" Dense Hover ExpandOnClick>
                 @foreach (var node in _workspaceTree)
                 {
-                    <AssetTreeNodeComponent Node="node"
-                                            OnFileActivated="OnFileActivated"
-                                            OnCreateFile="CreateFileInFolder"
-                                            OnRenameFile="RenameFile"/>
+                    <AssetTreeNodeComponent Node="node" OnFileActivated="OnFileActivated" OnCreateFile="CreateFileInFolder"
+                                            OnRenameFile="RenameFile" />
                 }
             </MudTreeView>
 
-            <!-- ── STATIC assets ── -->
             <div class="asset-section-label">Assets</div>
-            <MudDivider/>
+            <MudDivider />
             <MudTreeView T="string" Dense Hover ExpandOnClick>
                 @if (_assetsTree.Count == 0)
                 {
@@ -61,22 +50,19 @@
                 {
                     @foreach (var node in _assetsTree)
                     {
-                        <AssetTreeNodeComponent Node="node"
-                                                OnFileActivated="OnFileActivated"
-                                                OnCreateFile="CreateFileInFolder"
-                                                OnRenameFile="RenameFile"/>
+                        <AssetTreeNodeComponent Node="node" OnFileActivated="OnFileActivated" OnCreateFile="CreateFileInFolder"
+                                                OnRenameFile="RenameFile" />
                     }
                 }
             </MudTreeView>
         </div>
     }
 
-    <!-- ── TOOLS (always available) ── -->
     <div class="asset-tools">
         <div class="asset-section-label">Tools</div>
-        <MudDivider/>
+        <MudDivider />
         <button class="asset-tool-item" @onclick="OpenPhotoshop" title="Open Photopea image editor">
-            <MudIcon Icon="@Icons.Material.Sharp.Brush" Class="asset-row-icon" Size="Size.Small"/>
+            <MudIcon Icon="@Icons.Material.Sharp.Brush" Class="asset-row-icon" Size="Size.Small" />
             <span class="asset-row-name">Photopea</span>
         </button>
     </div>
@@ -92,7 +78,7 @@
                 @switch (_previewKind)
                 {
                     case PreviewKind.Image:
-                        <img class="asset-preview-img" src="@_previewData" alt="@_previewName"/>
+                        <img class="asset-preview-img" src="@_previewData" alt="@_previewName" />
                         break;
                     case PreviewKind.Audio:
                         <audio class="asset-preview-audio" controls autoplay src="@_previewData"></audio>
@@ -115,7 +101,7 @@
     private bool _isPreviewPanelActive;
     private PreviewKind _previewKind;
     private string? _previewName;
-    private string? _previewData;      // data: URI for image / audio
+    private string? _previewData; // data: URI for image / audio
     private string _previewJsonHtml = string.Empty;
     private bool _projectLoaded;
     private List<AssetNode> _workspaceTree = [];
@@ -252,7 +238,7 @@
         base.Dispose();
         StorageService.FilesLoaded -= OnFilesLoaded;
     }
-    
+
     private async Task OpenPdf(string filePath)
     {
         try
@@ -270,8 +256,8 @@
         {
             Console.Error.WriteLine(exc);
         }
-    }    
-    
+    }
+
     private async void PlayVideo(string filePath)
     {
         try
@@ -283,7 +269,7 @@
             Console.Error.WriteLine(exc);
         }
     }
-    
+
     private async void SelectMarkdown(string filePath)
     {
         try
@@ -298,8 +284,8 @@
 
         EditorService.SetEditor(EditorType.Markdown);
         StateHasChanged();
-    }    
-    
+    }
+
     private async void SelectInkScript(string filePath)
     {
         try
@@ -317,7 +303,7 @@
         EditorService.SetEditor(EditorType.Ink);
         StateHasChanged();
     }
-    
+
     /// <summary>Creates a new .ink (scripts) or .md (notes) file in the given category folder and opens it.</summary>
     private async Task CreateFileInFolder(AssetNode folder)
     {
@@ -340,7 +326,7 @@
         try
         {
             await StorageService.WriteFileAsync(relPath, initial);
-            StorageService.SetFilePathsAsync();     // re-enumerate → FilesLoaded → tree rebuild
+            StorageService.SetFilePathsAsync(); // re-enumerate → FilesLoaded → tree rebuild
 
             switch (ext)
             {
@@ -413,7 +399,7 @@
         try
         {
             StorageService.RenameFile(oldPath, newPath);
-            StorageService.SetFilePathsAsync();     // re-enumerate → tree rebuild
+            StorageService.SetFilePathsAsync(); // re-enumerate → tree rebuild
 
             // Keep the editor pointed at the renamed ink script if it was active.
             if (string.Equals(InkStoryService.ActiveScriptPath.Replace('\\', '/'), oldPath, StringComparison.OrdinalIgnoreCase))

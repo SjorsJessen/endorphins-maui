@@ -7,15 +7,15 @@
 @inject MoodboardService MoodboardService;
 @inherits DevHotReloadComponentBase;
 
-<div class="ws-layout">
+<div class="workspace-layout">
 
-    <div class="ws-divider @(_dragTarget == DragTarget.Asset ? "dragging" : null)"
+    <div class="workspace-divider @(_dragTarget == DragTarget.Asset ? "dragging" : null)"
          @onpointerdown="e => StartDrag(e, DragTarget.Asset)"
          title="Drag to resize">
     </div>
 
     <!-- ── EDITOR COLUMN ── -->
-    <div class="ws-col ws-editor">
+    <div class="workspace-col workspace-editor">
         @switch (EditorService.ActiveEditor)
         {
             case EditorType.Ink:
@@ -33,10 +33,10 @@
     </div>
 
     <!-- ── EDITOR / PREVIEW DIVIDER ── -->
-    <div class="ws-divider @(_dragTarget == DragTarget.Preview ? "dragging" : null)"
+    <div class="workspace-divider @(_dragTarget == DragTarget.Preview ? "dragging" : null)"
          @onpointerdown="e => StartDrag(e, DragTarget.Preview)"
          title="Drag to resize">
-        <button class="ws-divider-btn" title="@(_previewCollapsed ? "Show preview" : "Hide preview")"
+        <button class="workspace-divider-btn" title="@(_previewCollapsed ? "Show preview" : "Hide preview")"
                 @onclick="TogglePreview" @onclick:stopPropagation="true" @onpointerdown:stopPropagation="true">
             <MudIcon Icon="@(_previewCollapsed ? Icons.Material.Sharp.ChevronLeft : Icons.Material.Sharp.ChevronRight)"
                      Size="MudBlazor.Size.Small"/>
@@ -44,7 +44,7 @@
     </div>
 
     <!-- ── PREVIEW COLUMN ── -->
-    <div class="ws-col ws-preview @(_previewCollapsed ? "collapsed" : null)" style="@PreviewStyle">
+    <div class="workspace-col workspace-preview @(_previewCollapsed ? "collapsed" : null)" style="@PreviewStyle">
         <MudTabs MinimumTabWidth="60px" KeepPanelsAlive="true" @bind-ActivePanelIndex="_activeIndex">
             <MudTabPanel TabContent="@PinnedHeader("Story")">
                 <InkStoryRunnerComponent/>
@@ -73,7 +73,7 @@
     <!-- Full-viewport catcher so dragging keeps tracking outside the divider -->
     @if (_dragTarget != DragTarget.None)
     {
-        <div class="ws-drag-overlay"
+        <div class="workspace-drag-overlay"
              @onpointermove="OnDrag"
              @onpointerup="EndDrag"
              @onpointerleave="EndDrag"></div>

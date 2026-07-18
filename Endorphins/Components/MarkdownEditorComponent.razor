@@ -22,9 +22,6 @@
     {
         base.OnInitialized();
         AssetsService.MarkdownFileSelected += OnMarkdownFileSelect;
-
-        // Created lazily when the Markdown editor first appears — after the
-        // selection event has already fired — so seed from the persisted note.
         if (AssetsService.ActiveMarkdownPath is not null)
         {
             _activeFile = AssetsService.ActiveMarkdownPath;

@@ -671,7 +671,7 @@ code {
    with `display: contents` (no box), so the runner is effectively a direct
    flex child of .mud-tabs-panels — hence the flex column here rather than a
    height:100% chain, which cannot resolve through a box-less panel. */
-.ws-preview .mud-tabs {
+.workspace-preview .mud-tabs {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
@@ -680,12 +680,12 @@ code {
 /* Keep the tab bar above the panel and stacked in front, so panel content
    (e.g. the PDF pages, which slide during MudTabs' tab-change transition)
    can't render up behind or over the tab bar. */
-.ws-preview .mud-tabs-toolbar {
+.workspace-preview .mud-tabs-toolbar {
     flex: 0 0 auto;
     position: relative;
     z-index: 2;
 }
-.ws-preview .mud-tabs-panels {
+.workspace-preview .mud-tabs-panels {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
@@ -861,9 +861,10 @@ code {
 .markdown-editor .CodeMirror,
 .markdown-editor .editor-preview,
 .markdown-editor .editor-preview-side {
-    background: var(--surface) !important;
+    background: var(--bg) !important;
     color: var(--text) !important;
     border-color: var(--border) !important;
+    line-height: 2rem !important;
 }
 .markdown-editor .editor-toolbar {
     display: none !important;   /* hide EasyMDE's formatting toolbar */
@@ -1179,7 +1180,7 @@ a:hover,
    ══════════════════════════════════════════════════════════════════ */
 
 /* Asset Menu — the underlying layer, filling the whole side panel. Sticky
-   toolbar; the tree fills the rest and its lower rows pass behind the preview. */
+   toolbar; the tree fills the rest and its lower roworkspace pass behind the preview. */
 .asset-panel {
     position: absolute;
     inset: 0;
@@ -1276,7 +1277,7 @@ a:hover,
     user-select: none;
 }
 
-/* File / folder rows — like .file-item */
+/* File / folder roworkspace — like .file-item */
 .asset-panel .mud-treeview-item-content {
     min-height: 0 !important;
     padding-top: 5px;
@@ -1314,7 +1315,7 @@ a:hover,
     opacity: 1;
 }
 
-/* Custom file / category rows with action buttons (create, rename) */
+/* Custom file / category roworkspace with action buttons (create, rename) */
 .asset-row {
     display: flex;
     align-items: center;
@@ -1516,7 +1517,7 @@ a:hover,
 /* ══════════════════════════════════════════════════════════════════
    WORKSPACE 3-COLUMN RESIZABLE LAYOUT (asset · editor · preview)
    ══════════════════════════════════════════════════════════════════ */
-.ws-layout {
+.workspace-layout {
     display: flex;
     flex-direction: row;
     height: 100%;
@@ -1524,20 +1525,20 @@ a:hover,
     overflow: hidden;
     position: relative;
 }
-.ws-col {
+.workspace-col {
     height: 100%;
     min-width: 0;
     overflow: hidden;
 }
-.ws-col.collapsed {
+.workspace-col.collapsed {
     flex: 0 0 0 !important;
     width: 0 !important;
     overflow: hidden;
 }
-.ws-asset {
+.workspace-asset {
     background: var(--surface);
 }
-.ws-editor {
+.workspace-editor {
     flex: 1 1 auto;
     min-width: 0;
     display: flex;
@@ -1552,25 +1553,26 @@ a:hover,
     border-bottom: 1px solid var(--border);
 }
 
-.ws-editor .ink-editor,
-.ws-editor .markdown-editor {
+.workspace-editor .ink-editor,
+.workspace-editor .markdown-editor {
     flex: 1 1 auto;
     min-height: 0;
     height: auto;
-    /* white-space: pre-wrap; */
     white-space: break-spaces;
     word-break: break-word;
     overflow-wrap: anywhere;
     flex-shrink: 1;
+    font-size: 18px;
+    line-height: 1.5rem;
 }
-.ws-preview {
+.workspace-preview {
     display: flex;
     flex-direction: column;
     background: var(--bg);
 }
 
 /* Thick, obviously-grabbable divider */
-.ws-divider {
+.workspace-divider {
     flex: 0 0 8px;
     width: 8px;
     background: var(--border2);
@@ -1583,37 +1585,13 @@ a:hover,
     transition: background 0.12s;
     z-index: 5;
 }
-.ws-divider:hover,
-.ws-divider.dragging {
+.workspace-divider:hover,
+.workspace-divider.dragging {
     background: var(--accent);
 }
-/* Collapse chevron, always visible so the column reads as collapsible */
-/* .ws-divider-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 40px;
-    padding: 0;
-    border: 1px solid var(--border2);
-    border-radius: 4px;
-    background: var(--surface2);
-    color: var(--text-mid);
-    cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
-    transition: background 0.12s, color 0.12s, border-color 0.12s;
-}
-.ws-divider-btn:hover {
-    background: var(--accent-dim);
-    border-color: var(--accent);
-    color: var(--accent);
-}
-.ws-divider-btn .mud-icon-root {
-    font-size: 16px;
-} */
 
 /* Full-viewport catcher active only while dragging */
-.ws-drag-overlay {
+.workspace-drag-overlay {
     position: fixed;
     inset: 0;
     z-index: 9999;
@@ -1626,7 +1604,7 @@ a:hover,
 .workspace-empty {
     padding: 24px 20px;
     font-family: 'Inter', sans-serif;
-    font-size: 16px;
+    font-size: 18px;
     color: var(--text-dim);
     text-align: center;
 }
@@ -1644,14 +1622,14 @@ a:hover,
 .markdown-preview::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 .markdown-preview::-webkit-scrollbar-track { background: transparent; }
 .markdown-preview-empty {
-    font-size: 14px;
+    font-size: 18px;
     font-style: italic;
     color: var(--text-dim);
 }
 
 .md-body {
     font-family: 'Inter', sans-serif;
-    font-size: 15px;
+    font-size: 18px;
     line-height: 1.75;
     color: var(--text);
     max-width: 680px;
@@ -1683,7 +1661,7 @@ a:hover,
 }
 .md-body code {
     font-family: 'RobotoMono', monospace;
-    font-size: 0.88em;
+    font-size: 18px;
     color: var(--accent);
     background: var(--surface2);
     border-radius: 3px;
@@ -1717,5 +1695,9 @@ a:hover,
     padding: 6px 10px;
     text-align: left;
 }
-.md-body th { background: var(--surface2); color: var(--text); }
-.md-body img { max-width: 100%; border-radius: 4px; }
+.md-body th { 
+    background: var(--surface2); color: var(--text); 
+}
+.md-body img { 
+    max-width: 100%; border-radius: 4px; 
+}

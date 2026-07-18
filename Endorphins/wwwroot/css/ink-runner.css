@@ -6,7 +6,7 @@
    with `display: contents` (no box), so the runner is effectively a direct
    flex child of .mud-tabs-panels — hence the flex column here rather than a
    height:100% chain, which cannot resolve through a box-less panel. */
-.ws-preview .mud-tabs {
+.workspace-preview .mud-tabs {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
@@ -15,12 +15,12 @@
 /* Keep the tab bar above the panel and stacked in front, so panel content
    (e.g. the PDF pages, which slide during MudTabs' tab-change transition)
    can't render up behind or over the tab bar. */
-.ws-preview .mud-tabs-toolbar {
+.workspace-preview .mud-tabs-toolbar {
     flex: 0 0 auto;
     position: relative;
     z-index: 2;
 }
-.ws-preview .mud-tabs-panels {
+.workspace-preview .mud-tabs-panels {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;

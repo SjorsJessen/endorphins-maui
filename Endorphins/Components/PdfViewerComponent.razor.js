@@ -6,15 +6,19 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 let _pdf = null;
 let _scale = 1.2;
 let _dotnet = null;
-let _pageObserver = null;    // reports the current page while scrolling
 let _renderObserver = null;  // lazily renders pages as they approach the viewport
 let _baseViewport = null;    // page-1 size used for placeholders
+let _pagesContainer = null;  // scroll container, for page tracking
+let _scrollHandler = null;   // throttled scroll listener reporting the current page
+let _scrollRaf = 0;
+let _lastReportedPage = 0;   // guards against redundant .NET round-trips
 
 // Load a document (bytes arrive as a .NET stream — no base64 inflation) and
 // create lightweight placeholders; pages render lazily as they scroll near.
 export async function load(streamRef, pagesContainer, dotnetRef) {
     _dotnet = dotnetRef;
     _scale = 1.2;
+    _lastReportedPage = 0;
     const buffer = await streamRef.arrayBuffer();
     _pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
     const page1 = await _pdf.getPage(1);
@@ -74,6 +78,8 @@ async function renderPage(wrapper) {
 }
 
 function setupObservers(pagesContainer) {
+    _pagesContainer = pagesContainer;
+
     // Render pages shortly before they scroll into view
     _renderObserver = new IntersectionObserver((entries) => {
         for (const e of entries) {
@@ -81,29 +87,51 @@ function setupObservers(pagesContainer) {
         }
     }, { root: pagesContainer, rootMargin: '800px 0px' });
 
-    // Report the most-visible page for the toolbar counter
-    _pageObserver = new IntersectionObserver((entries) => {
-        let best = null, bestRatio = 0;
-        for (const e of entries) {
-            if (e.isIntersecting && e.intersectionRatio > bestRatio) {
-                bestRatio = e.intersectionRatio;
-                best = e.target;
-            }
-        }
-        if (best && _dotnet) {
-            _dotnet.invokeMethodAsync('OnCurrentPageChanged', parseInt(best.dataset.page, 10));
-        }
-    }, { root: pagesContainer, threshold: [0.1, 0.3, 0.5, 0.75] });
-
     for (const w of pagesContainer.querySelectorAll('.pdf-page-wrapper')) {
         _renderObserver.observe(w);
-        _pageObserver.observe(w);
+    }
+
+    // Track the current page from scroll position rather than intersection
+    // ratios: the page crossing the viewport's vertical centre is unambiguous,
+    // so the counter no longer flickers between adjacent pages.
+    _scrollHandler = () => {
+        if (_scrollRaf) return;
+        _scrollRaf = requestAnimationFrame(() => {
+            _scrollRaf = 0;
+            reportCurrentPage();
+        });
+    };
+    pagesContainer.addEventListener('scroll', _scrollHandler, { passive: true });
+    reportCurrentPage();
+}
+
+// The page whose box straddles the container's vertical midline is "current".
+// Uses viewport coords (getBoundingClientRect) so it's independent of offsetParent.
+function reportCurrentPage() {
+    if (!_pagesContainer || !_dotnet) return;
+    const contRect = _pagesContainer.getBoundingClientRect();
+    const midY = contRect.top + _pagesContainer.clientHeight / 2;
+    let current = 1;
+    for (const w of _pagesContainer.querySelectorAll('.pdf-page-wrapper')) {
+        if (w.getBoundingClientRect().top <= midY) {
+            current = parseInt(w.dataset.page, 10);
+        } else {
+            break;
+        }
+    }
+    if (current !== _lastReportedPage) {
+        _lastReportedPage = current;
+        _dotnet.invokeMethodAsync('OnCurrentPageChanged', current);
     }
 }
 
 function disconnectObservers() {
     _renderObserver?.disconnect(); _renderObserver = null;
-    _pageObserver?.disconnect(); _pageObserver = null;
+    if (_pagesContainer && _scrollHandler) {
+        _pagesContainer.removeEventListener('scroll', _scrollHandler);
+    }
+    _scrollHandler = null;
+    if (_scrollRaf) { cancelAnimationFrame(_scrollRaf); _scrollRaf = 0; }
 }
 
 export async function setZoom(pagesContainer, delta) {
@@ -160,6 +188,7 @@ export async function getOutline() {
 
 export function dispose() {
     disconnectObservers();
+    _pagesContainer = null;
     _pdf = null;
     _dotnet = null;
 }

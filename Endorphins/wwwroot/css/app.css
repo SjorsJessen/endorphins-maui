@@ -110,6 +110,30 @@ a,
     max-height: calc(100vh - 120px);
     background: var(--bg);
     overflow: hidden;
+    position: relative;
+}
+/* Loading overlay shown with the file's name while the document parses/renders */
+.pdf-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: rgba(17, 18, 20, 0.82);
+    backdrop-filter: blur(1px);
+}
+.pdf-loading-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--text-mid);
+    max-width: 80%;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .pdf-empty {
     padding: 24px;
@@ -573,11 +597,22 @@ code {
     display: flex;
     flex-direction: column;
 }
+/* Keep the tab bar above the panel and stacked in front, so panel content
+   (e.g. the PDF pages, which slide during MudTabs' tab-change transition)
+   can't render up behind or over the tab bar. */
+.ws-preview .mud-tabs-toolbar {
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 2;
+}
 .ws-preview .mud-tabs-panels {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
 }
 .ink-story-runner {
     background: var(--bg) !important;

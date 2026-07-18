@@ -98,7 +98,7 @@
 }
 .dialogue-name {
     font-family: 'Inter', sans-serif;
-    font-size: 12px;
+    font-size: 14px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--orange);

@@ -92,12 +92,12 @@
     // ⌘C / ⌘V stay copy & paste, so Choice and Variable take the shifted chord.
     private readonly List<InkSnippet> InkElements = new()
     {
-        new("===", "Knot",     "Named story section — diverts jump here.", "=== knot === \n", "⌘K",  Cmd | (int)BlazorMonaco.KeyCode.KeyK),
-        new("==",  "Stitch",   "Sub-section within a knot.",               "= stitch = \n ",  "⌘S",  Cmd | (int)BlazorMonaco.KeyCode.KeyS),
-        new("->",  "Divert",   "Jump to a knot, stitch or label.",         "-> divert \n",    "⌘D",  Cmd | (int)BlazorMonaco.KeyCode.KeyD),
+        new("===", "Knot",     "Named story section — diverts jump here.", "=== knot === \n", "⌘⇧K",  CmdShift | (int)BlazorMonaco.KeyCode.KeyK),
+        new("==",  "Stitch",   "Sub-section within a knot.",               "= stitch = \n ",  "⌘⇧S",  CmdShift | (int)BlazorMonaco.KeyCode.KeyS),
+        new("->",  "Divert",   "Jump to a knot, stitch or label.",         "-> divert \n",    "⌘⇧D",  CmdShift | (int)BlazorMonaco.KeyCode.KeyD),
         new("*",   "Choice",   "A choice the player can pick.",            "* choice \n",     "⌘⇧C", CmdShift | (int)BlazorMonaco.KeyCode.KeyC),
         new("VAR", "Variable", "Declare a global variable.",               "VAR ",            "⌘⇧V", CmdShift | (int)BlazorMonaco.KeyCode.KeyV),
-        new("#",   "Tag",      "Attach metadata to a line.",               "# Tag ",          "⌘T",  Cmd | (int)BlazorMonaco.KeyCode.KeyT)
+        new("#",   "Tag",      "Attach metadata to a line.",               "# Tag ",          "⌘⇧T",  CmdShift | (int)BlazorMonaco.KeyCode.KeyT)
     };
 
     private bool _functionsOpen;

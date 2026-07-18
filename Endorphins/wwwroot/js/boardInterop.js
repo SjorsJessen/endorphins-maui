@@ -60,16 +60,38 @@ export async function exportBoardPng(items, background) {
 
 // Wire paste + drop once, routing results back to .NET
 export function initImport(el, dotnet) {
-    async function filesToUrls(files) {
-        const out = [];
-        for (const f of files) {
-            if (!f.type.startsWith("image/")) continue;
-            const url = await new Promise(res => {
+    // Downscale on import: full-resolution photos become multi-MB data URLs
+    // that bloat the .moodboard file and make every Blazor re-render crawl.
+    const MAX_DIM = 1600;
+
+    async function fileToUrl(f) {
+        try {
+            const bitmap = await createImageBitmap(f);
+            const scale = Math.min(1, MAX_DIM / Math.max(bitmap.width, bitmap.height));
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+            canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+            canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+            bitmap.close?.();
+            // PNG keeps transparency; everything else compresses well as JPEG
+            return f.type === "image/png"
+                ? canvas.toDataURL("image/png")
+                : canvas.toDataURL("image/jpeg", 0.85);
+        } catch {
+            // Fallback: raw data URL if decode fails
+            return await new Promise(res => {
                 const r = new FileReader();
                 r.onload = () => res(r.result);
                 r.readAsDataURL(f);
             });
-            out.push(url);
+        }
+    }
+
+    async function filesToUrls(files) {
+        const out = [];
+        for (const f of files) {
+            if (!f.type.startsWith("image/")) continue;
+            out.push(await fileToUrl(f));
         }
         return out;
     }

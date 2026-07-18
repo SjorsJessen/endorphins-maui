@@ -34,6 +34,9 @@ public class FileStorageService : IFileStorageService
         _filePaths = Directory
             .EnumerateFiles(Root!, "*", SearchOption.AllDirectories)
             .Select(path => Path.GetRelativePath(Root!, path))
+            // Skip dot-folders/files (.git, .DS_Store, …) — enumerating a .git
+            // folder floods the asset tree with thousands of irrelevant entries.
+            .Where(path => !path.Split('/', '\\').Any(seg => seg.StartsWith('.')))
             .ToList();
 
         FilesLoaded?.Invoke(_filePaths);

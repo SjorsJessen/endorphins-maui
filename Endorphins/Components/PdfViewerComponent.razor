@@ -95,7 +95,10 @@
             _dotNetRef ??= DotNetObjectReference.Create(this);
             try
             {
-                _numPages = await _module.InvokeAsync<int>("load", _pendingContent, _pagesRef, _dotNetRef);
+                // Stream the bytes to JS — avoids the ~33% base64 inflation of
+                // passing byte[] through normal interop serialization.
+                using var streamRef = new DotNetStreamReference(new MemoryStream(_pendingContent));
+                _numPages = await _module.InvokeAsync<int>("load", streamRef, _pagesRef, _dotNetRef);
                 _currentPage = 1;
                 _zoom = 120;
                 _outline = (await _module.InvokeAsync<PdfOutlineNode[]>("getOutline")).ToList();

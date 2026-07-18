@@ -62,7 +62,7 @@
                 Run a story, open a note, or open a file to preview it here.
             </div>
         }
-        <MudTabs Color="Color.Inherit" MinimumTabWidth="60px" @bind-ActivePanelIndex="_activeIndex">
+        <MudTabs Color="Color.Inherit" MinimumTabWidth="60px" KeepPanelsAlive="true" @bind-ActivePanelIndex="_activeIndex">
             <MudTabPanel Visible="_storyOpen" TabContent="@Header("Story", () => _storyOpen = false)">
                 <InkStoryRunnerComponent/>
             </MudTabPanel>

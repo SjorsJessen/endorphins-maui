@@ -37,7 +37,8 @@
 
             @foreach (var item in _model.Items)
             {
-                <div style="position:absolute;
+                <div @key="item.Id"
+                     style="position:absolute;
                     left:@(item.X)px;top:@(item.Y)px;
                 width:@(item.Width)px;height:@(item.Height)px;
                 z-index:@item.ZIndex;transform:rotate(@(item.Rotation)deg);

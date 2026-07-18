@@ -28,6 +28,13 @@
         base.OnInitialized();
         AssetsService.MarkdownFileSelected += OnMarkdownSelected;
         AssetsService.MarkdownContentChanged += OnMarkdownChanged;
+
+        // The Notes tab (and this component) is created lazily on first open —
+        // after the selection event — so render the already-selected note now.
+        if (!string.IsNullOrWhiteSpace(AssetsService.ActiveMarkdownContent))
+        {
+            _html = Markdown.ToHtml(AssetsService.ActiveMarkdownContent, Pipeline);
+        }
     }
 
     private void OnMarkdownSelected(string _, string content) => Render(content);

@@ -22,6 +22,22 @@
     {
         base.OnInitialized();
         AssetsService.MarkdownFileSelected += OnMarkdownFileSelect;
+
+        // Created lazily when the Markdown editor first appears — after the
+        // selection event has already fired — so seed from the persisted note.
+        if (AssetsService.ActiveMarkdownPath is not null)
+        {
+            _activeFile = AssetsService.ActiveMarkdownPath;
+            Content = AssetsService.ActiveMarkdownContent;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _editor is not null && !string.IsNullOrEmpty(Content))
+        {
+            await _editor.SetValueAsync(Content);
+        }
     }
 
     private void OnMarkdownFileSelect(string filePath, string newContent)
@@ -42,7 +58,7 @@
     {
         Content = newContent;
         StorageService.WriteFileAsync(relativePath: _activeFile, content: newContent);
-        AssetsService.MarkdownContentChanged?.Invoke(newContent);
+        AssetsService.UpdateMarkdownContent(newContent);
     }
 
     public void Dispose()

@@ -9,6 +9,28 @@ public sealed class AssetsService
     /// <summary>Raised as the markdown editor content changes, for live preview.</summary>
     public Action<string>? MarkdownContentChanged { get; set; }
 
+    // The currently-selected markdown note. Persisted here (singleton) so the
+    // editor/preview components, which are created lazily when the Markdown editor
+    // and Notes tab first appear, can initialise from it — the selection event
+    // fires before those components exist on the very first open.
+    public string? ActiveMarkdownPath { get; private set; }
+    public string ActiveMarkdownContent { get; private set; } = string.Empty;
+
+    /// <summary>Records the active note and notifies listeners it was selected.</summary>
+    public void SelectMarkdown(string path, string content)
+    {
+        ActiveMarkdownPath = path;
+        ActiveMarkdownContent = content;
+        MarkdownFileSelected?.Invoke(path, content);
+    }
+
+    /// <summary>Records edited note content and notifies the live preview.</summary>
+    public void UpdateMarkdownContent(string content)
+    {
+        ActiveMarkdownContent = content;
+        MarkdownContentChanged?.Invoke(content);
+    }
+
     public Action<string>? VideoSelected { get; set; }
 
     /// <summary>Raised when the user launches the Photopea tool from the asset panel.</summary>

@@ -275,7 +275,7 @@
         try
         {
             var contents = await StorageService.ReadFileAsTextAsync(filePath);
-            AssetsService.MarkdownFileSelected?.Invoke(filePath, contents);
+            AssetsService.SelectMarkdown(filePath, contents);
         }
         catch (Exception exc)
         {

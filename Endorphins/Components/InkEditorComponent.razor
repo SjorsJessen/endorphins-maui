@@ -3,7 +3,7 @@
 @inject FileStorageService StorageService;
 @inherits DevHotReloadComponentBase;
 
-<MudToolBar Dense Style="display: flex; align-items: center; gap: 2px">
+<MudToolBar Dense Class="ink-editor-toolbar">
     @foreach (var element in InkElements)
     {
         <MudTooltip Text="@element.Tooltip" Arrow="true" Placement="Placement.Bottom">
@@ -136,6 +136,10 @@
         return new StandaloneEditorConstructionOptions
         {
             AutomaticLayout = true,
+            WordWrap = "on",
+            WrappingStrategy = "advanced",
+            WordBreak = "normal",
+            Minimap = new EditorMinimapOptions { Enabled = false },
             Language = "ink",
             Theme = "ink-dark",
             FontSize = 15,

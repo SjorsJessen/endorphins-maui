@@ -849,7 +849,7 @@ a:hover,
 }
 .mud-button-text.mud-button-text-inherit {
     font-family: 'Inter', sans-serif;
-    font-size: 16px;
+    font-size: 14px;
     color: var(--text-mid) !important;
 }
 .mud-button-outlined.mud-button-outlined-info {
@@ -883,8 +883,8 @@ a:hover,
     background-color: var(--bg);
 }
 .asset-panel > .mud-toolbar {
-    min-height: 36px;
-    height: 36px;
+    min-height: 48px;
+    height: 48px;
     background: var(--surface);
     padding-left: 14px;
     padding-right: 6px;
@@ -1230,6 +1230,13 @@ a:hover,
     background: var(--bg);
 }
 /* Let the code / markdown editor fill the editor column */
+.ink-editor-toolbar {
+    display: flex; 
+    align-items: center; 
+    gap: 2px;
+    border-bottom: 1px solid var(--border);
+}
+
 .ws-editor .ink-editor,
 .ws-editor .markdown-editor {
     flex: 1 1 auto;

@@ -2,10 +2,10 @@
 @implements IAsyncDisposable
 @inherits DevHotReloadComponentBase;
 
-<iframe id="pea" src="https://www.photopea.com"
-        style="width:100%;height:768px;border:0;"></iframe>
-
-<button class="photoshop-export" @onclick="Export">Export edited image</button>
+<div class="photoshop-pane">
+    <iframe id="pea" src="https://www.photopea.com" class="photopea-frame"></iframe>
+    <button class="photoshop-export" @onclick="Export">Export edited image</button>
+</div>
 
 @code {
     private IJSObjectReference? _module;

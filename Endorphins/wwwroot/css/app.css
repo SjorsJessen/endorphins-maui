@@ -899,6 +899,52 @@ a:hover,
     padding: 4px 0 6px;
 }
 
+/* Pinned Tools section (Photopea launcher) */
+.asset-tools {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+}
+.asset-tool-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-mid);
+    font-family: inherit;
+    font-size: 12px;
+    text-align: left;
+    transition: background 0.1s, color 0.1s;
+}
+.asset-tool-item:hover {
+    background: var(--surface2);
+    color: var(--text);
+}
+
+/* Photopea tool pane */
+.photoshop-pane {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 150px);
+    min-height: 360px;
+    background: var(--bg);
+}
+.photopea-frame {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    border: 0;
+    display: block;
+    background: var(--bg);
+}
+.photoshop-pane .photoshop-export {
+    align-self: flex-start;
+    margin: 8px 10px;
+}
+
 /* Section headers: "Workspace" / "Assets" */
 .asset-section-label {
     padding: 9px 12px 6px;

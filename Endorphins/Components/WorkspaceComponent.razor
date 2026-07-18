@@ -156,15 +156,14 @@
     private bool _readerOpen;
     private bool _graphOpen;       // opens when a diagram file is selected
     private bool _moodboardOpen;   // opens when a moodboard file is selected
-
-    // Tool tabs — available by default, still closeable.
-    private bool _photoshopOpen = true;
+    private bool _photoshopOpen;   // opens when launched from the asset panel's Tools section
 
     private const int StoryIndex = 0;
     private const int NotesIndex = 1;
     private const int ReaderIndex = 2;
     private const int GraphIndex = 3;
-    private const int MoodboardIndex = 5;   // declaration order: Photoshop is 4
+    private const int PhotoshopIndex = 4;
+    private const int MoodboardIndex = 5;
 
     private bool AnyTabOpen =>
         _storyOpen || _notesOpen || _readerOpen || _graphOpen || _photoshopOpen || _moodboardOpen;
@@ -178,6 +177,7 @@
         PdfService.PdfFileSelected += OnPdfSelected;
         DiagramService.DiagramFileSelected += OnDiagramSelected;
         MoodboardService.MoodboardFileSelected += OnMoodboardSelected;
+        AssetsService.PhotoshopRequested += OnPhotoshopRequested;
     }
 
     private void OnStoryContent(Endorphins.Models.DialogLine _) => OpenTab(() => _storyOpen = true, StoryIndex);
@@ -186,6 +186,7 @@
     private void OnPdfSelected(Endorphins.Models.PdfFile _) => OpenTab(() => _readerOpen = true, ReaderIndex);
     private void OnDiagramSelected(string _, string __) => OpenTab(() => _graphOpen = true, GraphIndex);
     private void OnMoodboardSelected(string _, string __) => OpenTab(() => _moodboardOpen = true, MoodboardIndex);
+    private void OnPhotoshopRequested() => OpenTab(() => _photoshopOpen = true, PhotoshopIndex);
 
     private void OpenTab(Action open, int index) => InvokeAsync(() =>
     {
@@ -222,5 +223,6 @@
         PdfService.PdfFileSelected -= OnPdfSelected;
         DiagramService.DiagramFileSelected -= OnDiagramSelected;
         MoodboardService.MoodboardFileSelected -= OnMoodboardSelected;
+        AssetsService.PhotoshopRequested -= OnPhotoshopRequested;
     }
 }

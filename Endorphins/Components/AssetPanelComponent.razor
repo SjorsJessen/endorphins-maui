@@ -71,6 +71,16 @@
         </div>
     }
 
+    <!-- ── TOOLS (always available) ── -->
+    <div class="asset-tools">
+        <div class="asset-section-label">Tools</div>
+        <MudDivider/>
+        <button class="asset-tool-item" @onclick="OpenPhotoshop" title="Open Photopea image editor">
+            <MudIcon Icon="@Icons.Material.Sharp.Brush" Class="asset-row-icon" Size="Size.Small"/>
+            <span class="asset-row-name">Photopea</span>
+        </button>
+    </div>
+
     @if (_isPreviewPanelActive)
     {
         <div class="asset-preview">
@@ -368,6 +378,9 @@
             Console.Error.WriteLine(exc);
         }
     }
+
+    /// <summary>Launches the Photopea tool tab.</summary>
+    private void OpenPhotoshop() => AssetsService.PhotoshopRequested?.Invoke();
 
     /// <summary>Opens a moodboard file for editing in the Moodboard tab.</summary>
     private async Task SelectMoodboard(string filePath)

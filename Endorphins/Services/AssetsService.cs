@@ -10,6 +10,9 @@ public sealed class AssetsService
     public Action<string>? MarkdownContentChanged { get; set; }
 
     public Action<string>? VideoSelected { get; set; }
+
+    /// <summary>Raised when the user launches the Photopea tool from the asset panel.</summary>
+    public Action? PhotoshopRequested { get; set; }
     
     private List<IBrowserFile> Assets { get; } = [];
     

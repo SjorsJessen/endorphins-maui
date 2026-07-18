@@ -251,8 +251,8 @@
                 _active.Y += dy / _scale;
                 break;
             case Mode.Resize:
-                _active!.Width = Math.Max(20, _active.Width + dx / _scale);
-                _active.Height = Math.Max(20, _active.Height + dy / _scale);
+                _active!.Width = Math.Max(10, _active.Width + dx / _scale);
+                _active.Height = Math.Max(10, _active.Height + dy / _scale);
                 break;
         }
     }
@@ -269,7 +269,7 @@
     private void OnWheel(WheelEventArgs e)
     {
         var old = _scale;
-        var next = Math.Clamp(old * (e.DeltaY < 0 ? 1.1 : 1 / 1.1), 0.1, 10);
+        var next = Math.Clamp(old * (e.DeltaY < 0 ? 1.01 : 1 / 1.01), 0.1, 10);
 
         var cx = e.ClientX - _rectLeft; // cursor relative to viewport
         var cy = e.ClientY - _rectTop;

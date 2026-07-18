@@ -1,28 +1,38 @@
 /* Split from app.css — asset-panel-specific styles. Loaded before MudBlazor, in source order. */
 
-.asset-panel {
+/* ══════════════════════════════════════════════════════════════════
+   SIDE PANEL — container for two layers:
+     • .asset-panel   : the Asset Menu (full height, scrolls)
+     • .asset-preview : the Preview Window, fixed to the side panel's
+                        bottom and stacked on top, so the assets scroll
+                        underneath it.
+   ══════════════════════════════════════════════════════════════════ */
+.side-panel {
+    position: relative;
+    height: calc(100vh - 49px);   /* fill the sidebar column below the header */
+    overflow: hidden;
     border-right: 1px solid var(--border);
-    height: 100%;
     background: var(--surface);
-    font-family: 'Inter', sans-serif;
-    font-size: 16px;
-    color: red;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   ASSET PANEL — file-panel layout + tree styling + asset preview
-   Adapts the reference #file-panel / #asset-preview look onto the
-   MudBlazor tree + preview markup.
-   ══════════════════════════════════════════════════════════════════ */
-
-/* Panel is a column: header, scrolling tree, pinned preview */
+/* Asset Menu — the underlying layer, filling the whole side panel. */
 .asset-panel {
-    /* display: grid; */
-    /* flex-direction: column; */
-    height: calc(100vh - 150px);
-    min-height: 400px;
-    overflow: scroll;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
     background-color: var(--bg);
+}
+/* The scrolling tree fills the menu below the toolbar; its lower rows pass
+   behind the preview window pinned at the bottom of the side panel. */
+.asset-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 .asset-panel > .mud-toolbar {
     min-height: 48px;
@@ -41,13 +51,6 @@
     letter-spacing: 0.08em;
     color: var(--text-dim) !important;
 }
-/* Scroll region holding the Workspace + Assets sections */
-.asset-scroll {
-    flex: 1 1 auto;
-    overflow-y: auto;
-    overflow-x: hidden;
-    min-height: 0;
-}
 .asset-scroll::-webkit-scrollbar { width: 4px; }
 .asset-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 .asset-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -55,10 +58,10 @@
     padding: 4px 0 6px;
 }
 
-/* Pinned Tools section (Photopea launcher) */
+/* Pinned Tools section (Photopea launcher) — sits above the preview inside
+   the bottom overlay, so no separate top border (the overlay draws it). */
 .asset-tools {
     flex-shrink: 0;
-    border-top: 1px solid var(--border);
 }
 .asset-tool-item {
     display: flex;
@@ -197,13 +200,20 @@
     outline: none;
 }
 
-/* ── ASSET PREVIEW (#asset-preview) ── */
+/* ── PREVIEW WINDOW — sibling of the menu, fixed to the side panel's bottom
+   and stacked above it; the asset menu scrolls underneath. ── */
 .asset-preview {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
     display: flex;
     flex-direction: column;
+    max-height: 60%;   /* never cover the whole menu */
     border-top: 1px solid var(--border);
     background: var(--surface2);
-    flex-shrink: 0;
+    box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.45);
 }
 .asset-preview-header {
     display: flex;
@@ -241,6 +251,8 @@
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    overflow-y: auto;   /* scroll within the footer rather than growing it */
+    min-height: 0;
 }
 .asset-preview-img {
     max-width: 100%;

@@ -1,2 +1,1 @@
-- I would like to have separate css scripts for each component. So Ink editor has its own, Runner has its, PDF viewer and so on. Except the generic styling and mud blazor can remain in app.css
 - I would like the scrolling in the moodboard to be less aggressive when using the touchpad 

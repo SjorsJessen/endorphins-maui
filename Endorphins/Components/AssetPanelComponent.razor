@@ -10,61 +10,66 @@
 @inject MoodboardService MoodboardService;
 @inherits DevHotReloadComponentBase;
 
-<div class="asset-panel">
-    <MudToolBar Class="justify-space-between" Dense>
-        <MudText>Project</MudText>
-        <MudIconButton Icon="@Icons.Material.Sharp.FolderOpen" Variant="Variant.Text" Color="Color.Inherit"
-                       Size="Size.Small" HtmlTag="label" for="folderInput" OnClick="OpenProject" />
-    </MudToolBar>
-    <MudDivider></MudDivider>
+@* Side panel: the Asset Menu is the underlying layer; the Preview Window is a
+   sibling fixed to the side panel's bottom, overlaying the menu so the assets
+   scroll underneath it. *@
+<div class="side-panel">
+    <div class="asset-panel">
+        <MudToolBar Class="justify-space-between" Dense>
+            <MudText>Project</MudText>
+            <MudIconButton Icon="@Icons.Material.Sharp.FolderOpen" Variant="Variant.Text" Color="Color.Inherit"
+                           Size="Size.Small" HtmlTag="label" for="folderInput" OnClick="OpenProject" />
+        </MudToolBar>
+        <MudDivider></MudDivider>
 
-    @if (!_projectLoaded)
-    {
-        <MudText Typo="Typo.body1" Class="pa-3" Style="color: var(--text-dim);">
-            No project loaded.
-        </MudText>
-    }
-    else
-    {
-        <div class="asset-scroll">
-            <div class="asset-section-label">Workspace</div>
-            <MudDivider />
-            <MudTreeView T="string" Dense Hover ExpandOnClick>
-                @foreach (var node in _workspaceTree)
-                {
-                    <AssetTreeNodeComponent Node="node" OnFileActivated="OnFileActivated" OnCreateFile="CreateFileInFolder"
-                                            OnRenameFile="RenameFile" />
-                }
-            </MudTreeView>
-
-            <div class="asset-section-label">Assets</div>
-            <MudDivider />
-            <MudTreeView T="string" Dense Hover ExpandOnClick>
-                @if (_assetsTree.Count == 0)
-                {
-                    <MudText Typo="Typo.body2" Class="px-3 py-2" Style="color: var(--text-dim); font-style: italic;">
-                        No assets.
-                    </MudText>
-                }
-                else
-                {
-                    @foreach (var node in _assetsTree)
+        @if (!_projectLoaded)
+        {
+            <MudText Typo="Typo.body1" Class="pa-3" Style="color: var(--text-dim);">
+                No project loaded.
+            </MudText>
+        }
+        else
+        {
+            <div class="asset-scroll">
+                <div class="asset-section-label">Workspace</div>
+                <MudDivider />
+                <MudTreeView T="string" Dense Hover ExpandOnClick>
+                    @foreach (var node in _workspaceTree)
                     {
                         <AssetTreeNodeComponent Node="node" OnFileActivated="OnFileActivated" OnCreateFile="CreateFileInFolder"
                                                 OnRenameFile="RenameFile" />
                     }
-                }
-            </MudTreeView>
-        </div>
-    }
+                </MudTreeView>
 
-    <div class="asset-tools">
-        <div class="asset-section-label">Tools</div>
-        <MudDivider />
-        <button class="asset-tool-item" @onclick="OpenPhotoshop" title="Open Photopea image editor">
-            <MudIcon Icon="@Icons.Material.Sharp.Brush" Class="asset-row-icon" Size="Size.Small" />
-            <span class="asset-row-name">Photopea</span>
-        </button>
+                <div class="asset-section-label">Assets</div>
+                <MudDivider />
+                <MudTreeView T="string" Dense Hover ExpandOnClick>
+                    @if (_assetsTree.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Class="px-3 py-2" Style="color: var(--text-dim); font-style: italic;">
+                            No assets.
+                        </MudText>
+                    }
+                    else
+                    {
+                        @foreach (var node in _assetsTree)
+                        {
+                            <AssetTreeNodeComponent Node="node" OnFileActivated="OnFileActivated" OnCreateFile="CreateFileInFolder"
+                                                    OnRenameFile="RenameFile" />
+                        }
+                    }
+                </MudTreeView>
+
+                <div class="asset-tools">
+                    <div class="asset-section-label">Tools</div>
+                    <MudDivider />
+                    <button class="asset-tool-item" @onclick="OpenPhotoshop" title="Open Photopea image editor">
+                        <MudIcon Icon="@Icons.Material.Sharp.Brush" Class="asset-row-icon" Size="Size.Small" />
+                        <span class="asset-row-name">Photopea</span>
+                    </button>
+                </div>
+            </div>
+        }
     </div>
 
     @if (_isPreviewPanelActive)

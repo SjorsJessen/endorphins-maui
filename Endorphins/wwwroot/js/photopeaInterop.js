@@ -5,6 +5,8 @@ export function init(iframeId, dotnet) {
     const iframe = document.getElementById(iframeId);
 
     window.addEventListener("message", async (e) => {
+        if (e.source !== iframe.contentWindow) return;
+
         if (e.data instanceof ArrayBuffer) {
             const bytes = new Uint8Array(e.data);
             let binary = "";

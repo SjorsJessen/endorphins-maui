@@ -1,1 +1,0 @@
-- When opening Photopea I would like it to start on the page where I can create a new file, not some promotional page.

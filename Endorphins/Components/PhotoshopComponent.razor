@@ -3,11 +3,18 @@
 @inherits DevHotReloadComponentBase;
 
 <div class="photoshop-pane">
-    <iframe id="pea" src="https://www.photopea.com" class="photopea-frame"></iframe>
+    <iframe id="pea" src="@PhotopeaSrc" class="photopea-frame"></iframe>
     <button class="photoshop-export" @onclick="Export">Export edited image</button>
 </div>
 
 @code {
+    // Photopea's API reads a JSON config from the URL hash on load. The script
+    // creates a blank document immediately, so the editor opens ready to work
+    // instead of showing the promotional start page. (www.photopea.com/api)
+    private static readonly string PhotopeaSrc =
+        "https://www.photopea.com#" + Uri.EscapeDataString(
+            "{\"script\":\"app.documents.add(1920,1080,72,\\\"Untitled\\\",NewDocumentMode.RGB,DocumentFill.WHITE);\"}");
+
     private IJSObjectReference? _module;
     private DotNetObjectReference<PhotoshopComponent> _self;
 

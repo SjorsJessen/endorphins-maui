@@ -740,6 +740,10 @@ video {
 .mud-tabs-toolbar {
     border-bottom: 1px solid var(--border) !important;
 }
+.mud-tabs-tabbar {
+    background: var(--bg) !important;
+    border-bottom: 1px solid var(--border) !important;
+}
 .mud-tab-slider {
     background-color: var(--accent) !important;
 }
@@ -868,8 +872,12 @@ a:hover,
 
 /* Panel is a column: header, scrolling tree, pinned preview */
 .asset-panel {
-    display: flex;
-    flex-direction: column;
+    /* display: grid; */
+    /* flex-direction: column; */
+    height: calc(100vh - 150px);
+    min-height: 400px;
+    overflow: scroll;
+    background-color: var(--bg);
 }
 .asset-panel > .mud-toolbar {
     min-height: 36px;

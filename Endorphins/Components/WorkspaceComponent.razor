@@ -50,13 +50,7 @@
 
     <!-- ── PREVIEW COLUMN ── -->
     <div class="ws-col ws-preview @(_previewCollapsed ? "collapsed" : null)" style="@PreviewStyle">
-        @if (!AnyTabOpen)
-        {
-            <div class="workspace-empty">
-                Run a story, open a note, or open a file to preview it here.
-            </div>
-        }
-        <MudTabs Color="Color.Inherit" MinimumTabWidth="60px" KeepPanelsAlive="true" @bind-ActivePanelIndex="_activeIndex">
+        <MudTabs MinimumTabWidth="60px" KeepPanelsAlive="true" @bind-ActivePanelIndex="_activeIndex">
             <MudTabPanel Visible="_storyOpen" TabContent="@Header("Story", () => _storyOpen = false)">
                 <InkStoryRunnerComponent/>
             </MudTabPanel>
@@ -76,6 +70,12 @@
                 <MoodboardComponent/>
             </MudTabPanel>
         </MudTabs>
+        @if (!AnyTabOpen)
+        {
+            <div class="workspace-empty">
+                Run a story, open a note, or open a file to preview it here.
+            </div>
+        }
     </div>
 
     <!-- Full-viewport catcher so dragging keeps tracking outside the divider -->

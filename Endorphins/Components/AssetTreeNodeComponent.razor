@@ -2,67 +2,20 @@
 @using MudBlazor
 @using Microsoft.AspNetCore.Components.Web
 
-@* Renders a single asset node and recurses into its children. Files and the
-   scripts/notes category folders use a custom row (BodyContent) so they can
-   carry action buttons — a + create button on the categories and an inline
-   rename on files. Plain folders keep the default MudTreeViewItem rendering. *@
+@* Renders a single asset node and recurses into its children. All nodes use
+   a custom row (BodyContent) so rows align; the scripts/notes/diagrams/
+   moodboards categories carry a + create button and files an inline rename.
+   ChildContent is only supplied for directories — a non-null fragment would
+   make MudTreeView treat files as expandable (click would toggle an empty
+   group and shift the rows below). *@
 
-@if (UseCustomRow)
-{
-    <MudTreeViewItem T="string"
-                     Value="@Node.Path"
-                     CanExpand="Node.IsDirectory"
-                     ExpandButtonIcon="@(Node.IsDirectory ? Icons.Material.Filled.ChevronRight : string.Empty)"
-                     OnClick="HandleClick">
-        <BodyContent>
-            <div class="asset-row">
-                <MudIcon Icon="@Icon" Class="asset-row-icon" Size="Size.Small"/>
-                @if (_isRenaming)
-                {
-                    <input class="asset-row-input" @ref="_renameInput"
-                           value="@_editName"
-                           @oninput="e => _editName = e.Value?.ToString() ?? string.Empty"
-                           @onkeydown="OnRenameKey"
-                           @onblur="CommitRename"
-                           @onclick:stopPropagation="true"/>
-                }
-                else
-                {
-                    <span class="asset-row-name">@Node.Name</span>
-                    <span class="asset-row-actions">
-                        @if (IsCreatable)
-                        {
-                            <button class="asset-row-btn asset-row-btn--create" title="@CreateTooltip"
-                                    @onclick="Create" @onclick:stopPropagation="true">
-                                <MudIcon Icon="@Icons.Material.Sharp.Add" Size="Size.Small"/>
-                            </button>
-                        }
-                        @if (!Node.IsDirectory)
-                        {
-                            <button class="asset-row-btn" title="Rename"
-                                    @onclick="StartRename" @onclick:stopPropagation="true">
-                                <MudIcon Icon="@Icons.Material.Sharp.Edit" Size="Size.Small"/>
-                            </button>
-                        }
-                    </span>
-                }
-            </div>
-        </BodyContent>
-        <ChildContent>@Children</ChildContent>
-    </MudTreeViewItem>
-}
-else
-{
-    <MudTreeViewItem T="string"
-                     Value="@Node.Path"
-                     Text="@Node.Name"
-                     Icon="@Icon"
-                     CanExpand="Node.IsDirectory"
-                     ExpandButtonIcon="@(Node.IsDirectory ? Icons.Material.Filled.ChevronRight : string.Empty)"
-                     OnClick="HandleClick">
-        @Children
-    </MudTreeViewItem>
-}
+<MudTreeViewItem T="string"
+                 Value="@Node.Path"
+                 CanExpand="Node.IsDirectory"
+                 ExpandButtonIcon="@(Node.IsDirectory ? Icons.Material.Filled.ChevronRight : string.Empty)"
+                 OnClick="HandleClick"
+                 BodyContent="RowContent"
+                 ChildContent="@(Node.IsDirectory ? Children : null)"/>
 
 @code {
     [Parameter, EditorRequired] public AssetNode Node { get; set; } = default!;
@@ -85,8 +38,6 @@ else
     private bool IsDiagrams => Node.IsDirectory && string.Equals(Node.Name, "diagrams", StringComparison.OrdinalIgnoreCase);
     private bool IsMoodboards => Node.IsDirectory && string.Equals(Node.Name, "moodboards", StringComparison.OrdinalIgnoreCase);
     private bool IsCreatable => IsScripts || IsNotes || IsDiagrams || IsMoodboards;
-    // Every node uses the custom row so all rows align (folders + files + categories).
-    private bool UseCustomRow => true;
     private string CreateTooltip => IsScripts ? "New Ink script"
         : IsDiagrams ? "New diagram"
         : IsMoodboards ? "New moodboard"
@@ -96,17 +47,48 @@ else
         ? Icons.Material.Sharp.Folder
         : ExtensionIcon(Node.Name);
 
+    private RenderFragment<MudTreeViewItem<string>> RowContent => _ =>
+        @<div class="asset-row">
+            <MudIcon Icon="@Icon" Class="asset-row-icon" Size="Size.Small"/>
+            @if (_isRenaming)
+            {
+                <input class="asset-row-input" @ref="_renameInput"
+                       value="@_editName"
+                       @oninput="e => _editName = e.Value?.ToString() ?? string.Empty"
+                       @onkeydown="OnRenameKey"
+                       @onblur="CommitRename"
+                       @onclick:stopPropagation="true"/>
+            }
+            else
+            {
+                <span class="asset-row-name">@Node.Name</span>
+                <span class="asset-row-actions">
+                    @if (IsCreatable)
+                    {
+                        <button class="asset-row-btn asset-row-btn--create" title="@CreateTooltip"
+                                @onclick="Create" @onclick:stopPropagation="true">
+                            <MudIcon Icon="@Icons.Material.Sharp.Add" Size="Size.Small"/>
+                        </button>
+                    }
+                    @if (!Node.IsDirectory)
+                    {
+                        <button class="asset-row-btn" title="Rename"
+                                @onclick="StartRename" @onclick:stopPropagation="true">
+                            <MudIcon Icon="@Icons.Material.Sharp.Edit" Size="Size.Small"/>
+                        </button>
+                    }
+                </span>
+            }
+        </div>;
+
     private RenderFragment Children => __builder =>
     {
-        if (Node.IsDirectory)
+        foreach (var child in Node.Children)
         {
-            foreach (var child in Node.Children)
-            {
-                <AssetTreeNodeComponent Node="child"
-                                        OnFileActivated="OnFileActivated"
-                                        OnCreateFile="OnCreateFile"
-                                        OnRenameFile="OnRenameFile"/>
-            }
+            <AssetTreeNodeComponent Node="child"
+                                    OnFileActivated="OnFileActivated"
+                                    OnCreateFile="OnCreateFile"
+                                    OnRenameFile="OnRenameFile"/>
         }
     };
 
@@ -121,6 +103,8 @@ else
 
     private async Task HandleClick()
     {
+        // Directories just expand/collapse (handled by MudTreeView); only
+        // files trigger activation.
         if (_isRenaming) return;
         if (!Node.IsDirectory)
         {

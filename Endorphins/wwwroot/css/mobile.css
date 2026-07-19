@@ -1,0 +1,103 @@
+/* Split from app.css — phone-only responsive layout.
+   Loaded last so it wins on equal specificity.
+
+   iPad and desktop (≥ 601px wide) keep the untouched 3-column workspace; only
+   phones (≤ 600px, i.e. every iPhone in portrait) collapse to a single region at
+   a time, switched from a bottom nav. Everything keys off a `mobile-view-*` class
+   on `.page`, so the workspace component's own logic is left alone. */
+
+/* The bottom nav only exists on phones. */
+#mobile-nav { display: none; }
+
+@media (max-width: 600px) {
+
+    .page {
+        min-height: 100dvh;
+    }
+
+    /* ── Header: pinned to the top, clearing the status bar / notch ── */
+    .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        margin: 0 !important;
+        padding: env(safe-area-inset-top) 0 0 0 !important;
+        background: var(--surface);
+    }
+
+    /* ── The two content regions become full-screen layers between header
+          (49px tall + notch) and the bottom nav (56px + home indicator). ── */
+    .sidebar,
+    .workspace {
+        position: fixed !important;
+        top: calc(49px + env(safe-area-inset-top));
+        left: 0;
+        right: 0;
+        bottom: calc(56px + env(safe-area-inset-bottom));
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        flex: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
+    }
+    .side-panel {
+        height: 100% !important;
+    }
+
+    /* Show only the region the bottom nav selected. */
+    .sidebar   { display: none; }
+    .workspace { display: none; }
+    .page.mobile-view-assets  .sidebar   { display: block; }
+    .page.mobile-view-editor  .workspace,
+    .page.mobile-view-preview .workspace { display: block; }
+
+    /* Inside the workspace: editor vs preview, no drag dividers on a phone. */
+    .workspace-divider { display: none !important; }
+    .page.mobile-view-editor  .workspace-preview { display: none !important; }
+    .page.mobile-view-preview .workspace-editor  { display: none !important; }
+    .workspace-editor,
+    .workspace-preview,
+    .workspace-preview.collapsed {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Bottom navigation ── */
+    #mobile-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: calc(56px + env(safe-area-inset-bottom));
+        padding-bottom: env(safe-area-inset-bottom);
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        z-index: 100;
+    }
+    .mobile-nav-btn {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        background: none;
+        border: none;
+        color: var(--text-mid);
+        font-family: 'Inter', sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.03em;
+        cursor: pointer;
+        transition: color 0.12s;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .mobile-nav-btn .mud-icon-root { font-size: 22px; }
+    .mobile-nav-btn.active,
+    .mobile-nav-btn:active { color: var(--accent); }
+}

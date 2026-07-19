@@ -1,6 +1,11 @@
 @namespace Endorphins.Components
 @inject Endorphins.Services.FileStorageService StorageService
 @inject Endorphins.Services.AssetsService AssetsService
+@inject Endorphins.Services.EditorService EditorService
+@inject Endorphins.Services.PdfService PdfService
+@inject Endorphins.Services.DiagramService DiagramService
+@inject Endorphins.Services.MoodboardService MoodboardService
+@implements IDisposable
 @inherits LayoutComponentBase
 
 <MudThemeProvider />
@@ -10,7 +15,7 @@
 
 <ErrorBoundary>
     <ChildContent>
-        <div class="page">
+        <div class="page @MobileViewClass">
             <MudGrid Spacing="0">
                 <MudItem xs="12" Class="header">
                     <Header></Header>
@@ -25,6 +30,26 @@
                     <WorkspaceComponent />
                 </MudItem>
             </MudGrid>
+
+            @* Phone-only bottom navigation (hidden ≥ 601px via mobile.css). Switches
+               which single region fills the screen; auto-follows file/preview opens. *@
+            <nav id="mobile-nav">
+                <button class="mobile-nav-btn @(_mobileView == MobileView.Assets ? "active" : null)"
+                        @onclick="() => SetMobileView(MobileView.Assets)">
+                    <MudIcon Icon="@Icons.Material.Sharp.FolderOpen" />
+                    <span>Files</span>
+                </button>
+                <button class="mobile-nav-btn @(_mobileView == MobileView.Editor ? "active" : null)"
+                        @onclick="() => SetMobileView(MobileView.Editor)">
+                    <MudIcon Icon="@Icons.Material.Sharp.Edit" />
+                    <span>Editor</span>
+                </button>
+                <button class="mobile-nav-btn @(_mobileView == MobileView.Preview ? "active" : null)"
+                        @onclick="() => SetMobileView(MobileView.Preview)">
+                    <MudIcon Icon="@Icons.Material.Sharp.Visibility" />
+                    <span>Preview</span>
+                </button>
+            </nav>
         </div>
     </ChildContent>
     <ErrorContent Context="ex">
@@ -33,6 +58,60 @@
 </ErrorBoundary>
 
 @code {
+    // ── Phone layout: which single region fills the screen (desktop/iPad ignore this) ──
+    private enum MobileView { Assets, Editor, Preview }
+    private MobileView _mobileView = MobileView.Assets;   // start on the file list
+
+    private string MobileViewClass => _mobileView switch
+    {
+        MobileView.Editor => "mobile-view-editor",
+        MobileView.Preview => "mobile-view-preview",
+        _ => "mobile-view-assets",
+    };
+
+    private void SetMobileView(MobileView view)
+    {
+        _mobileView = view;
+        StateHasChanged();
+    }
+
+    protected override void OnInitialized()
+    {
+        // Follow the content: opening a script/note jumps to the editor; opening a
+        // viewer-only asset (or a tool) jumps to the preview. No-ops on desktop/iPad.
+        EditorService.EditorChanged += ShowEditor;
+        PdfService.PdfFileSelected += ShowPreviewOnPdf;
+        AssetsService.VideoSelected += ShowPreviewOnVideo;
+        DiagramService.DiagramFileSelected += ShowPreviewOnDiagram;
+        MoodboardService.MoodboardFileSelected += ShowPreviewOnMoodboard;
+        AssetsService.PhotoshopRequested += ShowPreview;
+        AssetsService.HeavyPaintRequested += ShowPreview;
+    }
+
+    private void ShowEditor() => SwitchMobile(MobileView.Editor);
+    private void ShowPreview() => SwitchMobile(MobileView.Preview);
+    private void ShowPreviewOnPdf(Endorphins.Models.PdfFile _) => SwitchMobile(MobileView.Preview);
+    private void ShowPreviewOnVideo(string _) => SwitchMobile(MobileView.Preview);
+    private void ShowPreviewOnDiagram(string _, string __) => SwitchMobile(MobileView.Preview);
+    private void ShowPreviewOnMoodboard(string _, string __) => SwitchMobile(MobileView.Preview);
+
+    private void SwitchMobile(MobileView view) => InvokeAsync(() =>
+    {
+        _mobileView = view;
+        StateHasChanged();
+    });
+
+    public void Dispose()
+    {
+        EditorService.EditorChanged -= ShowEditor;
+        PdfService.PdfFileSelected -= ShowPreviewOnPdf;
+        AssetsService.VideoSelected -= ShowPreviewOnVideo;
+        DiagramService.DiagramFileSelected -= ShowPreviewOnDiagram;
+        MoodboardService.MoodboardFileSelected -= ShowPreviewOnMoodboard;
+        AssetsService.PhotoshopRequested -= ShowPreview;
+        AssetsService.HeavyPaintRequested -= ShowPreview;
+    }
+
     // Dev/test hook: auto-load a project (and optionally a video) at startup, so
     // flows behind the native folder picker can be exercised from the command line:
     //   ENDORPHINS_AUTO_PROJECT=/path/to/project ENDORPHINS_AUTO_VIDEO=videos/clip.mp4

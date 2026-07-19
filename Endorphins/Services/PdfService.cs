@@ -6,7 +6,7 @@ public sealed class PdfService
 {
     public Action<PdfFile>? PdfFileSelected { get; set; }
     public PdfFile SelectedPdfFile { get; private set; }
-    public bool HasSelectedPdfFile => SelectedPdfFile.Content is { Length: > 0 };
+    public bool HasSelectedPdfFile => !string.IsNullOrEmpty(SelectedPdfFile.Name);
 
     public void SelectPdfFile(PdfFile pdfFile)
     {

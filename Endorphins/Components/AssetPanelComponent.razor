@@ -227,7 +227,7 @@
                 await SelectMoodboard(relativePath);
                 break;
             case ".pdf":
-                await OpenPdf(relativePath);
+                OpenPdf(relativePath);
                 break;
             case ".mp4" or ".mkv" or ".webm" or ".mov":
                 PlayVideo(relativePath);
@@ -244,23 +244,13 @@
         StorageService.FilesLoaded -= OnFilesLoaded;
     }
 
-    private async Task OpenPdf(string filePath)
+    private void OpenPdf(string filePath)
     {
-        try
-        {
-            var content = await StorageService.ReadFileAsBytesAsync(filePath);
-            var pdfFile = new PdfFile
-            {
-                Name = filePath,
-                Content = content
-            };
-            PdfService.SelectPdfFile(pdfFile);
-            PdfService.PdfFileSelected?.Invoke(pdfFile);
-        }
-        catch (Exception exc)
-        {
-            Console.Error.WriteLine(exc);
-        }
+        // No byte read here — the viewer loads the PDF by URL from the loopback
+        // file server, so pdf.js can fetch pages lazily via HTTP range requests.
+        var pdfFile = new PdfFile { Name = filePath };
+        PdfService.SelectPdfFile(pdfFile);
+        PdfService.PdfFileSelected?.Invoke(pdfFile);
     }
 
     private void PlayVideo(string filePath)

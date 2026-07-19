@@ -1,5 +1,5 @@
 @inject AssetsService AssetsService
-@inject FileStorageService StorageService
+@inject LocalMediaServer MediaServer
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 @inherits DevHotReloadComponentBase;
@@ -42,16 +42,16 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_pendingVideo is null || StorageService.Root is null) return;
+        if (_pendingVideo is null) return;
         var path = _pendingVideo;
         _pendingVideo = null;
         try
         {
-            // The WebView can't address files outside wwwroot, so stream the bytes
-            // to JS and play them through a blob URL.
-            var bytes = await StorageService.ReadFileAsBytesAsync(path);
-            using var streamRef = new DotNetStreamReference(new MemoryStream(bytes));
-            var status = await JS.InvokeAsync<string>("playVideoStream", _videoRef, streamRef, MimeType(path));
+            // Point the <video> at the loopback file server — the WebView streams
+            // the file natively (progressive playback + seeking) instead of us
+            // pushing the whole clip across the interop bridge.
+            var url = MediaServer.Url(path);
+            var status = await JS.InvokeAsync<string>("playVideoUrl", _videoRef, url);
             Console.WriteLine($"[VideoPlayer] {path}: {status}");
             _activeVideo = path;
             StateHasChanged();
@@ -61,16 +61,6 @@
             Console.Error.WriteLine(e);
         }
     }
-
-    private static string MimeType(string path) =>
-        System.IO.Path.GetExtension(path).ToLowerInvariant() switch
-        {
-            ".mp4" => "video/mp4",
-            ".webm" => "video/webm",
-            ".mkv" => "video/x-matroska",
-            ".mov" => "video/quicktime",
-            _ => "video/mp4"
-        };
 
     public async ValueTask DisposeAsync()
     {

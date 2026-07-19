@@ -3,6 +3,7 @@
 @inject IJSRuntime Js
 @inject PdfService PdfService
 @inject FileStorageService StorageService
+@inject LocalMediaServer MediaServer
 @inherits DevHotReloadComponentBase;
 
 <div class="pdf-preview">
@@ -69,7 +70,6 @@
     private DotNetObjectReference<PdfViewerComponent>? _dotNetRef;
     private const string JavascriptFilePath = $"./Components/{nameof(PdfViewerComponent)}.razor.js";
 
-    private byte[]? _pendingContent;
     private bool _pendingLoad;
     private bool _isLoading;
     private string? _loadingTitle;
@@ -98,7 +98,6 @@
 
     private void OnPdfFileOpened(PdfFile pdfFile) => InvokeAsync(() =>
     {
-        _pendingContent = pdfFile.Content;
         _activePdfPath = pdfFile.Name;
         _pendingLoad = true;
         _isLoading = true;
@@ -113,16 +112,16 @@
             _module = await Js.InvokeAsync<IJSObjectReference>("import", JavascriptFilePath);
         }
 
-        if (_pendingLoad && _module is not null && _pendingContent is not null)
+        if (_pendingLoad && _module is not null && _activePdfPath is not null)
         {
             _pendingLoad = false;
             _dotNetRef ??= DotNetObjectReference.Create(this);
             try
             {
-                // Stream the bytes to JS — avoids the ~33% base64 inflation of
-                // passing byte[] through normal interop serialization.
-                using var streamRef = new DotNetStreamReference(new MemoryStream(_pendingContent));
-                _numPages = await _module.InvokeAsync<int>("load", streamRef, _pagesRef, _dotNetRef);
+                // Load by URL from the loopback file server so pdf.js fetches pages
+                // lazily over HTTP range requests — no whole-file interop transfer.
+                var url = MediaServer.Url(_activePdfPath);
+                _numPages = await _module.InvokeAsync<int>("load", url, _pagesRef, _dotNetRef);
                 _currentPage = 1;
                 _zoom = 120;
                 _outline = (await _module.InvokeAsync<PdfOutlineNode[]>("getOutline")).ToList();

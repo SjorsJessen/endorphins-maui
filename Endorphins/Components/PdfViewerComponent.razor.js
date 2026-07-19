@@ -15,15 +15,15 @@ let _lastReportedPage = 0;   // guards against redundant .NET round-trips
 let _highlights = [];        // [{id, page, rects:[{x,y,w,h}]}] — rects stored at scale 1
 let _highlightSeq = 1;
 
-// Load a document (bytes arrive as a .NET stream — no base64 inflation) and
-// create lightweight placeholders; pages render lazily as they scroll near.
-export async function load(streamRef, pagesContainer, dotnetRef) {
+// Load a document by URL (served by the in-app loopback file server, which
+// supports HTTP range requests so pdf.js streams pages on demand) and create
+// lightweight placeholders; pages render lazily as they scroll near.
+export async function load(url, pagesContainer, dotnetRef) {
     _dotnet = dotnetRef;
     _scale = 1.2;
     _lastReportedPage = 0;
     _highlights = [];
-    const buffer = await streamRef.arrayBuffer();
-    _pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+    _pdf = await pdfjsLib.getDocument({ url }).promise;
     const page1 = await _pdf.getPage(1);
     _baseViewport = page1.getViewport({ scale: 1 });
     buildPlaceholders(pagesContainer);

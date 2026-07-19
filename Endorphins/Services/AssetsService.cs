@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Components.Forms;
-
 namespace Endorphins.Services;
 
 public sealed class AssetsService
@@ -45,21 +43,4 @@ public sealed class AssetsService
 
     /// <summary>Raised when the user launches the Photopea tool from the asset panel.</summary>
     public Action? PhotoshopRequested { get; set; }
-    
-    private List<IBrowserFile> Assets { get; } = [];
-    
-    public List<IBrowserFile> FilterBy(string[] extensions)
-    {
-        return Assets.Where(file => extensions.Any(ext => file.Name.EndsWith(ext, StringComparison.OrdinalIgnoreCase))).ToList();
-    }
-
-    public void AddAssets(IReadOnlyList<IBrowserFile> assets)
-    {
-        Assets.AddRange(assets);
-    }
-
-    public void ResetAssets()
-    {
-        Assets.Clear();
-    }
 }

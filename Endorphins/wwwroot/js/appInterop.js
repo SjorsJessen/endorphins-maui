@@ -8,26 +8,12 @@ window.scrollStoryToEnd = (element) => {
     });
 };
 
-/** Plays a video from a .NET byte stream (project files live outside wwwroot,
-    so the WebView can't address them directly).
-
-    Note: WKWebView (MacCatalyst/iOS) can't play a blob: URL on a <video> — its
-    media process has no access to the blob store, so decoding silently fails.
-    A data: URL embeds the bytes inline and plays reliably instead. We build it
-    with FileReader so the file is still streamed over interop (no base64
-    inflation on the wire) rather than serialized as a byte[].
+/** Points a <video> at a URL served by the in-app loopback file server and
+    starts playback. The WebView streams the file natively (progressive + seek),
+    so nothing is copied across the interop bridge.
     Returns a status string so the caller can log whether decoding worked. */
-window.playVideoStream = async (videoEl, streamRef, mimeType) => {
+window.playVideoUrl = async (videoEl, url) => {
     if (!videoEl) return "no video element";
-    const buffer = await streamRef.arrayBuffer();
-    const blob = new Blob([buffer], { type: mimeType });
-
-    const url = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(blob);
-    });
     videoEl.src = url;
 
     // Wait for metadata (decode success) or an error, so failures are visible.

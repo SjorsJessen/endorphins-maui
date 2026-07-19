@@ -34,5 +34,12 @@
     </array>
     <key>XSAppIconAssets</key>
     <string>Assets.xcassets/appicon.appiconset</string>
+    <!-- Allow cleartext HTTP loads to the in-app loopback file server (LocalMediaServer).
+         NSAllowsLocalNetworking permits 127.0.0.1/localhost without weakening ATS elsewhere. -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
 </dict>
 </plist>

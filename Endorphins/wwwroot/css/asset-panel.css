@@ -42,6 +42,12 @@
     padding-right: 6px;
     flex-shrink: 0;
 }
+/* MudDivider defaults to flex:1 0 auto — in this flex column it grew to fill the
+   panel and pushed the tree down to the vertical centre. Pin it to its own height
+   so "Workspace" sits directly under "Project". */
+.asset-panel > .mud-divider {
+    flex: 0 0 auto;
+}
 /* "Project" header label → uppercase, dim, letter-spaced (beats the global
    .mud-typography colour override via higher specificity + !important) */
 .asset-panel > .mud-toolbar .mud-typography {

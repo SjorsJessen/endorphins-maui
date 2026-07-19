@@ -67,6 +67,10 @@
                         <MudIcon Icon="@Icons.Material.Sharp.Brush" Class="asset-row-icon" Size="Size.Small" />
                         <span class="asset-row-name">Photopea</span>
                     </button>
+                    <button class="asset-tool-item" @onclick="OpenHeavyPaint" title="Open HeavyPaint">
+                        <MudIcon Icon="@Icons.Material.Sharp.Palette" Class="asset-row-icon" Size="Size.Small" />
+                        <span class="asset-row-name">HeavyPaint</span>
+                    </button>
                 </div>
             </div>
         }
@@ -362,6 +366,9 @@
 
     /// <summary>Launches the Photopea tool tab.</summary>
     private void OpenPhotoshop() => AssetsService.PhotoshopRequested?.Invoke();
+
+    /// <summary>Launches the HeavyPaint tool tab.</summary>
+    private void OpenHeavyPaint() => AssetsService.HeavyPaintRequested?.Invoke();
 
     /// <summary>Opens a moodboard file for editing in the Moodboard tab.</summary>
     private async Task SelectMoodboard(string filePath)

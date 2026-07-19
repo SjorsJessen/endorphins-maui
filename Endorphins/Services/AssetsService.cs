@@ -43,4 +43,7 @@ public sealed class AssetsService
 
     /// <summary>Raised when the user launches the Photopea tool from the asset panel.</summary>
     public Action? PhotoshopRequested { get; set; }
+
+    /// <summary>Raised when the user launches the HeavyPaint tool from the asset panel.</summary>
+    public Action? HeavyPaintRequested { get; set; }
 }

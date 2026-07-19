@@ -1,0 +1,40 @@
+@inherits DevHotReloadComponentBase;
+
+@* HeavyPaint's web build embeds directly in an iframe (it sends no X-Frame-Options
+   / frame-ancestors headers). Unlike Photopea it exposes no cross-iframe scripting
+   API, and same-origin policy hides its canvas from us — so this is a "paint in
+   place" tool: saving/exporting happens through HeavyPaint's own UI.
+
+   It's a WebGL app, so the iframe must first mount while the tab is *visible* —
+   MudTabs keeps every panel alive and would otherwise render it hidden at startup,
+   leaving the canvas a black, zero-size context that never recovers. We latch on
+   the first activation and keep the iframe after, so painting survives tab switches. *@
+<div class="heavypaint-pane">
+    @if (_mounted)
+    {
+        <iframe id="heavypaint"
+                src="https://www.heavypaint.com/hp3-3/"
+                class="heavypaint-frame"
+                allow="fullscreen; clipboard-read; clipboard-write; pointer-lock"
+                allowfullscreen></iframe>
+    }
+    else
+    {
+        <div class="heavypaint-placeholder">Opening HeavyPaint…</div>
+    }
+</div>
+
+@code {
+    /// <summary>True while the HeavyPaint tab is the active tab.</summary>
+    [Parameter] public bool Active { get; set; }
+
+    private bool _mounted;   // one-way latch: mount the iframe once, keep it alive
+
+    protected override void OnParametersSet()
+    {
+        if (Active && !_mounted)
+        {
+            _mounted = true;
+        }
+    }
+}

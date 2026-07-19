@@ -10,12 +10,16 @@ public partial class MainPage : ContentPage
         blazorWebView.UrlLoading += OnUrlLoading;
     }
 
+    // Hosts embedded as iframe tools in the workspace (Photopea, HeavyPaint).
+    private static readonly string[] EmbeddedToolHosts = ["photopea.com", "heavypaint.com"];
+
     private static void OnUrlLoading(object? sender, UrlLoadingEventArgs e)
     {
         // BlazorWebView opens every external URL in the system browser by
-        // default — which kicks the embedded Photopea iframe out to Safari.
-        // Keep photopea.com inside the WebView so it renders embedded.
-        if (e.Url.Host.EndsWith("photopea.com", StringComparison.OrdinalIgnoreCase))
+        // default — which kicks embedded tool iframes out to Safari (and leaves
+        // a black pane behind, since the in-app load gets canceled).
+        // Keep the embedded tools' hosts inside the WebView so they render in place.
+        if (EmbeddedToolHosts.Any(h => e.Url.Host.EndsWith(h, StringComparison.OrdinalIgnoreCase)))
         {
             e.UrlLoadingStrategy = UrlLoadingStrategy.OpenInWebView;
         }

@@ -1,0 +1,27 @@
+/* Split from photoshop.css — HeavyPaint-specific styles. Loaded before MudBlazor, in source order. */
+
+/* HeavyPaint tool pane — same full-bleed iframe treatment as Photopea */
+.heavypaint-pane {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 150px);
+    min-height: 360px;
+    background: var(--bg);
+}
+.heavypaint-frame {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    border: 0;
+    display: block;
+    background: var(--bg);
+}
+.heavypaint-placeholder {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: var(--text-dim);
+}

@@ -59,12 +59,10 @@ a,
     color: white;
 }
 
-/* Workspace grid column fills the viewport below the header */
 .workspace {
     height: calc(100vh - 49px);
 }
 
-/* ── Tab / split-panel content surfaces → dark ── */
 .mud-tabs-panels {
     background: var(--bg) !important;
 }
@@ -182,17 +180,6 @@ code {
     text-align: start;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   GLOBAL DARK THEME
-   MudBlazor components are themed via MudTheme (MainLayout.razor).
-   The rules below cover the structural containers MudTheme cannot
-   reach. Component-specific styling lives in the per-component css
-   files (asset-panel.css, ink-editor.css, ink-runner.css, markdown.css,
-   pdf-viewer.css, graph.css, moodboard.css, photoshop.css, video.css,
-   workspace.css), loaded after this file in index.html.
-   ══════════════════════════════════════════════════════════════════ */
-
-/* Structural containers — no white gaps */
 #app,
 .page,
 .workspace {
@@ -202,7 +189,6 @@ code {
     min-height: 100vh;
 }
 
-/* MudBlazor surfaces — belt-and-suspenders alignment with the palette */
 .mud-toolbar,
 .mud-tabs-toolbar {
     background-color: var(--surface);
@@ -216,13 +202,6 @@ code {
     background-color: transparent;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   BORDERS & TEXT COLOURS
-   Forced overrides so every component's dividers, outlines and text
-   follow the palette even where MudBlazor's IsDarkMode does not reach.
-   ══════════════════════════════════════════════════════════════════ */
-
-/* ── Dividers & borders ── */
 .mud-divider {
     border-color: var(--border) !important;
 }
@@ -239,7 +218,6 @@ code {
 .mud-tab {
     border-color: var(--border) !important;
 }
-/* Outlined inputs / selects / text fields */
 .mud-input-outlined-border {
     border-color: var(--border2) !important;
 }
@@ -249,7 +227,6 @@ code {
 .mud-input-outlined.mud-focused .mud-input-outlined-border {
     border-color: var(--accent) !important;
 }
-/* Tabs underline / active indicator */
 .mud-tabs-toolbar {
     border-bottom: 1px solid var(--border) !important;
 }
@@ -261,7 +238,6 @@ code {
     background-color: var(--accent) !important;
 }
 
-/* ── Text colours ── */
 .mud-typography,
 .mud-input-root,
 .mud-input,
@@ -272,7 +248,6 @@ code {
 .mud-table-cell {
     color: var(--text) !important;
 }
-/* Secondary / muted text: headers, placeholders, disabled, icons-as-text */
 .mud-input-label,
 .mud-input-helper-text,
 .mud-form-help-text,
@@ -280,20 +255,17 @@ code {
 .mud-table-head .mud-table-cell {
     color: var(--text-mid) !important;
 }
-/* Toolbar / tab labels default to the mid tier, brighten on active */
 .mud-tab {
     color: var(--text-mid) !important;
 }
 .mud-tab.mud-tab-active {
     color: var(--text) !important;
 }
-/* Icon buttons & default-coloured icons */
 .mud-icon-button .mud-icon-root,
 .mud-icon-default {
     color: var(--text-mid) !important;
 }
 
-/* Links */
 a,
 .mud-link,
 .btn-link {
@@ -304,9 +276,6 @@ a:hover,
     color: #7bb6f5 !important;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   MUDBUTTON — drop the default uppercase everywhere
-   ══════════════════════════════════════════════════════════════════ */
 .mud-button-root,
 .mud-button-label {
     text-transform: none !important;

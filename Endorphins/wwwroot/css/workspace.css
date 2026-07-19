@@ -32,6 +32,26 @@
     color: var(--text);
     opacity: 1;
 }
+/* Fullscreen toggle — only rendered on visual-preview tabs (PDF, Graph, Moodboard, Video) */
+.wtab-fs {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    color: var(--text-dim);
+    opacity: 0.6;
+    transition: background 0.1s, color 0.1s, opacity 0.1s;
+}
+.wtab-fs:hover {
+    background: var(--surface2);
+    color: var(--text);
+    opacity: 1;
+}
+.wtab-fs .mud-icon-root {
+    font-size: 16px;
+}
 
 /* ══════════════════════════════════════════════════════════════════
    WORKSPACE 3-COLUMN RESIZABLE LAYOUT (asset · editor · preview)
@@ -80,6 +100,17 @@
 .workspace-preview {
     display: flex;
     flex-direction: column;
+    background: var(--bg);
+}
+/* Fullscreen: the preview takes over the whole viewport, above the header,
+   sidebar and editor. Overrides the inline flex-basis width from PreviewStyle. */
+.workspace-preview.fullscreen {
+    position: fixed;
+    inset: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    flex: none !important;
+    z-index: 1200;
     background: var(--bg);
 }
 

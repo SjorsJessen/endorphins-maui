@@ -44,27 +44,27 @@
     </div>
 
     <!-- ── PREVIEW COLUMN ── -->
-    <div class="workspace-col workspace-preview @(_previewCollapsed ? "collapsed" : null)" style="@PreviewStyle">
-        <MudTabs MinimumTabWidth="60px" KeepPanelsAlive="true" @bind-ActivePanelIndex="_activeIndex">
+    <div class="workspace-col workspace-preview @(_previewCollapsed ? "collapsed" : null) @(_fullscreen ? "fullscreen" : null)" style="@PreviewStyle">
+        <MudTabs MinimumTabWidth="60px" KeepPanelsAlive="true" @bind-ActivePanelIndex="ActiveIndex">
             <MudTabPanel TabContent="@PinnedHeader("Story")">
                 <InkStoryRunnerComponent/>
             </MudTabPanel>
             <MudTabPanel Visible="_notesOpen" TabContent="@Header("Notes", () => _notesOpen = false)">
                 <MarkdownPreviewComponent/>
             </MudTabPanel>
-            <MudTabPanel Visible="_readerOpen" TabContent="@Header("Reader", () => _readerOpen = false)">
+            <MudTabPanel Visible="_readerOpen" TabContent="@Header("Reader", () => _readerOpen = false, fullscreenable: true)">
                 <PdfViewerComponent/>
             </MudTabPanel>
-            <MudTabPanel Visible="_graphOpen" TabContent="@Header("Graph", () => _graphOpen = false)">
+            <MudTabPanel Visible="_graphOpen" TabContent="@Header("Graph", () => _graphOpen = false, fullscreenable: true)">
                 <GraphComponent/>
             </MudTabPanel>
             <MudTabPanel Visible="_photoshopOpen" TabContent="@Header("Photoshop", () => _photoshopOpen = false)">
                 <PhotoshopComponent/>
             </MudTabPanel>
-            <MudTabPanel Visible="_moodboardOpen" TabContent="@Header("Moodboard", () => _moodboardOpen = false)">
+            <MudTabPanel Visible="_moodboardOpen" TabContent="@Header("Moodboard", () => _moodboardOpen = false, fullscreenable: true)">
                 <MoodboardComponent/>
             </MudTabPanel>
-            <MudTabPanel Visible="_videoOpen" TabContent="@Header("Video", () => _videoOpen = false)">
+            <MudTabPanel Visible="_videoOpen" TabContent="@Header("Video", () => _videoOpen = false, fullscreenable: true)">
                 <VideoPlayerComponent/>
             </MudTabPanel>
         </MudTabs>
@@ -82,6 +82,27 @@
 
 @code {
     private int _activeIndex;
+
+    // Bound to MudTabs so we can drop out of fullscreen when the user switches
+    // to a tab that isn't fullscreen-eligible (the text previews).
+    private int ActiveIndex
+    {
+        get => _activeIndex;
+        set
+        {
+            _activeIndex = value;
+            if (_fullscreen && !IsFullscreenable(value)) _fullscreen = false;
+        }
+    }
+
+    // ── Fullscreen (in-app maximize) ──
+    //    Only the visual previews opt in — text previews (Story, Notes) never do.
+    private bool _fullscreen;
+
+    private static bool IsFullscreenable(int index) =>
+        index is ReaderIndex or GraphIndex or MoodboardIndex or VideoIndex;
+
+    private void ToggleFullscreen() => _fullscreen = !_fullscreen;
 
     // ── Column sizing / collapse ──
     private double _assetWidth = 240;
@@ -179,7 +200,7 @@
     {
         open();
         _previewCollapsed = false;   // make sure the preview column is visible
-        _activeIndex = index;        // bring the freshly-loaded preview to the front
+        ActiveIndex = index;         // bring the freshly-loaded preview to the front
         StateHasChanged();
     });
 
@@ -190,9 +211,17 @@
             <span class="wtab-label">@label</span>
         </span>;
 
-    private RenderFragment Header(string label, Action close) =>
+    private RenderFragment Header(string label, Action close, bool fullscreenable = false) =>
         @<span class="wtab">
             <span class="wtab-label">@label</span>
+            @if (fullscreenable)
+            {
+                <span class="wtab-fs" title="@(_fullscreen ? "Exit fullscreen" : "Fullscreen")"
+                      @onclick="ToggleFullscreen" @onclick:stopPropagation="true">
+                    <MudIcon Icon="@(_fullscreen ? Icons.Material.Sharp.FullscreenExit : Icons.Material.Sharp.Fullscreen)"
+                             Size="Size.Small"/>
+                </span>
+            }
             <span class="wtab-close" title="Close"
                   @onclick="@(() => CloseTab(close))" @onclick:stopPropagation="true">
                 &#10005;

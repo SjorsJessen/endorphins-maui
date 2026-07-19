@@ -8,15 +8,26 @@ window.scrollStoryToEnd = (element) => {
     });
 };
 
-/** Plays a video from a .NET byte stream via a blob URL (project files live
-    outside wwwroot, so the WebView can't address them directly).
+/** Plays a video from a .NET byte stream (project files live outside wwwroot,
+    so the WebView can't address them directly).
+
+    Note: WKWebView (MacCatalyst/iOS) can't play a blob: URL on a <video> — its
+    media process has no access to the blob store, so decoding silently fails.
+    A data: URL embeds the bytes inline and plays reliably instead. We build it
+    with FileReader so the file is still streamed over interop (no base64
+    inflation on the wire) rather than serialized as a byte[].
     Returns a status string so the caller can log whether decoding worked. */
 window.playVideoStream = async (videoEl, streamRef, mimeType) => {
     if (!videoEl) return "no video element";
     const buffer = await streamRef.arrayBuffer();
-    if (videoEl.dataset.blobUrl) URL.revokeObjectURL(videoEl.dataset.blobUrl);
-    const url = URL.createObjectURL(new Blob([buffer], { type: mimeType }));
-    videoEl.dataset.blobUrl = url;
+    const blob = new Blob([buffer], { type: mimeType });
+
+    const url = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+    });
     videoEl.src = url;
 
     // Wait for metadata (decode success) or an error, so failures are visible.
@@ -36,10 +47,10 @@ window.playVideoStream = async (videoEl, streamRef, mimeType) => {
     return status;
 };
 
-/** Releases the blob URL created by playVideoStream. */
+/** Clears the video source so its bytes can be garbage-collected. */
 window.releaseVideoStream = (videoEl) => {
-    if (videoEl?.dataset.blobUrl) {
-        URL.revokeObjectURL(videoEl.dataset.blobUrl);
-        delete videoEl.dataset.blobUrl;
+    if (videoEl) {
+        videoEl.removeAttribute("src");
+        videoEl.load();
     }
 };

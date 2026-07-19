@@ -70,11 +70,12 @@
     flex: 1 1 auto;
     min-height: 0;
     height: auto;
-    /* white-space: pre-wrap; */
     white-space: break-spaces;
     word-break: break-word;
     overflow-wrap: anywhere;
     flex-shrink: 1;
+    font-size: 18px;
+    line-height: 1.5rem;
 }
 .workspace-preview {
     display: flex;
@@ -139,7 +140,7 @@
 .workspace-empty {
     padding: 24px 20px;
     font-family: 'Inter', sans-serif;
-    font-size: 16px;
+    font-size: 18px;
     color: var(--text-dim);
     text-align: center;
 }

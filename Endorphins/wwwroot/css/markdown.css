@@ -19,9 +19,10 @@
 .markdown-editor .CodeMirror,
 .markdown-editor .editor-preview,
 .markdown-editor .editor-preview-side {
-    background: var(--surface) !important;
+    background: var(--bg) !important;
     color: var(--text) !important;
     border-color: var(--border) !important;
+    line-height: 2rem !important;
 }
 .markdown-editor .editor-toolbar {
     display: none !important;   /* hide EasyMDE's formatting toolbar */
@@ -80,7 +81,7 @@
 .markdown-preview::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 .markdown-preview::-webkit-scrollbar-track { background: transparent; }
 .markdown-preview-empty {
-    font-size: 14px;
+    font-size: 18px;
     font-style: italic;
     color: var(--text-dim);
 }
@@ -119,7 +120,7 @@
 }
 .md-body code {
     font-family: 'RobotoMono', monospace;
-    font-size: 0.88em;
+    font-size: 18px;
     color: var(--accent);
     background: var(--surface2);
     border-radius: 3px;

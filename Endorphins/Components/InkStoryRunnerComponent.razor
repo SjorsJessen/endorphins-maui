@@ -2,11 +2,20 @@
 @using Ink.Runtime
 @inject FileStorageService StorageService
 @inject InkStoryService StoryService
+@inject LocalMediaServer MediaServer
 @inject IJSRuntime JS
 
 @inherits DevHotReloadComponentBase
 
 <div class="ink-story-runner">
+    @* Scene banner — sits outside .story-scroll so it stays put while the dialogue scrolls. *@
+    @if (BannerUrl is { } bannerUrl)
+    {
+        <div class="story-banner">
+            <img class="story-banner-img" src="@bannerUrl" alt="@StoryService.BannerImage" />
+        </div>
+    }
+
     <div class="story-scroll overflow-auto" @ref="_scrollRef">
         @if (!StoryService.IsStoryLoaded && StoryService.DialogLines.Count == 0)
         {
@@ -92,6 +101,38 @@
     private ElementReference _scrollRef;
     private int _renderedEntryCount;
 
+    // Resolving the banner means a scan of the project's file list plus a stat for the
+    // media server's cache-busting stamp. This component re-renders on every dialogue line,
+    // so the result is cached and only recomputed when the story asks for a different image.
+    private string? _resolvedFor;
+    private string? _resolvedUrl;
+
+    /// <summary>
+    /// The banner image as a URL the WebView can load, or null when there is nothing to show
+    /// (no image set, or the script named a file that isn't in the project). Served over the
+    /// loopback media server for the same reason the asset preview is — a data: URI would
+    /// mean re-reading and base64-inflating the file on every render.
+    /// </summary>
+    private string? BannerUrl
+    {
+        get
+        {
+            var name = StoryService.BannerImage;
+            if (name is null) return null;
+            if (name == _resolvedFor) return _resolvedUrl;
+
+            _resolvedFor = name;
+            // Authors rename and move assets; a missing one should leave the banner hidden
+            // rather than render a broken image over the story.
+            _resolvedUrl = StorageService.FindFile(name) is { } path ? MediaServer.Url(path) : null;
+            if (_resolvedUrl is null)
+            {
+                Console.Error.WriteLine($"[InkBanner] setImage(\"{name}\") — no such file in the project.");
+            }
+            return _resolvedUrl;
+        }
+    }
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
@@ -101,6 +142,7 @@
         StoryService.StoryReset += OnStateChanged;
         StoryService.ChoicesReset += OnStateChanged;
         StoryService.InkScriptSelected += OnScriptSelected;
+        StoryService.BannerChanged += OnStateChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -142,5 +184,6 @@
         StoryService.StoryReset -= OnStateChanged;
         StoryService.ChoicesReset -= OnStateChanged;
         StoryService.InkScriptSelected -= OnScriptSelected;
+        StoryService.BannerChanged -= OnStateChanged;
     }
 }

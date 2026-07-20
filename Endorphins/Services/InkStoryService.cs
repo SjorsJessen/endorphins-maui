@@ -76,6 +76,15 @@ public sealed class InkStoryService
     public IReadOnlyList<DialogLine> DialogLines => _dialogLines;
     public IReadOnlyList<Choice> Choices => _choices;
 
+    /// <summary>
+    /// Image the story last requested via the <c>setImage</c> external function, as the raw
+    /// name the script used. Null when no banner should show. Resolving this to an actual
+    /// file is the view's job — the story only knows what the author wrote.
+    /// </summary>
+    public string? BannerImage { get; private set; }
+
+    public Action? BannerChanged { get; set; }
+
     public Action<string>? InkScriptSelected { get; set; }
     public Action<DialogLine>? DialogUpdated { get; set; }
     public Action? StoryReset { get; set; }
@@ -206,6 +215,9 @@ public sealed class InkStoryService
     {
         _dialogLines.Clear();
         _choices.Clear();
+        // The banner belongs to the scene that set it; a restart has no scene yet.
+        BannerImage = null;
+        BannerChanged?.Invoke();
     }
 
     public void SetContent(string newContent)
@@ -272,12 +284,27 @@ public sealed class InkStoryService
     private void UpdateSpeaker(string speakerName)
     {
         _currentSpeaker = speakerName;
-    }   
+    }
+
+    /// <summary>
+    /// Backs the <c>setImage</c> external function. An empty name clears the banner, so a
+    /// scene can drop back to text-only without a separate function.
+    /// </summary>
+    private void SetImage(string imageName)
+    {
+        var next = string.IsNullOrWhiteSpace(imageName) ? null : imageName.Trim();
+        if (next == BannerImage) return;
+        BannerImage = next;
+        BannerChanged?.Invoke();
+    }
     
     private void BindExternalFunctions(Story story)
     {
         Console.WriteLine($"Binding external functions to story: {story}");
-        story.BindExternalFunction<string>("setImage", ServiceFunctions.SetImage, true);
+        // setImage mutates visible state, so it carries the same lookahead hazard as
+        // updateSpeaker below: were it lookahead-safe, the banner would swap to the next
+        // scene's image while the current line is still on screen.
+        story.BindExternalFunction<string>("setImage", SetImage, false);
         story.BindExternalFunction<string>("setBackground", ServiceFunctions.SetBackground, true);
         // lookaheadSafe must be false: UpdateSpeaker mutates _currentSpeaker, and the
         // ink engine evaluates ahead of the current line to detect glue. If it were
@@ -316,11 +343,6 @@ public sealed class InkStoryService
 
 public static class ServiceFunctions
 {
-    public static void SetImage(string imageName)
-    {
-        Console.WriteLine($"Set image: {imageName}");
-    }    
-    
     public static void SetBackground(string imageName)
     {
         Console.WriteLine($"Set background: {imageName}");

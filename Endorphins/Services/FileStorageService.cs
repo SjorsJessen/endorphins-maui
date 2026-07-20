@@ -35,6 +35,26 @@ public class FileStorageService(ProjectBookmarkStore bookmarks) : IFileStorageSe
     /// </summary>
     public string? TryRestoreLastProject() => Root = bookmarks.Restore();
 
+    /// <summary>
+    /// Finds a project file from a name written by hand — an ink script naming an asset, say.
+    /// Tries the full relative path first, then falls back to matching on filename alone, so
+    /// authors can write <c>setImage("forest.png")</c> without tracking which folder it is in.
+    /// Returns the canonical relative path, or null if nothing matches.
+    /// </summary>
+    public string? FindFile(string nameOrPath)
+    {
+        if (string.IsNullOrWhiteSpace(nameOrPath)) return null;
+        var needle = nameOrPath.Trim().Replace('\\', '/').TrimStart('/');
+
+        var byPath = _filePaths.FirstOrDefault(p =>
+            string.Equals(p.Replace('\\', '/'), needle, StringComparison.OrdinalIgnoreCase));
+        if (byPath is not null) return byPath;
+
+        var fileName = Path.GetFileName(needle);
+        return _filePaths.FirstOrDefault(p =>
+            string.Equals(Path.GetFileName(p), fileName, StringComparison.OrdinalIgnoreCase));
+    }
+
     public List<string> FilterBy(string[] extensions)
     {
         return _filePaths.Where(path => extensions.Any(ext => path.EndsWith(ext, StringComparison.OrdinalIgnoreCase))).ToList();

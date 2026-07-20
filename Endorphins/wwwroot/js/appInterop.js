@@ -8,6 +8,59 @@ window.scrollStoryToEnd = (element) => {
     });
 };
 
+/** Stops clicking the runner's controls from selecting the dialogue above them.
+ *
+ *  `user-select: none` on the controls is not enough: the control holds no selectable text,
+ *  so WebKit resolves the selection gesture against the nearest text that *is* selectable —
+ *  the dialogue. Nor is cancelling the repeat mousedown enough on its own, since the same
+ *  highlight can arrive via a plain drag or a synthesised gesture that never reports
+ *  detail > 1.
+ *
+ *  So gate the thing all of those must go through: `selectstart`. Any selection beginning
+ *  while the pointer went down on a control is cancelled outright, whatever gesture asked
+ *  for it, with a post-click sweep as a backstop for selections that never fire selectstart.
+ *  Dragging within the dialogue is untouched — no control is involved — so story text stays
+ *  selectable.
+ *
+ *  Bound once on the runner root in the capture phase, so choice buttons created later are
+ *  covered without re-binding. */
+window.suppressMultiClickSelection = (root) => {
+    if (!root || root.dataset.multiClickGuard) return;
+    root.dataset.multiClickGuard = "1";
+
+    const CONTROLS = "button, .story-footer, .choices-panel, .mud-button-root";
+    let downOnControl = false;
+
+    const clearSelection = () => {
+        const selection = window.getSelection();
+        if (selection && !selection.isCollapsed) selection.removeAllRanges();
+    };
+
+    root.addEventListener("pointerdown", (e) => {
+        downOnControl = !!e.target.closest(CONTROLS);
+    }, true);
+
+    // Covers mouse-only paths that never emit pointerdown.
+    root.addEventListener("mousedown", (e) => {
+        downOnControl = !!e.target.closest(CONTROLS);
+        if (downOnControl && e.detail > 1) e.preventDefault();
+    }, true);
+
+    root.addEventListener("selectstart", (e) => {
+        if (downOnControl) e.preventDefault();
+    }, true);
+
+    // Backstop: if a selection formed anyway, drop it once the click resolves.
+    root.addEventListener("click", (e) => {
+        if (e.target.closest(CONTROLS)) clearSelection();
+    }, true);
+
+    root.addEventListener("pointerup", () => {
+        if (downOnControl) clearSelection();
+        downOnControl = false;
+    }, true);
+};
+
 /** Points a <video> at a URL served by the in-app loopback file server and
     starts playback. The WebView streams the file natively (progressive + seek),
     so nothing is copied across the interop bridge.

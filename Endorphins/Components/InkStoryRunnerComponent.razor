@@ -6,7 +6,7 @@
 
 @inherits DevHotReloadComponentBase
 
-<div class="ink-story-runner">
+<div class="ink-story-runner" @ref="_runnerRef">
     @* Scene banner — sits outside .story-scroll so it stays put while the dialogue scrolls. *@
     @if (StoryService.BannerImageUrl is { } bannerUrl)
     {
@@ -104,6 +104,7 @@
 
 @code {
     private ElementReference _scrollRef;
+    private ElementReference _runnerRef;
     private int _renderedEntryCount;
 
     protected override void OnInitialized()
@@ -135,6 +136,11 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("suppressMultiClickSelection", _runnerRef);
+        }
+
         // Keep the newest dialogue line / choices in view as the story advances.
         var entryCount = StoryService.DialogLines.Count + StoryService.Choices.Count;
         if (entryCount != _renderedEntryCount)

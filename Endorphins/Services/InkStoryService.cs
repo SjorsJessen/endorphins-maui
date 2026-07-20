@@ -65,8 +65,7 @@ public sealed class InkStoryService
     public bool HasStoryStarted { get; private set; }
     public string? EditorContent => _editorContent;
     public string ActiveScriptPath { get; set; } = string.Empty;
-    public bool IsMainScriptActive =>
-        string.Equals(ActiveScriptPath.Replace('\\', '/'), MainScriptPath, StringComparison.OrdinalIgnoreCase);
+    public bool IsMainScriptActive => IsMainScript(ActiveScriptPath);
     public bool IsStoryLoaded => _activeStory != null;
 
     public InkCompileState CompileState { get; private set; } = InkCompileState.NotLoaded;
@@ -114,17 +113,31 @@ public sealed class InkStoryService
         SetCompileState(InkCompileState.Compiling);
         _diagnostics.Clear();
 
+        // Only the root script pulls in the whole story through its INCLUDEs, so only it can
+        // be resolved into a runtime story. Resolving any other file on its own reports every
+        // divert into a sibling file as an unknown target — complaints about the fragment's
+        // missing context rather than anything wrong with the file being edited. Those files
+        // get parsed for syntax only; their references are checked when the root compiles.
+        var isRootScript = IsMainScript(scriptPath);
+
         Story? story = null;
+        var parsed = false;
         try
         {
-            story = ParseEditorContentToStory(root, scriptPath, _editorContent);
+            var parsedStory = ParseEditorContent(root, scriptPath, _editorContent);
+            parsed = parsedStory is not null;
+            if (parsed && isRootScript)
+            {
+                story = parsedStory!.ExportRuntime(OnCompileDiagnostic);
+            }
         }
         catch (Exception ex)
         {
             _diagnostics.Add(new InkDiagnostic(ex.Message, ErrorType.Error));
         }
 
-        var hasErrors = _diagnostics.Any(d => d.Type == ErrorType.Error) || story is null;
+        var produced = isRootScript ? story is not null : parsed;
+        var hasErrors = _diagnostics.Any(d => d.Type == ErrorType.Error) || !produced;
         if (hasErrors && _diagnostics.Count == 0)
         {
             _diagnostics.Add(new InkDiagnostic("Compilation produced no output.", ErrorType.Error));
@@ -132,6 +145,9 @@ public sealed class InkStoryService
         SetCompileState(hasErrors ? InkCompileState.Error : InkCompileState.Compiled);
         return hasErrors ? null : story;
     }
+
+    private static bool IsMainScript(string scriptPath) =>
+        string.Equals(scriptPath.Replace('\\', '/'), MainScriptPath, StringComparison.OrdinalIgnoreCase);
 
     private void SetCompileState(InkCompileState state)
     {
@@ -203,7 +219,12 @@ public sealed class InkStoryService
         BindExternalFunctions(story);
     }
     
-    private Story? ParseEditorContentToStory(string filesRoot, string scriptPath, string editorContent)
+    /// <summary>
+    /// Runs the parse phase only — syntax, and INCLUDE expansion via the file handler.
+    /// Reference resolution is the caller's choice, since it is only meaningful for the root
+    /// script (see <see cref="Compile"/>).
+    /// </summary>
+    private Ink.Parsed.Story? ParseEditorContent(string filesRoot, string scriptPath, string editorContent)
     {
         var fileHandler = new ProjectFileHandler(filesRoot);
         var parser = new InkParser(
@@ -212,9 +233,7 @@ public sealed class InkStoryService
             externalErrorHandler: OnCompileDiagnostic,
             fileHandler: fileHandler
         );
-        var parsed = parser.Parse();
-        var story = parsed?.ExportRuntime(OnCompileDiagnostic);
-        return story;
+        return parser.Parse();
     }
 
     private void OnCompileDiagnostic(string message, ErrorType type)

@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Maui;
 using Endorphins.Services;
 using Endorphins.Shared;
+using Microsoft.AspNetCore.Components.WebView.Maui;
 using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
 
@@ -39,6 +40,15 @@ public static class MauiProgram
             "Inspectable", (handler, view) =>
             {
                 handler.PlatformView.Inspectable = true;
+            });
+#endif
+#if IOS || MACCATALYST
+        // Saving from an embedded tool navigates to a data:/blob: URL far longer than System.Uri
+        // accepts, which crashes BlazorWebView's navigation delegate. See WebViewDownloadInterceptor.
+        BlazorWebViewHandler.BlazorWebViewMapper.AppendToMapping(
+            "InterceptDownloads", (handler, view) =>
+            {
+                WebViewDownloadInterceptor.InstallOn(handler.PlatformView);
             });
 #endif
         return builder.Build();

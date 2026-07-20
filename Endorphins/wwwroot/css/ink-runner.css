@@ -95,8 +95,11 @@
     justify-content: flex-end;
 }
 .dialogue-portrait {
-    width: 44px;
-    height: 44px;
+    /* border-box so this is the rendered footprint — the 4px padding and 1px border used to
+       sit outside it, making the box ~10px larger than the declared size. */
+    box-sizing: border-box;
+    width: 72px;
+    height: 72px;
     border-radius: 4px;
     object-fit: cover;
     object-position: top center;
@@ -109,7 +112,8 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    /* Speaker name sits just above its line — 1rem read as a gap between separate blocks. */
+    gap: 5px;
 }
 .dialogue-line-npc .dialogue-bubble {
     align-items: flex-end;

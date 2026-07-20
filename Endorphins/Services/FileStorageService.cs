@@ -3,7 +3,7 @@ using Endorphins.Shared;
 
 namespace Endorphins.Services;
 
-public class FileStorageService : IFileStorageService
+public class FileStorageService(ProjectBookmarkStore bookmarks) : IFileStorageService
 {
     public string? Root;
     public Action<List<string>>? FilesLoaded { get; set; }
@@ -25,8 +25,15 @@ public class FileStorageService : IFileStorageService
         {
             return null;
         }
-        return Root = result.Folder!.Path;
+        bookmarks.Remember(result.Folder!.Path);
+        return Root = result.Folder.Path;
     }
+
+    /// <summary>
+    /// Reopens the project from the previous session, if one was stored and is still
+    /// reachable. Returns the restored path, or null to leave the app with no project.
+    /// </summary>
+    public string? TryRestoreLastProject() => Root = bookmarks.Restore();
 
     public List<string> FilterBy(string[] extensions)
     {

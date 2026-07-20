@@ -119,7 +119,16 @@
     {
         if (!firstRender) return;
         var autoProject = System.Environment.GetEnvironmentVariable("ENDORPHINS_AUTO_PROJECT");
-        if (string.IsNullOrEmpty(autoProject) || !Directory.Exists(autoProject)) return;
+        if (string.IsNullOrEmpty(autoProject) || !Directory.Exists(autoProject))
+        {
+            // No override: reopen last session's project, if it's still reachable.
+            if (StorageService.TryRestoreLastProject() is { } restored)
+            {
+                Console.WriteLine($"[Restore] project: {restored}");
+                StorageService.SetFilePathsAsync();
+            }
+            return;
+        }
 
         Console.WriteLine($"[AutoLoad] project: {autoProject}");
         StorageService.Root = autoProject;

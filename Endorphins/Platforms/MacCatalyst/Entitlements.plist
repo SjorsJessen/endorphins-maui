@@ -9,7 +9,18 @@
         <!-- When App Sandbox is enabled, this value is required to open outgoing network connections. -->
         <key>com.apple.security.network.client</key>
         <true/>
+        <!-- LocalMediaServer listens on a loopback TCP port. App Sandbox gates *accepting*
+             connections behind this entitlement, loopback included — without it the Release
+             build's PDF, video and image previews all fail while Debug (sandbox-free
+             entitlements) works fine. -->
+        <key>com.apple.security.network.server</key>
+        <true/>
         <key>com.apple.security.files.user-selected.read-write</key>
+        <true/>
+        <!-- Lets ProjectBookmarkStore persist a security-scoped bookmark, so the last
+             project reopens on launch. Without it the sandbox re-grants nothing and the
+             remembered folder comes back unreadable. -->
+        <key>com.apple.security.files.bookmarks.app-scope</key>
         <true/>
     </dict>
 </plist>

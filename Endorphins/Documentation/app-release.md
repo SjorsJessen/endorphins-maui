@@ -31,3 +31,10 @@ When you open a sideloaded app for the first time, your iPad will block it for s
 1. Go to *Settings > General > VPN & Device Management*;
 2. Tap your Apple ID under the Developer App section;
 3. Tap Trust [Your Name]
+
+---
+
+# Building apps
+
+**MacOS**: `dotnet build -t:Run -f net9.0-maccatalyst -c Release -r maccatalyst-arm64`
+**iOS**: `dotnet build -t:Run -f net9.0-ios -c Release -r ios-arm64`

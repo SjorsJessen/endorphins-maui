@@ -172,6 +172,18 @@
             });
         }
 
+        // ⌘D duplicates the current line (or the selected lines). This displaces Monaco's
+        // default ⌘D, "add selection to next find match" — its multi-cursor behaviour is not
+        // available on another key once rebound.
+        await _editor.AddAction(new ActionDescriptor
+        {
+            Id = "ink-duplicate-line",
+            Label = "Duplicate line",
+            Keybindings = [Cmd | (int)BlazorMonaco.KeyCode.KeyD],
+            ContextMenuGroupId = "modification",
+            Run = editor => _ = InvokeAsync(DuplicateLine)
+        });
+
         foreach (var element in InkElements)
         {
             if (element.Keybinding is not int keybinding) continue;
@@ -184,6 +196,17 @@
                 Run = editor => _ = InvokeAsync(() => AddInkElement(element.Snippet))
             });
         }
+    }
+
+    /// <summary>
+    /// Copies the current line below the cursor, delegating to Monaco's own
+    /// copyLinesDownAction so selections, undo grouping and multi-line cases behave exactly
+    /// as they do on its default ⌥⇧↓ binding.
+    /// </summary>
+    private async Task DuplicateLine()
+    {
+        if (_editor is null) return;
+        await _editor.Trigger("inkDuplicateLine", "editor.action.copyLinesDownAction");
     }
 
     protected override void OnInitialized()

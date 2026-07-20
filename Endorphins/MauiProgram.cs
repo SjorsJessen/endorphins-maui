@@ -24,6 +24,7 @@ public static class MauiProgram
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddSingleton<AssetsService>();
         builder.Services.AddSingleton<PdfService>();
+        builder.Services.AddSingleton<AssetUrlResolver>();
         builder.Services.AddSingleton<InkStoryService>();
         builder.Services.AddSingleton<InkLinkResolver>();
         builder.Services.AddSingleton<InkNavigationHistory>();

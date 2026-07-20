@@ -104,6 +104,8 @@
     private StandaloneCodeEditor? _editor;
     private CancellationTokenSource? _compileCts;
     private DotNetObjectReference<InkEditorComponent>? _self;
+    private bool _editorReady;          // Monaco's JS side has constructed the editor
+    private string? _pendingContent;    // content that arrived before it had
     private BlazorMonaco.Position _currentCursorPosition = new();
     private sealed record InkSnippet(
         string Icon, string Label, string Tooltip, string Snippet,
@@ -139,6 +141,13 @@
     private async Task RegisterEditorShortcuts()
     {
         if (_editor is null) return;
+
+        _editorReady = true;
+        if (_pendingContent is { } pending)
+        {
+            _pendingContent = null;
+            await _editor.SetValue(pending);
+        }
 
         // ⌘← / ⌘→ walk the script history. Note these are macOS's line-start/line-end keys,
         // which this rebinds inside the ink editor — see ScriptHistoryShortcuts.
@@ -348,7 +357,17 @@
         try
         {
             InkStoryService.SetContent(content ?? string.Empty);
-            if (_editor is not null)
+
+            // _editor is non-null as soon as the @ref binds, but Monaco only exists once its
+            // JS side has constructed it — calling SetValue in between throws "Couldn't find
+            // the editor". A restored project loads its main script during the very first
+            // render, so that gap is the common case, not a rare race. Hold the content and
+            // apply it from OnDidInit.
+            if (!_editorReady)
+            {
+                _pendingContent = content ?? string.Empty;
+            }
+            else if (_editor is not null)
             {
                 await _editor.SetValue(content ?? string.Empty);
             }

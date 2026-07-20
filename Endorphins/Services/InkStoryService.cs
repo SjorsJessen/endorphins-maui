@@ -31,7 +31,7 @@ public sealed record InkDiagnostic(string Message, ErrorType Type);
 /// <summary>Documentation entry for a function offered by the ink editor's Functions dropdown.</summary>
 public sealed record InkFunctionDoc(string Signature, string Description, string Snippet);
 
-public sealed class InkStoryService
+public sealed class InkStoryService(AssetUrlResolver assets)
 {
     public const string MainScriptPath = "scripts/main.ink";
 
@@ -41,6 +41,7 @@ public sealed class InkStoryService
     [
         new("updateSpeaker(name)",  "Set the active speaker's name and portrait.", "~ updateSpeaker(\"speaker\")\n"),
         new("setImage(name)",       "Display an image asset by name.",             "~ setImage(\"image\")\n"),
+        new("setAvatar(path)",      "Portrait for following lines, by asset path.", "~ setAvatar(\"assets/images/characters/name.png\")\n"),
         new("setBackground(name)",  "Set the background image by asset name.",     "~ setBackground(\"background\")\n"),
         new("playAudio(name)",      "Play an audio asset by name.",                "~ playAudio(\"audio\")\n"),
         new("addDivider()",         "Insert a section break between passages.",    "~ addDivider()\n"),
@@ -83,6 +84,9 @@ public sealed class InkStoryService
     /// </summary>
     public string? BannerImage { get; private set; }
 
+    /// <summary><see cref="BannerImage"/> resolved to a loadable URL, or null if unresolved.</summary>
+    public string? BannerImageUrl { get; private set; }
+
     public Action? BannerChanged { get; set; }
 
     public Action<string>? InkScriptSelected { get; set; }
@@ -99,6 +103,7 @@ public sealed class InkStoryService
     private readonly List<InkDiagnostic> _diagnostics = [];
     private List<Choice> _choices = [];
     private string _currentSpeaker;
+    private string? _currentAvatar;
 
     public void Run(string root, string scriptPath)
     {
@@ -180,7 +185,9 @@ public sealed class InkStoryService
             {
                 Speaker = _currentSpeaker,
                 Line = nextLine,
-                Type = type
+                Type = type,
+                Image = _currentAvatar,
+                ImageUrl = assets.Url(_currentAvatar)
             };
             _dialogLines.Add(dialogueLine);
             DialogUpdated?.Invoke(dialogueLine);
@@ -215,8 +222,10 @@ public sealed class InkStoryService
     {
         _dialogLines.Clear();
         _choices.Clear();
-        // The banner belongs to the scene that set it; a restart has no scene yet.
+        // The banner and avatar belong to the scene that set them; a restart has no scene yet.
         BannerImage = null;
+        BannerImageUrl = null;
+        _currentAvatar = null;
         BannerChanged?.Invoke();
     }
 
@@ -287,6 +296,15 @@ public sealed class InkStoryService
     }
 
     /// <summary>
+    /// Backs the <c>setAvatar</c> external function. The avatar sticks until changed, so a
+    /// character keeps their portrait across consecutive lines; an empty name drops it.
+    /// </summary>
+    private void SetAvatar(string imageName)
+    {
+        _currentAvatar = string.IsNullOrWhiteSpace(imageName) ? null : imageName.Trim();
+    }
+
+    /// <summary>
     /// Backs the <c>setImage</c> external function. An empty name clears the banner, so a
     /// scene can drop back to text-only without a separate function.
     /// </summary>
@@ -295,6 +313,7 @@ public sealed class InkStoryService
         var next = string.IsNullOrWhiteSpace(imageName) ? null : imageName.Trim();
         if (next == BannerImage) return;
         BannerImage = next;
+        BannerImageUrl = assets.Url(next);
         BannerChanged?.Invoke();
     }
     
@@ -311,6 +330,9 @@ public sealed class InkStoryService
         // lookahead-safe, the next line's updateSpeaker would fire while the current
         // line is still being emitted, attributing the current line to the wrong speaker.
         story.BindExternalFunction<string>("updateSpeaker", UpdateSpeaker, false);
+        // Same lookahead reasoning as updateSpeaker: the avatar is stamped onto the line
+        // being emitted, so it must not be advanced early by the glue lookahead.
+        story.BindExternalFunction<string>("setAvatar", SetAvatar, false);
         story.BindExternalFunction<string>("playAudio", ServiceFunctions.PlayAudio, true);
         story.BindExternalFunction("addDivider", AddDivider, false);
         story.BindExternalFunction<string>("transition", Transition, false);

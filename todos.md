@@ -1,2 +1,2 @@
-- I would like to have one more button left of the arrow buttons which navigate ink scripts, which is like a home/center button that goes back to the main.ink script. I would also like to navigate back by pressing cmd + space (i believe no other important things are bound to it)?
+
 - When I am working in the Ink editor (BlazorMonaco) and I am with the cursor on a line, I would like to be able to press cmd + d to duplicate the line underneath.

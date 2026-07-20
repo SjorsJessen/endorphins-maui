@@ -6,6 +6,15 @@
 @inherits DevHotReloadComponentBase;
 
 <MudToolBar Dense Class="ink-editor-toolbar">
+    <MudTooltip Text="Back to main.ink (⌘↑)" Arrow="true" Placement="Placement.Bottom">
+        <MudIconButton
+            Class="ink-tb-nav"
+            Icon="@Icons.Material.Sharp.Home"
+            Size="Size.Small"
+            Color="Color.Inherit"
+            Disabled="@(InkStoryService.IsMainScriptActive)"
+            OnClick="GoHome"/>
+    </MudTooltip>
     <MudTooltip Text="Back to previous script (⌘←)" Arrow="true" Placement="Placement.Bottom">
         <MudIconButton
             Class="ink-tb-nav"
@@ -241,20 +250,40 @@
     }
 
     /// <summary>
-    /// History navigation bound to ⌘←/⌘→, as requested. On macOS those are normally
-    /// line-start/line-end; inside the ink editor they navigate instead, and Home/End (plus
-    /// ⌘↑/⌘↓ for document start/end) remain available for caret movement. Registered through
-    /// AddAction so the rebinding is scoped to this editor and never leaks app-wide.
+    /// Script navigation on the arrow cluster, as requested: ⌘← back, ⌘→ forward, ⌘↑ to
+    /// main.ink. All three are macOS caret-movement keys that this rebinds inside the ink
+    /// editor — ⌘←/⌘→ are line start/end, ⌘↑ is document start. Home/End still move within a
+    /// line and ⌘↓ still jumps to the document end, but document *start* has no shortcut left
+    /// here; ⌘↓ then ⌘← is the two-key equivalent. Registered through AddAction so the
+    /// rebinding is scoped to this editor and never leaks app-wide.
     /// </summary>
     private (string Id, string Label, int Keybinding, Func<Task> Run)[] ScriptHistoryShortcuts => [
         ("ink-history-back", "Back to previous script",
             Cmd | (int)BlazorMonaco.KeyCode.LeftArrow, GoBack),
         ("ink-history-forward", "Forward to next script",
             Cmd | (int)BlazorMonaco.KeyCode.RightArrow, GoForward),
+        ("ink-history-home", "Back to main.ink",
+            Cmd | (int)BlazorMonaco.KeyCode.UpArrow, GoHome),
     ];
 
     private Task GoBack() => StepHistory(History.Back(IsReachable));
     private Task GoForward() => StepHistory(History.Forward(IsReachable));
+
+    /// <summary>
+    /// Jumps to the project's root script. This is a normal navigation rather than a history
+    /// step, so it is recorded — going home then pressing Back returns you where you were.
+    /// </summary>
+    private async Task GoHome()
+    {
+        if (InkStoryService.IsMainScriptActive) return;
+        if (!IsReachable(MainInkScriptPath))
+        {
+            Console.Error.WriteLine($"[InkNav] '{MainInkScriptPath}' not found in this project.");
+            return;
+        }
+        await OpenScriptAsync(MainInkScriptPath);
+        await RevealAsync(1, 1);
+    }
 
     private async Task StepHistory(string? destination)
     {

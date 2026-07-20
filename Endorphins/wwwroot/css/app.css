@@ -17,6 +17,9 @@
     --text-dim:     #5a6070;
     --text-mid:     #8a929e;
     --accent:       #4f9cf0;
+    /* Markdown headings — a desaturated step from --text toward --accent, so headings read
+       as structure at a glance without competing with links for attention. */
+    --heading:      #9db4d0;
     --accent-dim:   #1e3a5f;
     --green:        #4ec9a0;
     --yellow:       #e8c97a;

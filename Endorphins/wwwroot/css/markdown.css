@@ -104,7 +104,13 @@
 .markdown-editor .CodeMirror-selected {
     background: var(--accent-dim) !important;
 }
-.markdown-editor .cm-header,
+/* Headings get their own colour so they separate from body text at a glance. Split from
+   .cm-strong deliberately — bold text is emphasis within a paragraph, not structure, so it
+   stays the body colour. The .cm-header class also covers the leading # marks, so the whole
+   heading line tints together. */
+.markdown-editor .cm-header {
+    color: var(--heading) !important;
+}
 .markdown-editor .cm-strong {
     color: var(--text) !important;
 }
@@ -137,8 +143,11 @@
 }
 .markdown-editor .editor-preview h1,
 .markdown-editor .editor-preview h2,
-.markdown-editor .editor-preview h3 {
-    color: var(--text) !important;
+.markdown-editor .editor-preview h3,
+.markdown-editor .editor-preview h4,
+.markdown-editor .editor-preview h5,
+.markdown-editor .editor-preview h6 {
+    color: var(--heading) !important;
     border-color: var(--border) !important;
 }
 
@@ -171,7 +180,7 @@
 .md-body h4, .md-body h5, .md-body h6 {
     font-family: 'Inter', sans-serif;
     font-weight: 700;
-    color: var(--text);
+    color: var(--heading);
     margin: 1.4em 0 0.4em;
     line-height: 1.3;
 }

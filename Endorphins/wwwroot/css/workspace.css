@@ -32,7 +32,8 @@
     color: var(--text);
     opacity: 1;
 }
-/* Fullscreen toggle — only rendered on visual-preview tabs (PDF, Graph, Moodboard, Video) */
+/* Fullscreen toggle — only rendered on the visual-preview tabs, not the text ones
+   (Story, Notes). See IsFullscreenable in WorkspaceComponent for the current set. */
 .wtab-fs {
     display: inline-flex;
     align-items: center;

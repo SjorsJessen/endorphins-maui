@@ -58,7 +58,7 @@
             <MudTabPanel Visible="_graphOpen" TabContent="@Header("Graph", () => _graphOpen = false, fullscreenable: true)">
                 <GraphComponent/>
             </MudTabPanel>
-            <MudTabPanel Visible="_photoshopOpen" TabContent="@Header("Photoshop", () => _photoshopOpen = false)">
+            <MudTabPanel Visible="_photoshopOpen" TabContent="@Header("Photoshop", () => _photoshopOpen = false, fullscreenable: true)">
                 <PhotoshopComponent/>
             </MudTabPanel>
             <MudTabPanel Visible="_heavyPaintOpen" TabContent="@Header("HeavyPaint", () => _heavyPaintOpen = false, fullscreenable: true)">
@@ -103,7 +103,7 @@
     private bool _fullscreen;
 
     private static bool IsFullscreenable(int index) =>
-        index is ReaderIndex or GraphIndex or MoodboardIndex or VideoIndex or HeavyPaintIndex;
+        index is ReaderIndex or GraphIndex or MoodboardIndex or VideoIndex or HeavyPaintIndex or PhotoshopIndex;
 
     private void ToggleFullscreen() => _fullscreen = !_fullscreen;
 

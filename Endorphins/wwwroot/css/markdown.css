@@ -2,6 +2,9 @@
 
 .markdown-editor {
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .editor-statusbar {
@@ -22,8 +25,57 @@
     background: var(--bg) !important;
     color: var(--text) !important;
     border-color: var(--border) !important;
-    line-height: 2rem !important;
 }
+
+/* ── Sizing ──
+   The component asks for MaxHeight="100vh", but 100vh is the *viewport*, and this pane
+   starts below the app header and toolbar. CodeMirror therefore sized itself taller than
+   the space it actually has, and the overflow — the last lines — was clipped by the editor
+   column with no way to scroll to it. Drive the height from the flex column instead and let
+   CodeMirror scroll internally, so its idea of its own height matches the box it is in. */
+.markdown-editor .EasyMDEContainer {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+.markdown-editor .CodeMirror {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;      /* beats EasyMDE's fixed 300px */
+    max-height: none !important;  /* beats the inline 100vh from MaxHeight */
+    /* line-height belongs on the editor alone: CodeMirror measures line boxes to position
+       the cursor and decide what to render while scrolling, and setting it on the wrappers
+       too gave it two different answers — the source of the jumpy scrolling. */
+    font-size: 20px;
+    line-height: 1.6;
+}
+
+/* ── Scrollbar ──
+   EasyMDE hides the native scrollbar by pushing the scroller 50px outside its own box
+   (margin-bottom/-right: -50px, paired with a 50px transparent border on .CodeMirror-sizer).
+   Undo both so a real scrollbar is visible, keeping a smaller bottom padding so the last
+   line still clears the pane edge. */
+.markdown-editor .CodeMirror-scroll {
+    margin-bottom: 0;
+    margin-right: 0;
+    padding-bottom: 0;
+    overscroll-behavior: contain;
+}
+.markdown-editor .CodeMirror-sizer {
+    border-right: 0 !important;
+}
+/* Insets for the text itself. Right keeps it clear of the scrollbar, which otherwise sits on
+   top of the last characters — dragging it then grabbed text instead of scrolling. Bottom is
+   the breathing room under the final line, and it has to live here: CodeMirror derives the
+   document's scroll height from the lines box, so padding on .CodeMirror-scroll is outside
+   that measurement and never becomes scrollable space. */
+.markdown-editor .CodeMirror-lines {
+    padding: 8px 22px 64px 0 !important;
+}
+.markdown-editor .CodeMirror-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.markdown-editor .CodeMirror-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+.markdown-editor .CodeMirror-scroll::-webkit-scrollbar-track { background: transparent; }
 .markdown-editor .editor-toolbar {
     display: none !important;   /* hide EasyMDE's formatting toolbar */
 }
@@ -46,6 +98,18 @@
 .markdown-editor .cm-strong {
     color: var(--text) !important;
 }
+
+/* Heading scale, matched to the preview's .md-body h1–h4 (2 / 1.5 / 1.25 / 1.05em) so a note
+   is the same shape in both panes. EasyMDE's own sizes are viewport-relative —
+   calc(1.375rem + 1.5vw) for h1 — which made headings grow with the window and tower over
+   the body text. !important is needed because easymde.min.css loads after this file and its
+   .cm-s-easymde .cm-header-N selectors match at equal specificity. */
+.markdown-editor .cm-header-1 { font-size: 2em !important; }
+.markdown-editor .cm-header-2 { font-size: 1.5em !important; }
+.markdown-editor .cm-header-3 { font-size: 1.25em !important; }
+.markdown-editor .cm-header-4 { font-size: 1.05em !important; }
+.markdown-editor .cm-header-5,
+.markdown-editor .cm-header-6 { font-size: 1em !important; }
 .markdown-editor .cm-link,
 .markdown-editor .cm-url {
     color: var(--accent) !important;

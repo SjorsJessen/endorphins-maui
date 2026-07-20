@@ -1,6 +1,7 @@
 @inject IJSRuntime JS
 @inject InkStoryService InkStoryService;
 @inject FileStorageService StorageService;
+@inject InkLinkResolver LinkResolver;
 @inherits DevHotReloadComponentBase;
 
 <MudToolBar Dense Class="ink-editor-toolbar">
@@ -81,6 +82,7 @@
     private const int CompileDebounceMs = 700;
     private StandaloneCodeEditor? _editor;
     private CancellationTokenSource? _compileCts;
+    private DotNetObjectReference<InkEditorComponent>? _self;
     private BlazorMonaco.Position _currentCursorPosition = new();
     private sealed record InkSnippet(
         string Icon, string Label, string Tooltip, string Snippet,
@@ -145,7 +147,56 @@
         if (firstRender)
         {
             await JS.InvokeVoidAsync(identifier: "registerInkLanguage");
+            _self = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("registerInkNavigation", _self);
         }
+    }
+
+    /// <summary>
+    /// Follows a Cmd/Ctrl-clicked divert or INCLUDE. Called from inkNavigation.js, which
+    /// knows what was clicked but not where it lives.
+    /// </summary>
+    [JSInvokable]
+    public async Task NavigateInkLink(string kind, string target)
+    {
+        var resolved = kind switch
+        {
+            "include" => LinkResolver.ResolveInclude(target),
+            "divert" => LinkResolver.ResolveDivert(target, InkStoryService.ActiveScriptPath,
+                                                  InkStoryService.EditorContent ?? string.Empty),
+            _ => null
+        };
+
+        if (resolved is null)
+        {
+            // Unresolved targets are common while drafting; the compiler already reports
+            // them in the Problems panel, so stay silent rather than moving the caret.
+            return;
+        }
+
+        if (!string.Equals(resolved.RelativePath, InkStoryService.ActiveScriptPath,
+                           StringComparison.OrdinalIgnoreCase))
+        {
+            await OpenScriptAsync(resolved.RelativePath);
+        }
+        await RevealAsync(resolved.Line, resolved.Column);
+    }
+
+    /// <summary>Swaps the editor to another project script, mirroring the asset panel's flow.</summary>
+    private async Task OpenScriptAsync(string relativePath)
+    {
+        var content = await StorageService.ReadFileAsTextAsync(relativePath);
+        InkStoryService.ActiveScriptPath = relativePath;
+        await ApplyContentAsync(content);
+    }
+
+    private async Task RevealAsync(int line, int column)
+    {
+        if (_editor is null) return;
+        var position = new BlazorMonaco.Position { LineNumber = line, Column = column };
+        await _editor.SetPosition(position, "inkLinkNavigation");
+        await _editor.RevealLineInCenter(line);
+        await _editor.Focus();
     }
 
     private async Task AddInkElement(string element)
@@ -277,6 +328,7 @@
     {
         base.Dispose();
         _compileCts?.Cancel();
+        _self?.Dispose();
         _editor?.Dispose();
         InkStoryService.InkScriptSelected -= UpdateEditorContent;
         InkStoryService.CompileStateChanged -= OnCompileStateChanged;

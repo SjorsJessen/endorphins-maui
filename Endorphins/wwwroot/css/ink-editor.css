@@ -203,3 +203,17 @@
     gap: 2px;
     border-bottom: 1px solid var(--border);
 }
+
+/* Divert / INCLUDE navigation links.
+   Monaco underlines every detected link permanently, which in an ink script means
+   underlining most diverts on screen at once. Restrict the underline to the Cmd/Ctrl-held
+   hover state (.detected-link-active), so it reads as a cue that this target is
+   followable rather than as constant decoration. */
+.monaco-editor .detected-link {
+    text-decoration: none;
+}
+.monaco-editor .detected-link-active {
+    text-decoration: underline;
+    text-underline-position: under;
+    cursor: pointer;
+}

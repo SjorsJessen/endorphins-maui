@@ -39,7 +39,12 @@ public sealed partial class InkLinkResolver(FileStorageService storage)
         if (relative.Length == 0) return null;
 
         var full = Path.GetFullPath(Path.Combine(storage.Root, relative));
-        return File.Exists(full) ? new InkLinkTarget(relative, 1, 1) : null;
+        if (!File.Exists(full)) return null;
+
+        // Hand back the canonical project-relative form rather than the raw INCLUDE text, so
+        // it compares equal to paths coming from the asset tree.
+        var canonical = Path.GetRelativePath(storage.Root, full).Replace('\\', '/');
+        return new InkLinkTarget(canonical, 1, 1);
     }
 
     /// <summary>

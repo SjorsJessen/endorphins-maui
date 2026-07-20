@@ -2,9 +2,30 @@
 @inject InkStoryService InkStoryService;
 @inject FileStorageService StorageService;
 @inject InkLinkResolver LinkResolver;
+@inject InkNavigationHistory History;
 @inherits DevHotReloadComponentBase;
 
 <MudToolBar Dense Class="ink-editor-toolbar">
+    <MudTooltip Text="Back to previous script (⌘←)" Arrow="true" Placement="Placement.Bottom">
+        <MudIconButton
+            Class="ink-tb-nav"
+            Icon="@Icons.Material.Sharp.ArrowBack"
+            Size="Size.Small"
+            Color="Color.Inherit"
+            Disabled="@(!History.CanGoBack)"
+            OnClick="GoBack"/>
+    </MudTooltip>
+    <MudTooltip Text="Forward to next script (⌘→)" Arrow="true" Placement="Placement.Bottom">
+        <MudIconButton
+            Class="ink-tb-nav"
+            Icon="@Icons.Material.Sharp.ArrowForward"
+            Size="Size.Small"
+            Color="Color.Inherit"
+            Disabled="@(!History.CanGoForward)"
+            OnClick="GoForward"/>
+    </MudTooltip>
+    <div class="ink-tb-divider"></div>
+
     @foreach (var element in InkElements)
     {
         <MudTooltip Text="@ElementTooltip(element)" Arrow="true" Placement="Placement.Bottom">
@@ -118,6 +139,21 @@
     private async Task RegisterEditorShortcuts()
     {
         if (_editor is null) return;
+
+        // ⌘← / ⌘→ walk the script history. Note these are macOS's line-start/line-end keys,
+        // which this rebinds inside the ink editor — see ScriptHistoryShortcuts.
+        foreach (var (id, label, keybinding, run) in ScriptHistoryShortcuts)
+        {
+            await _editor.AddAction(new ActionDescriptor
+            {
+                Id = id,
+                Label = label,
+                Keybindings = [keybinding],
+                ContextMenuGroupId = "navigation",
+                Run = editor => _ = InvokeAsync(run)
+            });
+        }
+
         foreach (var element in InkElements)
         {
             if (element.Keybinding is not int keybinding) continue;
@@ -182,13 +218,46 @@
         await RevealAsync(resolved.Line, resolved.Column);
     }
 
-    /// <summary>Swaps the editor to another project script, mirroring the asset panel's flow.</summary>
-    private async Task OpenScriptAsync(string relativePath)
+    /// <summary>
+    /// Swaps the editor to another project script, mirroring the asset panel's flow.
+    /// <paramref name="recordHistory"/> is false when the move *is* a history step, which
+    /// would otherwise rewrite the entry it just navigated to.
+    /// </summary>
+    private async Task OpenScriptAsync(string relativePath, bool recordHistory = true)
     {
         var content = await StorageService.ReadFileAsTextAsync(relativePath);
         InkStoryService.ActiveScriptPath = relativePath;
+        if (recordHistory) History.Visit(relativePath);
         await ApplyContentAsync(content);
     }
+
+    /// <summary>
+    /// History navigation bound to ⌘←/⌘→, as requested. On macOS those are normally
+    /// line-start/line-end; inside the ink editor they navigate instead, and Home/End (plus
+    /// ⌘↑/⌘↓ for document start/end) remain available for caret movement. Registered through
+    /// AddAction so the rebinding is scoped to this editor and never leaks app-wide.
+    /// </summary>
+    private (string Id, string Label, int Keybinding, Func<Task> Run)[] ScriptHistoryShortcuts => [
+        ("ink-history-back", "Back to previous script",
+            Cmd | (int)BlazorMonaco.KeyCode.LeftArrow, GoBack),
+        ("ink-history-forward", "Forward to next script",
+            Cmd | (int)BlazorMonaco.KeyCode.RightArrow, GoForward),
+    ];
+
+    private Task GoBack() => StepHistory(History.Back(IsReachable));
+    private Task GoForward() => StepHistory(History.Forward(IsReachable));
+
+    private async Task StepHistory(string? destination)
+    {
+        if (destination is null) return;
+        await OpenScriptAsync(destination, recordHistory: false);
+        await RevealAsync(1, 1);
+    }
+
+    /// <summary>Whether a remembered script can still be opened (it may have been deleted).</summary>
+    private bool IsReachable(string relativePath) =>
+        StorageService.Root is not null &&
+        File.Exists(Path.Combine(StorageService.Root, relativePath));
 
     private async Task RevealAsync(int line, int column)
     {
@@ -218,6 +287,7 @@
                 {
                     var content = await StorageService.ReadFileAsTextAsync(filePath!);
                     InkStoryService.ActiveScriptPath = MainInkScriptPath;
+                    History.Visit(MainInkScriptPath);
                     await ApplyContentAsync(content);
                     InkStoryService.InkScriptSelected?.Invoke(content);
 

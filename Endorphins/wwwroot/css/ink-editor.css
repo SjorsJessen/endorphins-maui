@@ -217,3 +217,23 @@
     text-underline-position: under;
     cursor: pointer;
 }
+
+/* Back / forward, separated from the insert-element buttons by a rule so the two
+   groups read as different kinds of action (navigate vs. edit). */
+.ink-tb-nav {
+    color: var(--text-mid);
+    padding: 4px;
+}
+.ink-tb-nav:hover:not(:disabled) {
+    color: var(--text);
+}
+.ink-tb-nav:disabled {
+    opacity: 0.3;
+}
+.ink-tb-divider {
+    flex: 0 0 1px;
+    align-self: stretch;
+    width: 1px;
+    background: var(--border2);
+    margin: 6px 8px;
+}

@@ -26,6 +26,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<PdfService>();
         builder.Services.AddSingleton<InkStoryService>();
         builder.Services.AddSingleton<InkLinkResolver>();
+        builder.Services.AddSingleton<InkNavigationHistory>();
         builder.Services.AddSingleton<EditorService>();
         builder.Services.AddSingleton<ProjectBookmarkStore>();
         builder.Services.AddSingleton<FileStorageService>();

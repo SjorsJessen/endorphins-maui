@@ -9,6 +9,7 @@
 @inject DiagramService DiagramService;
 @inject MoodboardService MoodboardService;
 @inject LocalMediaServer MediaServer;
+@inject InkNavigationHistory InkHistory;
 @inherits DevHotReloadComponentBase;
 
 @* Side panel: the Asset Menu is the underlying layer; the Preview Window is a
@@ -294,6 +295,7 @@
         {
             var fileContents = await StorageService.ReadFileAsTextAsync(filePath);
             InkStoryService.ActiveScriptPath = filePath;
+            InkHistory.Visit(filePath);
             InkStoryService.SetContent(fileContents);
             InkStoryService.InkScriptSelected?.Invoke(fileContents);
         }
@@ -405,6 +407,7 @@
         {
             StorageService.RenameFile(oldPath, newPath);
             StorageService.SetFilePathsAsync(); // re-enumerate → tree rebuild
+            InkHistory.Rename(oldPath, newPath); // so back/forward don't strand on the old name
 
             // Keep the editor pointed at the renamed ink script if it was active.
             if (string.Equals(InkStoryService.ActiveScriptPath.Replace('\\', '/'), oldPath, StringComparison.OrdinalIgnoreCase))

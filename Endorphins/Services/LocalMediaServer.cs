@@ -43,7 +43,19 @@ public sealed class LocalMediaServer : IDisposable
             .Replace('\\', '/')
             .Split('/', StringSplitOptions.RemoveEmptyEntries)
             .Select(Uri.EscapeDataString));
-        return $"http://127.0.0.1:{_port}/{_token}/{escaped}";
+        var url = $"http://127.0.0.1:{_port}/{_token}/{escaped}";
+
+        // Stamp the URL with the file's last-write time. Responses are marked immutable
+        // so repeat selections are served from WebKit's cache with no round trip at all,
+        // and editing the file on disk still yields a new URL rather than a stale hit.
+        // (ResolvePath drops the query string, so the stamp never affects lookup.)
+        var root = _storage.Root;
+        if (root is not null)
+        {
+            var stamp = File.GetLastWriteTimeUtc(Path.Combine(root, relativePath)).Ticks;
+            url += $"?v={stamp}";
+        }
+        return url;
     }
 
     private async Task AcceptLoopAsync()
@@ -193,6 +205,8 @@ public sealed class LocalMediaServer : IDisposable
         head.Append($"Content-Type: {contentType}\r\n");
         head.Append($"Content-Length: {length}\r\n");
         head.Append("Accept-Ranges: bytes\r\n");
+        // Safe because Url() version-stamps every URL with the file's mtime.
+        head.Append("Cache-Control: public, max-age=31536000, immutable\r\n");
         // pdf.js/media fetch cross-origin from the app:// (WebView) origin.
         head.Append("Access-Control-Allow-Origin: *\r\n");
         head.Append("Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges\r\n");

@@ -8,6 +8,7 @@
 @inject FileStorageService StorageService;
 @inject DiagramService DiagramService;
 @inject MoodboardService MoodboardService;
+@inject LocalMediaServer MediaServer;
 @inherits DevHotReloadComponentBase;
 
 @* Side panel: the Asset Menu is the underlying layer; the Preview Window is a
@@ -110,7 +111,7 @@
     private bool _isPreviewPanelActive;
     private PreviewKind _previewKind;
     private string? _previewName;
-    private string? _previewData; // data: URI for image / audio
+    private string? _previewData; // loopback media-server URL for image / audio
     private string _previewJsonHtml = string.Empty;
     private bool _projectLoaded;
     private List<AssetNode> _workspaceTree = [];
@@ -446,12 +447,17 @@
                     _previewJsonHtml = JsonPreview.Highlight(json);
                     _previewKind = PreviewKind.Json;
                     break;
+                // Images and audio stream from the loopback server rather than being
+                // inlined: a data: URI costs a full read, a 33% base64 inflation, and a
+                // multi-megabyte string through the render diff before the <img> even
+                // starts decoding. A URL hands the file straight to WebKit, which loads
+                // and decodes it off the UI thread and caches it for repeat selections.
                 case ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" or ".bmp":
-                    _previewData = await ReadAsDataUriAsync(filePath, ext);
+                    _previewData = MediaServer.Url(filePath);
                     _previewKind = PreviewKind.Image;
                     break;
                 case ".mp3" or ".wav" or ".ogg" or ".m4a" or ".flac":
-                    _previewData = await ReadAsDataUriAsync(filePath, ext);
+                    _previewData = MediaServer.Url(filePath);
                     _previewKind = PreviewKind.Audio;
                     break;
                 default:
@@ -467,12 +473,6 @@
         }
     }
 
-    private async Task<string> ReadAsDataUriAsync(string filePath, string ext)
-    {
-        var bytes = await StorageService.ReadFileAsBytesAsync(filePath);
-        return $"data:{MimeType(ext)};base64,{Convert.ToBase64String(bytes)}";
-    }
-
     private void ClosePreview()
     {
         _isPreviewPanelActive = false;
@@ -480,21 +480,6 @@
         _previewJsonHtml = string.Empty;
         _previewKind = PreviewKind.None;
     }
-
-    private static string MimeType(string ext) => ext switch
-    {
-        ".png" => "image/png",
-        ".jpg" or ".jpeg" => "image/jpeg",
-        ".gif" => "image/gif",
-        ".webp" => "image/webp",
-        ".bmp" => "image/bmp",
-        ".mp3" => "audio/mpeg",
-        ".wav" => "audio/wav",
-        ".ogg" => "audio/ogg",
-        ".m4a" => "audio/mp4",
-        ".flac" => "audio/flac",
-        _ => "application/octet-stream"
-    };
 
 }
 

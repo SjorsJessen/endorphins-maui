@@ -43,7 +43,7 @@ public sealed class InkStoryService(AssetUrlResolver assets)
         new("setImage(name)",       "Display an image asset by name.",             "~ setImage(\"image\")\n"),
         new("setAvatar(path)",      "Portrait for following lines, by asset path.", "~ setAvatar(\"assets/images/characters/name.png\")\n"),
         new("setBackground(name)",  "Set the background image by asset name.",     "~ setBackground(\"background\")\n"),
-        new("playAudio(name)",      "Play an audio asset by name.",                "~ playAudio(\"audio\")\n"),
+        new("playAudio(path)",      "Play a sound bite by asset path.",            "~ playAudio(\"assets/audio/name.mp3\")\n"),
         new("addDivider()",         "Insert a section break between passages.",    "~ addDivider()\n"),
         new("transition(title)",    "Display a centered bold header.",             "~ transition(\"title\")\n"),
     ];
@@ -88,6 +88,12 @@ public sealed class InkStoryService(AssetUrlResolver assets)
     public string? BannerImageUrl { get; private set; }
 
     public Action? BannerChanged { get; set; }
+
+    /// <summary>Raised with a loadable URL when the story calls <c>playAudio</c>.</summary>
+    public Action<string>? AudioRequested { get; set; }
+
+    /// <summary>Raised when everything currently playing should be silenced.</summary>
+    public Action? AudioStopRequested { get; set; }
 
     public Action<string>? InkScriptSelected { get; set; }
     public Action<DialogLine>? DialogUpdated { get; set; }
@@ -227,6 +233,8 @@ public sealed class InkStoryService(AssetUrlResolver assets)
         BannerImageUrl = null;
         _currentAvatar = null;
         BannerChanged?.Invoke();
+        // A sound bite from the old run shouldn't carry over the start of the new one.
+        AudioStopRequested?.Invoke();
     }
 
     public void SetContent(string newContent)
@@ -305,6 +313,16 @@ public sealed class InkStoryService(AssetUrlResolver assets)
     }
 
     /// <summary>
+    /// Backs the <c>playAudio</c> external function. Fire-and-forget: the story does not wait
+    /// for the sound, and overlapping calls layer rather than interrupting one another.
+    /// </summary>
+    private void PlayAudio(string audioName)
+    {
+        if (assets.Url(audioName) is not { } url) return;   // resolver already logged the miss
+        AudioRequested?.Invoke(url);
+    }
+
+    /// <summary>
     /// Backs the <c>setImage</c> external function. An empty name clears the banner, so a
     /// scene can drop back to text-only without a separate function.
     /// </summary>
@@ -333,7 +351,9 @@ public sealed class InkStoryService(AssetUrlResolver assets)
         // Same lookahead reasoning as updateSpeaker: the avatar is stamped onto the line
         // being emitted, so it must not be advanced early by the glue lookahead.
         story.BindExternalFunction<string>("setAvatar", SetAvatar, false);
-        story.BindExternalFunction<string>("playAudio", ServiceFunctions.PlayAudio, true);
+        // Not lookahead-safe, for the same reason as the others: a sound belongs to the line
+        // being emitted, and the glue lookahead would otherwise fire the next one early.
+        story.BindExternalFunction<string>("playAudio", PlayAudio, false);
         story.BindExternalFunction("addDivider", AddDivider, false);
         story.BindExternalFunction<string>("transition", Transition, false);
     }
@@ -369,11 +389,4 @@ public static class ServiceFunctions
     {
         Console.WriteLine($"Set background: {imageName}");
     }
-    
-    
-    public static void PlayAudio(string audioName)
-    {
-        Console.WriteLine($"Playing: {audioName}");
-    }    
-
 }

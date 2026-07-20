@@ -116,7 +116,22 @@
         StoryService.ChoicesReset += OnStateChanged;
         StoryService.InkScriptSelected += OnScriptSelected;
         StoryService.BannerChanged += OnStateChanged;
+        StoryService.AudioRequested += OnAudioRequested;
+        StoryService.AudioStopRequested += OnAudioStopRequested;
     }
+
+    // The story raises these from wherever it is being advanced, so hop to the renderer's
+    // context before touching JS.
+    private void OnAudioRequested(string url) => InvokeAsync(async () =>
+    {
+        var status = await JS.InvokeAsync<string>("playStoryAudio", url);
+        if (status != "ok")
+        {
+            Console.Error.WriteLine($"[InkAudio] {url} — {status}");
+        }
+    });
+
+    private void OnAudioStopRequested() => InvokeAsync(() => JS.InvokeVoidAsync("stopStoryAudio").AsTask());
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -158,5 +173,7 @@
         StoryService.ChoicesReset -= OnStateChanged;
         StoryService.InkScriptSelected -= OnScriptSelected;
         StoryService.BannerChanged -= OnStateChanged;
+        StoryService.AudioRequested -= OnAudioRequested;
+        StoryService.AudioStopRequested -= OnAudioStopRequested;
     }
 }

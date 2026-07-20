@@ -13,14 +13,19 @@ public class FileStorageService : IFileStorageService
     /// <summary>All loaded file paths, relative to <see cref="Root"/>.</summary>
     public IReadOnlyList<string> FilePaths => _filePaths;
 
+    /// <summary>
+    /// Prompts for a project folder. Returns the newly picked path, or null if the user
+    /// cancelled — in which case <see cref="Root"/> is left untouched. Note that a null
+    /// return does not imply Root is null: cancelling simply keeps any current project.
+    /// </summary>
     public async Task<string?> PickProjectFolderAsync()
     {
         var result = await MainThread.InvokeOnMainThreadAsync(() => FolderPicker.Default.PickAsync());
-        if (result.IsSuccessful)
+        if (!result.IsSuccessful)
         {
-            Root = result.Folder!.Path;
+            return null;
         }
-        return Root;
+        return Root = result.Folder!.Path;
     }
 
     public List<string> FilterBy(string[] extensions)

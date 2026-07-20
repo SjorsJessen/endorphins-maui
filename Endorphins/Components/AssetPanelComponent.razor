@@ -138,7 +138,9 @@
 
     private async Task OpenProject()
     {
-        await StorageService.PickProjectFolderAsync();
+        // Cancelling the picker is a no-op: don't re-enumerate (there may be no project
+        // yet, and if there is one it hasn't changed).
+        if (await StorageService.PickProjectFolderAsync() is null) return;
         StorageService.SetFilePathsAsync();
     }
 

@@ -47,8 +47,18 @@
     /* line-height belongs on the editor alone: CodeMirror measures line boxes to position
        the cursor and decide what to render while scrolling, and setting it on the wrappers
        too gave it two different answers — the source of the jumpy scrolling. */
-    font-size: 20px;
-    line-height: 1.6;
+}
+
+/* Type scale, forced onto the line elements as well as the editor.
+   In principle setting it on .CodeMirror is enough — EasyMDE gives pre.CodeMirror-line
+   `font-size: inherit; line-height: inherit` — but that was not taking effect, and nothing
+   in the app's CSS, EasyMDE's, or a global `pre` rule accounts for it. Rather than leave it
+   to inheritance, apply it directly to the elements that render the text. */
+.markdown-editor .CodeMirror,
+.markdown-editor .CodeMirror pre.CodeMirror-line,
+.markdown-editor .CodeMirror pre.CodeMirror-line-like {
+    font-size: 20px !important;
+    line-height: 1.8rem !important;
 }
 
 /* ── Scrollbar ──
@@ -71,7 +81,7 @@
    document's scroll height from the lines box, so padding on .CodeMirror-scroll is outside
    that measurement and never becomes scrollable space. */
 .markdown-editor .CodeMirror-lines {
-    padding: 8px 22px 64px 0 !important;
+    padding: 8px 82px 64px 0 !important;
 }
 .markdown-editor .CodeMirror-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
 .markdown-editor .CodeMirror-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }

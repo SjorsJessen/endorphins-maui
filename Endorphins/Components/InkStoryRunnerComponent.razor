@@ -86,6 +86,17 @@
     @if (StoryService.IsMainScriptActive)
     {
         <div class="story-footer">
+            @if (StoryService.IsStoryLoaded && StoryService.KnotNames.Count > 0)
+            {
+                <select class="story-knot-select" value="@_selectedKnot" @onchange="OnKnotSelected"
+                        title="Jump to a knot">
+                    <option value="" disabled selected>Jump to knot…</option>
+                    @foreach (var knot in StoryService.KnotNames)
+                    {
+                        <option value="@knot">@knot</option>
+                    }
+                </select>
+            }
             <MudTooltip Text="Compile and run from the beginning" Arrow="true" Placement="Placement.Top">
                 <MudIconButton Icon="@Icons.Material.Sharp.PlayArrow" Color="Color.Info" Size="Size.Medium"
                                OnClick="Run" />
@@ -106,6 +117,7 @@
     private ElementReference _scrollRef;
     private ElementReference _runnerRef;
     private int _renderedEntryCount;
+    private string _selectedKnot = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -119,6 +131,15 @@
         StoryService.BannerChanged += OnStateChanged;
         StoryService.AudioRequested += OnAudioRequested;
         StoryService.AudioStopRequested += OnAudioStopRequested;
+        StoryService.KnotsChanged += OnStateChanged;
+    }
+
+    private void OnKnotSelected(ChangeEventArgs e)
+    {
+        var knot = e.Value?.ToString() ?? string.Empty;
+        if (string.IsNullOrEmpty(knot)) return;
+        _selectedKnot = knot;
+        StoryService.JumpToKnot(knot);
     }
 
     // The story raises these from wherever it is being advanced, so hop to the renderer's
@@ -181,5 +202,6 @@
         StoryService.BannerChanged -= OnStateChanged;
         StoryService.AudioRequested -= OnAudioRequested;
         StoryService.AudioStopRequested -= OnAudioStopRequested;
+        StoryService.KnotsChanged -= OnStateChanged;
     }
 }

@@ -72,6 +72,9 @@
 }
 .ink-story-runner .story-footer {
     flex: 0 0 auto;
+    /* Relative so the knot selector can pin to the left edge while the transport
+       buttons stay centered in the bar. */
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -84,6 +87,43 @@
 }
 .ink-story-runner .story-footer .mud-icon-button {
     padding: 10px;
+}
+/* Knot jump selector — pinned left so it doesn't shift the centered transport buttons. */
+.ink-story-runner .story-knot-select {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    max-width: 40%;
+    padding: 5px 26px 5px 10px;
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    background: var(--surface2);
+    color: var(--text-mid);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    /* Native arrow off; draw a themed chevron so it matches the dark UI in every engine. */
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23888' stroke-width='1.5'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    transition: background-color 0.1s, color 0.1s, border-color 0.1s;
+}
+.ink-story-runner .story-knot-select:hover {
+    background-color: var(--choice-hover);
+    color: var(--text);
+    border-color: var(--border2);
+}
+.ink-story-runner .story-knot-select:focus {
+    outline: none;
+    border-color: var(--orange);
+}
+/* The dropdown list itself renders with the OS palette, so force readable colors. */
+.ink-story-runner .story-knot-select option {
+    background: var(--surface);
+    color: var(--text);
 }
 
 /* Dialogue line: portrait + bubble */

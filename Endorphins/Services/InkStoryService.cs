@@ -78,6 +78,13 @@ public sealed class InkStoryService(AssetUrlResolver assets)
     public IReadOnlyList<Choice> Choices => _choices;
 
     /// <summary>
+    /// Top-level knot names in the running story, alphabetical — the targets offered by the
+    /// runner's "jump to knot" control. Refreshed on every root-script compile; empty until one
+    /// succeeds. Functions and the compiler's internal containers are filtered out.
+    /// </summary>
+    public IReadOnlyList<string> KnotNames => _knotNames;
+
+    /// <summary>
     /// Image the story last requested via the <c>setImage</c> external function, as the raw
     /// name the script used. Null when no banner should show. Resolving this to an actual
     /// file is the view's job — the story only knows what the author wrote.
@@ -95,6 +102,9 @@ public sealed class InkStoryService(AssetUrlResolver assets)
     /// <summary>Raised when everything currently playing should be silenced.</summary>
     public Action? AudioStopRequested { get; set; }
 
+    /// <summary>Raised when <see cref="KnotNames"/> has been refreshed by a compile.</summary>
+    public Action? KnotsChanged { get; set; }
+
     public Action<string>? InkScriptSelected { get; set; }
     public Action<DialogLine>? DialogUpdated { get; set; }
     public Action? StoryReset { get; set; }
@@ -108,6 +118,7 @@ public sealed class InkStoryService(AssetUrlResolver assets)
     private readonly List<DialogLine> _dialogLines = [];
     private readonly List<InkDiagnostic> _diagnostics = [];
     private List<Choice> _choices = [];
+    private List<string> _knotNames = [];
     private string _currentSpeaker;
     private string? _currentAvatar;
 
@@ -148,6 +159,7 @@ public sealed class InkStoryService(AssetUrlResolver assets)
             parsed = parsedStory is not null;
             if (parsed && isRootScript)
             {
+                CaptureKnotNames(parsedStory!);
                 story = parsedStory!.ExportRuntime(OnCompileDiagnostic);
             }
         }
@@ -222,6 +234,55 @@ public sealed class InkStoryService(AssetUrlResolver assets)
         _choices.Clear();
         ContinueStory();
         ChoicesReset?.Invoke();
+    }
+
+    /// <summary>
+    /// Moves the running story to the start of <paramref name="knotName"/>, keeping story state
+    /// (variables, visit counts) but replacing the on-screen transcript — a seek, not a restart.
+    /// No-op when no story is loaded or the name isn't a known knot.
+    /// </summary>
+    public void JumpToKnot(string knotName)
+    {
+        if (_activeStory is null || string.IsNullOrWhiteSpace(knotName)) return;
+        if (!_knotNames.Contains(knotName)) return;
+
+        try
+        {
+            // A knot's path string is just its name; resetCallstack (the default) makes this a
+            // clean jump rather than a return into whatever called the current thread.
+            _activeStory.ChoosePathString(knotName);
+        }
+        catch (Exception exc)
+        {
+            Console.Error.WriteLine(exc);
+            return;
+        }
+
+        _dialogLines.Clear();
+        _choices.Clear();
+        StoryReset?.Invoke();
+        ContinueStory();
+    }
+
+    /// <summary>
+    /// Pulls the top-level knot names out of the freshly parsed story for the jump control.
+    /// Functions share the knot flow level, so <c>isFunction</c> filters them out; the compiler's
+    /// internal "global decl" container isn't a parsed knot and so never appears here.
+    /// </summary>
+    private void CaptureKnotNames(Ink.Parsed.Story parsed)
+    {
+        var names = new List<string>();
+        foreach (var obj in parsed.content)
+        {
+            if (obj is Ink.Parsed.FlowBase { flowLevel: Ink.Parsed.FlowLevel.Knot, isFunction: false } flow
+                && !string.IsNullOrEmpty(flow.name))
+            {
+                names.Add(flow.name);
+            }
+        }
+        names.Sort(StringComparer.OrdinalIgnoreCase);
+        _knotNames = names;
+        KnotsChanged?.Invoke();
     }
 
     private void ClearHistory()

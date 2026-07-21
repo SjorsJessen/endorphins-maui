@@ -12,6 +12,7 @@
 <MudTreeViewItem T="string"
                  Value="@Node.Path"
                  CanExpand="Node.IsDirectory"
+                 @bind-Expanded="_expanded"
                  ExpandButtonIcon="@(Node.IsDirectory ? Icons.Material.Filled.ChevronRight : string.Empty)"
                  OnClick="HandleClick"
                  BodyContent="RowContent"
@@ -32,6 +33,9 @@
     private bool _focusPending;
     private string _editName = string.Empty;
     private ElementReference _renameInput;
+
+    /// <summary>Tree expansion state — the scripts (Ink) folder starts expanded.</summary>
+    private bool _expanded;
 
     private bool IsScripts => Node.IsDirectory && string.Equals(Node.Name, "scripts", StringComparison.OrdinalIgnoreCase);
     private bool IsNotes => Node.IsDirectory && string.Equals(Node.Name, "notes", StringComparison.OrdinalIgnoreCase);
@@ -91,6 +95,8 @@
                                     OnRenameFile="OnRenameFile"/>
         }
     };
+
+    protected override void OnInitialized() => _expanded = IsScripts;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

@@ -33,46 +33,70 @@
         else
         {
             <div class="asset-scroll">
-                <div class="asset-section-label">Workspace</div>
+                <button type="button" class="asset-section-header" @onclick="() => _workspaceExpanded = !_workspaceExpanded"
+                        title="@(_workspaceExpanded ? "Collapse" : "Expand")">
+                    <MudIcon Icon="@Icons.Material.Sharp.ChevronRight"
+                             Class="@SectionChevronClass(_workspaceExpanded)" Size="Size.Small" />
+                    <span class="asset-section-label">Workspace</span>
+                </button>
                 <MudDivider />
-                <MudTreeView T="string" Dense Hover ExpandOnClick>
-                    @foreach (var node in _workspaceTree)
-                    {
-                        <AssetTreeNodeComponent Node="node" OnFileActivated="OnFileActivated" OnCreateFile="CreateFileInFolder"
-                                                OnRenameFile="RenameFile" />
-                    }
-                </MudTreeView>
-
-                <div class="asset-section-label">Assets</div>
-                <MudDivider />
-                <MudTreeView T="string" Dense Hover ExpandOnClick>
-                    @if (_assetsTree.Count == 0)
-                    {
-                        <MudText Typo="Typo.body2" Class="px-3 py-2" Style="color: var(--text-dim); font-style: italic;">
-                            No assets.
-                        </MudText>
-                    }
-                    else
-                    {
-                        @foreach (var node in _assetsTree)
+                @if (_workspaceExpanded)
+                {
+                    <MudTreeView T="string" Dense Hover ExpandOnClick>
+                        @foreach (var node in _workspaceTree)
                         {
                             <AssetTreeNodeComponent Node="node" OnFileActivated="OnFileActivated" OnCreateFile="CreateFileInFolder"
                                                     OnRenameFile="RenameFile" />
                         }
-                    }
-                </MudTreeView>
+                    </MudTreeView>
+                }
+
+                <button type="button" class="asset-section-header" @onclick="() => _assetsExpanded = !_assetsExpanded"
+                        title="@(_assetsExpanded ? "Collapse" : "Expand")">
+                    <MudIcon Icon="@Icons.Material.Sharp.ChevronRight"
+                             Class="@SectionChevronClass(_assetsExpanded)" Size="Size.Small" />
+                    <span class="asset-section-label">Assets</span>
+                </button>
+                <MudDivider />
+                @if (_assetsExpanded)
+                {
+                    <MudTreeView T="string" Dense Hover ExpandOnClick>
+                        @if (_assetsTree.Count == 0)
+                        {
+                            <MudText Typo="Typo.body2" Class="px-3 py-2" Style="color: var(--text-dim); font-style: italic;">
+                                No assets.
+                            </MudText>
+                        }
+                        else
+                        {
+                            @foreach (var node in _assetsTree)
+                            {
+                                <AssetTreeNodeComponent Node="node" OnFileActivated="OnFileActivated" OnCreateFile="CreateFileInFolder"
+                                                        OnRenameFile="RenameFile" />
+                            }
+                        }
+                    </MudTreeView>
+                }
 
                 <div class="asset-tools">
-                    <div class="asset-section-label">Tools</div>
+                    <button type="button" class="asset-section-header" @onclick="() => _toolsExpanded = !_toolsExpanded"
+                            title="@(_toolsExpanded ? "Collapse" : "Expand")">
+                        <MudIcon Icon="@Icons.Material.Sharp.ChevronRight"
+                                 Class="@SectionChevronClass(_toolsExpanded)" Size="Size.Small" />
+                        <span class="asset-section-label">Tools</span>
+                    </button>
                     <MudDivider />
-                    <button class="asset-tool-item" @onclick="OpenPhotoshop" title="Open Photopea image editor">
-                        <MudIcon Icon="@Icons.Material.Sharp.Brush" Class="asset-row-icon" Size="Size.Small" />
-                        <span class="asset-row-name">Photopea</span>
-                    </button>
-                    <button class="asset-tool-item" @onclick="OpenHeavyPaint" title="Open HeavyPaint">
-                        <MudIcon Icon="@Icons.Material.Sharp.Palette" Class="asset-row-icon" Size="Size.Small" />
-                        <span class="asset-row-name">HeavyPaint</span>
-                    </button>
+                    @if (_toolsExpanded)
+                    {
+                        <button class="asset-tool-item" @onclick="OpenPhotoshop" title="Open Photopea image editor">
+                            <MudIcon Icon="@Icons.Material.Sharp.Brush" Class="asset-row-icon" Size="Size.Small" />
+                            <span class="asset-row-name">Photopea</span>
+                        </button>
+                        <button class="asset-tool-item" @onclick="OpenHeavyPaint" title="Open HeavyPaint">
+                            <MudIcon Icon="@Icons.Material.Sharp.Palette" Class="asset-row-icon" Size="Size.Small" />
+                            <span class="asset-row-name">HeavyPaint</span>
+                        </button>
+                    }
                 </div>
             </div>
         }
@@ -117,6 +141,15 @@
     private bool _projectLoaded;
     private List<AssetNode> _workspaceTree = [];
     private List<AssetNode> _assetsTree = [];
+
+    // Section collapse state — all expanded by default.
+    private bool _workspaceExpanded = true;
+    private bool _assetsExpanded = true;
+    private bool _toolsExpanded = true;
+
+    /// <summary>Chevron class for a section header; the "expanded" modifier rotates it to point down.</summary>
+    private static string SectionChevronClass(bool expanded) =>
+        expanded ? "asset-section-chevron expanded" : "asset-section-chevron";
 
     // Dynamic (editable) categories shown under "Workspace", in this order.
     private static readonly string[] WorkspaceCategories = ["scripts", "notes", "diagrams", "moodboards"];

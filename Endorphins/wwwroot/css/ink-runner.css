@@ -61,7 +61,7 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
-    padding: 20px 22px 8px;
+    padding: 20px 22px 2rem;
 }
 .ink-story-runner .story-empty {
     padding: 24px 20px;
@@ -79,10 +79,6 @@
     padding: 12px 16px;
     border-top: 1px solid var(--border);
     background: var(--surface);
-    /* Tapping Continue repeatedly registers as a double/triple click, and WebKit answers
-       that by extending a text selection into the nearest text — the dialogue just above.
-       The controls hold no selectable text of their own, so opting the bar out costs
-       nothing, and the story text stays selectable. */
     user-select: none;
     -webkit-user-select: none;
 }
@@ -101,8 +97,6 @@
     justify-content: flex-end;
 }
 .dialogue-portrait {
-    /* border-box so this is the rendered footprint — the 4px padding and 1px border used to
-       sit outside it, making the box ~10px larger than the declared size. */
     box-sizing: border-box;
     width: 72px;
     height: 72px;
@@ -118,7 +112,6 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    /* Speaker name sits just above its line — 1rem read as a gap between separate blocks. */
     gap: 5px;
 }
 .dialogue-line-npc .dialogue-bubble {
@@ -126,7 +119,7 @@
 }
 .dialogue-name {
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
+    font-size: 16px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--orange);
@@ -139,7 +132,7 @@
 .story-p {
     color: var(--text);
     line-height: 1.5;
-    font-size: 20px;
+    font-size: 22px;
     text-wrap: pretty;
 }
 

@@ -160,6 +160,40 @@
             await _editor.SetValue(pending);
         }
 
+        // Copy / cut / paste. Two things had to line up for these to work in the WebView:
+        //   1. AppDelegate.BuildMenu frees ⌘C/⌘X/⌘V from Mac Catalyst's Edit menu, which
+        //      otherwise swallows them as key-equivalents before the editor sees the keydown.
+        //   2. These actions then act on the *native* macOS pasteboard via MAUI's Clipboard —
+        //      Monaco's own clipboard (and the browser's) don't function inside this WebView.
+        // Copy/cut fall back to the whole line when nothing is selected, matching VS Code.
+        await _editor.AddAction(new ActionDescriptor
+        {
+            Id = "ink-clipboard-copy",
+            Label = "Copy",
+            Keybindings = [Cmd | (int)BlazorMonaco.KeyCode.KeyC],
+            ContextMenuGroupId = "9_cutcopypaste",
+            ContextMenuOrder = 1,
+            Run = editor => _ = InvokeAsync(() => ClipboardCopyOrCut(cut: false))
+        });
+        await _editor.AddAction(new ActionDescriptor
+        {
+            Id = "ink-clipboard-cut",
+            Label = "Cut",
+            Keybindings = [Cmd | (int)BlazorMonaco.KeyCode.KeyX],
+            ContextMenuGroupId = "9_cutcopypaste",
+            ContextMenuOrder = 2,
+            Run = editor => _ = InvokeAsync(() => ClipboardCopyOrCut(cut: true))
+        });
+        await _editor.AddAction(new ActionDescriptor
+        {
+            Id = "ink-clipboard-paste",
+            Label = "Paste",
+            Keybindings = [Cmd | (int)BlazorMonaco.KeyCode.KeyV],
+            ContextMenuGroupId = "9_cutcopypaste",
+            ContextMenuOrder = 3,
+            Run = editor => _ = InvokeAsync(ClipboardPaste)
+        });
+
         // ⌘← / ⌘→ walk the script history. Note these are macOS's line-start/line-end keys,
         // which this rebinds inside the ink editor — see ScriptHistoryShortcuts.
         foreach (var (id, label, keybinding, run) in ScriptHistoryShortcuts)
@@ -209,6 +243,52 @@
     {
         if (_editor is null) return;
         await _editor.Trigger("inkDuplicateLine", "editor.action.copyLinesDownAction");
+    }
+
+    /// <summary>
+    /// Copies (or, when <paramref name="cut"/> is true, cuts) the selection to the system
+    /// clipboard. With no selection it acts on the whole line — including its trailing newline —
+    /// so ⌘C / ⌘X on a bare caret grab the line, as VS Code does.
+    ///
+    /// The clipboard write goes through the native macOS pasteboard (MAUI Clipboard), which
+    /// works where the WebView's own clipboard does not. Reading the selection and deleting it
+    /// (for cut) are done in JS on the Monaco instance — BlazorMonaco's GetValueInRange /
+    /// ExecuteEdits wrappers silently no-op in this WebView, whereas direct editor JS works.
+    /// </summary>
+    private async Task ClipboardCopyOrCut(bool cut)
+    {
+        try
+        {
+            var text = await JS.InvokeAsync<string>("inkClipboardGetText");
+            if (string.IsNullOrEmpty(text)) return;
+
+            await Microsoft.Maui.ApplicationModel.DataTransfer.Clipboard.Default.SetTextAsync(text);
+
+            if (cut)
+            {
+                await JS.InvokeVoidAsync("inkClipboardDelete");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ClipboardCopyOrCut failed: {ex}");
+        }
+    }
+
+    /// <summary>Pastes clipboard text over the selection (or at the caret) via the native pasteboard.</summary>
+    private async Task ClipboardPaste()
+    {
+        try
+        {
+            var text = await Microsoft.Maui.ApplicationModel.DataTransfer.Clipboard.Default.GetTextAsync();
+            if (string.IsNullOrEmpty(text)) return;
+
+            await JS.InvokeVoidAsync("inkClipboardInsert", text);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ClipboardPaste failed: {ex}");
+        }
     }
 
     protected override void OnInitialized()

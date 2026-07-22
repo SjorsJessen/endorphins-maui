@@ -64,8 +64,12 @@
             <MudTabPanel Visible="_heavyPaintOpen" TabContent="@Header("HeavyPaint", () => _heavyPaintOpen = false, fullscreenable: true)">
                 <HeavyPaintComponent Active="_activeIndex == HeavyPaintIndex"/>
             </MudTabPanel>
+            <MudTabPanel Visible="_conceptArtWorldOpen" TabContent="@Header("ConceptArtWorld", () => _conceptArtWorldOpen = false, fullscreenable: true)">
+                <ConceptArtWorldComponent Active="_activeIndex == ConceptArtWorldIndex"/>
+            </MudTabPanel>
             <MudTabPanel Visible="_moodboardOpen" TabContent="@Header("Moodboard", () => _moodboardOpen = false, fullscreenable: true)">
                 <MoodboardComponent/>
+                
             </MudTabPanel>
             <MudTabPanel Visible="_videoOpen" TabContent="@Header("Video", () => _videoOpen = false, fullscreenable: true)">
                 <VideoPlayerComponent/>
@@ -103,7 +107,7 @@
     private bool _fullscreen;
 
     private static bool IsFullscreenable(int index) =>
-        index is ReaderIndex or GraphIndex or MoodboardIndex or VideoIndex or HeavyPaintIndex or PhotoshopIndex;
+        index is ReaderIndex or GraphIndex or MoodboardIndex or VideoIndex or HeavyPaintIndex or PhotoshopIndex or ConceptArtWorldIndex;
 
     private void ToggleFullscreen() => _fullscreen = !_fullscreen;
 
@@ -168,6 +172,7 @@
     private bool _moodboardOpen;   // opens when a moodboard file is selected
     private bool _photoshopOpen;   // opens when launched from the asset panel's Tools section
     private bool _heavyPaintOpen;  // opens when launched from the asset panel's Tools section
+    private bool _conceptArtWorldOpen;  // opens when launched from the asset panel's Tools section
     private bool _videoOpen;       // opens when a video file is selected
 
     private const int StoryIndex = 0;
@@ -176,8 +181,9 @@
     private const int GraphIndex = 3;
     private const int PhotoshopIndex = 4;
     private const int HeavyPaintIndex = 5;
-    private const int MoodboardIndex = 6;
-    private const int VideoIndex = 7;
+    private const int ConceptArtWorldIndex = 6;
+    private const int MoodboardIndex = 7;
+    private const int VideoIndex = 8;
 
     protected override void OnInitialized()
     {
@@ -190,6 +196,7 @@
         MoodboardService.MoodboardFileSelected += OnMoodboardSelected;
         AssetsService.PhotoshopRequested += OnPhotoshopRequested;
         AssetsService.HeavyPaintRequested += OnHeavyPaintRequested;
+        AssetsService.ConceptArtWorldRequested += OnConceptArtWorldRequested;
         AssetsService.VideoSelected += OnVideoSelected;
     }
 
@@ -201,6 +208,7 @@
     private void OnMoodboardSelected(string _, string __) => OpenTab(() => _moodboardOpen = true, MoodboardIndex);
     private void OnPhotoshopRequested() => OpenTab(() => _photoshopOpen = true, PhotoshopIndex);
     private void OnHeavyPaintRequested() => OpenTab(() => _heavyPaintOpen = true, HeavyPaintIndex);
+    private void OnConceptArtWorldRequested() => OpenTab(() => _conceptArtWorldOpen = true, ConceptArtWorldIndex);
     private void OnVideoSelected(string _) => OpenTab(() => _videoOpen = true, VideoIndex);
 
     private void OpenTab(Action open, int index) => InvokeAsync(() =>
@@ -253,6 +261,7 @@
         MoodboardService.MoodboardFileSelected -= OnMoodboardSelected;
         AssetsService.PhotoshopRequested -= OnPhotoshopRequested;
         AssetsService.HeavyPaintRequested -= OnHeavyPaintRequested;
+        AssetsService.ConceptArtWorldRequested -= OnConceptArtWorldRequested;
         AssetsService.VideoSelected -= OnVideoSelected;
     }
 }

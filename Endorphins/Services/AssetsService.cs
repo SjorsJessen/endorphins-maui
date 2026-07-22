@@ -46,4 +46,7 @@ public sealed class AssetsService
 
     /// <summary>Raised when the user launches the HeavyPaint tool from the asset panel.</summary>
     public Action? HeavyPaintRequested { get; set; }
+
+    /// <summary>Raised when the user launches the ConceptArtWorld tool from the asset panel.</summary>
+    public Action? ConceptArtWorldRequested { get; set; }
 }

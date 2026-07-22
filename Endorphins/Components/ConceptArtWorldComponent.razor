@@ -1,0 +1,44 @@
+@inherits DevHotReloadComponentBase;
+
+@* ConceptArtWorld embeds directly in an iframe as a "browse in place" reference tool —
+   the site opens inside the app instead of the system browser. Like HeavyPaint it
+   exposes no cross-iframe scripting API, so this is view-only.
+
+   Unlike ArtStation (which was tried first and sends X-Frame-Options: SAMEORIGIN,
+   an unconditional server-side refusal to be framed that no client-side trick can
+   override), conceptartworld.com sends no framing-blocking headers at all, so it
+   embeds cleanly the same way HeavyPaint/Photopea do. See MainPage.OnUrlLoading's
+   EmbeddedToolHosts allowlist, which is what keeps this rendering in place instead
+   of being canceled and kicked out to the system browser.
+
+   We latch the iframe on the first activation and keep it alive after, so the page
+   (and any scroll position) survives tab switches. *@
+<div class="conceptartworld-pane">
+    @if (_mounted)
+    {
+        <iframe id="conceptartworld"
+                src="https://conceptartworld.com/"
+                class="conceptartworld-frame"
+                allow="fullscreen; clipboard-read; clipboard-write"
+                allowfullscreen></iframe>
+    }
+    else
+    {
+        <div class="conceptartworld-placeholder">Opening ConceptArtWorld…</div>
+    }
+</div>
+
+@code {
+    /// <summary>True while the ConceptArtWorld tab is the active tab.</summary>
+    [Parameter] public bool Active { get; set; }
+
+    private bool _mounted;   // one-way latch: mount the iframe once, keep it alive
+
+    protected override void OnParametersSet()
+    {
+        if (Active && !_mounted)
+        {
+            _mounted = true;
+        }
+    }
+}

@@ -96,6 +96,10 @@
                             <MudIcon Icon="@Icons.Material.Sharp.Palette" Class="asset-row-icon" Size="Size.Small" />
                             <span class="asset-row-name">HeavyPaint</span>
                         </button>
+                        <button class="asset-tool-item" @onclick="OpenConceptArtWorld" title="Browse ConceptArtWorld">
+                            <MudIcon Icon="@Icons.Material.Sharp.Image" Class="asset-row-icon" Size="Size.Small" />
+                            <span class="asset-row-name">ConceptArtWorld</span>
+                        </button>
                     }
                 </div>
             </div>
@@ -407,6 +411,9 @@
 
     /// <summary>Launches the HeavyPaint tool tab.</summary>
     private void OpenHeavyPaint() => AssetsService.HeavyPaintRequested?.Invoke();
+
+    /// <summary>Launches the ConceptArtWorld tool tab.</summary>
+    private void OpenConceptArtWorld() => AssetsService.ConceptArtWorldRequested?.Invoke();
 
     /// <summary>Opens a moodboard file for editing in the Moodboard tab.</summary>
     private async Task SelectMoodboard(string filePath)

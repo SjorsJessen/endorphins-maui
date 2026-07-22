@@ -40,14 +40,35 @@ internal sealed class WebViewDownloadInterceptor : NSObject, IWKNavigationDelega
         webView.NavigationDelegate = interceptor;
     }
 
+    // Private WebKit policy (_WKNavigationActionPolicyAllowWithoutTryingAppLink =
+    // WKNavigationActionPolicyAllow + 2): allow the navigation but don't hand the URL off to a
+    // matching native app through universal links. The public SDK doesn't surface it.
+    private const WKNavigationActionPolicy AllowWithoutTryingAppLink = (WKNavigationActionPolicy)3;
+
     [Export("webView:decidePolicyForNavigationAction:decisionHandler:")]
     public void DecidePolicy(WKWebView webView, WKNavigationAction navigationAction, Action<WKNavigationActionPolicy> decisionHandler)
     {
         // Read only the scheme — touching AbsoluteString here would cost a multi-megabyte string
         // copy for exactly the navigations we are trying to keep out of managed code.
-        if (navigationAction.Request.Url?.Scheme is "data" or "blob")
+        var scheme = navigationAction.Request.Url?.Scheme;
+        if (scheme is "data" or "blob")
         {
             decisionHandler(WKNavigationActionPolicy.Download);
+            return;
+        }
+
+        // Keep web navigations inside the web view. WKWebView otherwise hands universal-link
+        // domains to their installed native app if one matches, so an embedded tool tab could
+        // pop a desktop app instead of loading in place. We let MAUI's delegate make its usual
+        // allow/cancel decision (see MainPage.OnUrlLoading for the embedded-tool host allowlist
+        // that governs that), then upgrade an "allow" to allowWithoutTryingAppLink so it loads
+        // normally without the app hand-off. Harmless for our own app:// and loopback
+        // navigations, which are never app links anyway.
+        if (scheme is "http" or "https")
+        {
+            var suppressAppLink = new Action<WKNavigationActionPolicy>(policy =>
+                decisionHandler(policy == WKNavigationActionPolicy.Allow ? AllowWithoutTryingAppLink : policy));
+            ((IWKNavigationDelegate)_inner).DecidePolicy(webView, navigationAction, suppressAppLink);
             return;
         }
 

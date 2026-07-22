@@ -10,8 +10,8 @@ public partial class MainPage : ContentPage
         blazorWebView.UrlLoading += OnUrlLoading;
     }
 
-    // Hosts embedded as iframe tools in the workspace (Photopea, HeavyPaint).
-    private static readonly string[] EmbeddedToolHosts = ["photopea.com", "heavypaint.com"];
+    // Hosts embedded as iframe tools in the workspace (Photopea, HeavyPaint, ConceptArtWorld).
+    private static readonly string[] EmbeddedToolHosts = ["photopea.com", "heavypaint.com", "conceptartworld.com"];
 
     private static void OnUrlLoading(object? sender, UrlLoadingEventArgs e)
     {

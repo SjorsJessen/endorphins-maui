@@ -200,6 +200,162 @@
     border-bottom: 1px solid var(--border);
 }
 
+/* ── Translate widget (collapsible, under the ink toolbar) ── */
+.tw-widget {
+    flex: 0 0 auto;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    font-family: 'Inter', sans-serif;
+}
+.tw-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 14px 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-mid);
+    transition: color 0.1s, background 0.1s;
+}
+.tw-header:hover {
+    color: var(--text);
+    background: var(--surface2);
+}
+.tw-caret {
+    font-size: 12px;
+    color: var(--accent);
+    transition: transform 0.12s ease;
+}
+.tw-caret.is-open {
+    transform: rotate(90deg);
+}
+.tw-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.tw-langs {
+    margin-left: auto;
+    font-size: 14px;
+    color: var(--text-dim);
+}
+.tw-body {
+    padding: 4px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.tw-langbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--text-mid);
+}
+.tw-lang {
+    min-width: 62px;
+    text-align: center;
+}
+.tw-swap {
+    background: none;
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 2px 8px;
+    font-size: 16px;
+    line-height: 1;
+    transition: background 0.1s, border-color 0.1s;
+}
+.tw-swap:hover {
+    background: var(--surface2);
+    border-color: var(--accent);
+}
+.tw-panes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+@media (max-width: 560px) {
+    .tw-panes { grid-template-columns: 1fr; }
+}
+.tw-input,
+.tw-output {
+    min-height: 68px;
+    max-height: 180px;
+    padding: 8px 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--text);
+}
+.tw-input {
+    resize: vertical;
+    outline: none;
+}
+.tw-input:focus {
+    border-color: var(--accent);
+}
+.tw-output {
+    overflow-y: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.tw-output.is-error {
+    color: #f28b82;
+    border-color: rgba(242, 139, 130, 0.4);
+}
+.tw-hint {
+    color: var(--text-dim);
+    font-size: 15px;
+}
+.tw-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.tw-buttons {
+    display: flex;
+    gap: 8px;
+}
+.tw-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 15.5px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text-mid);
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+.tw-btn:hover:not(:disabled) {
+    background: var(--surface2);
+    color: var(--text);
+    border-color: var(--border2);
+}
+.tw-btn.is-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--surface);
+}
+.tw-btn.is-primary:hover:not(:disabled) {
+    filter: brightness(1.1);
+    color: var(--surface);
+}
+.tw-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
 /* Divert / INCLUDE navigation links.
    Monaco underlines every detected link permanently, which in an ink script means
    underlining most diverts on screen at once. Restrict the underline to the Cmd/Ctrl-held

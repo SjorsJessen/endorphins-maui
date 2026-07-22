@@ -34,6 +34,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<LocalMediaServer>();
         builder.Services.AddSingleton<DiagramService>();
         builder.Services.AddSingleton<MoodboardService>();
+        builder.Services.AddSingleton(_ => new HttpClient { Timeout = TimeSpan.FromSeconds(15) });
+        builder.Services.AddSingleton<TranslationService>();
         builder.Services.AddMudServices();
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();

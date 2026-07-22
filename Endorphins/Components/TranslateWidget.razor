@@ -1,0 +1,153 @@
+@inject TranslationService Translation
+@implements IDisposable
+
+<div class="tw-widget">
+    <button class="tw-header" @onclick="Toggle" type="button">
+        <span class="tw-caret @(_open ? "is-open" : "")">▸</span>
+        <span class="tw-title">Translate</span>
+        <span class="tw-langs">@SourceName → @TargetName</span>
+    </button>
+
+    @if (_open)
+    {
+        <div class="tw-body">
+            <div class="tw-langbar">
+                <span class="tw-lang">@SourceName</span>
+                <button class="tw-swap" type="button" title="Swap languages" @onclick="Swap">⇄</button>
+                <span class="tw-lang">@TargetName</span>
+            </div>
+
+            <div class="tw-panes">
+                <textarea class="tw-input"
+                          placeholder="Type text to translate…"
+                          @bind="_input"
+                          @bind:event="oninput"
+                          @onkeydown="OnKeyDown"></textarea>
+                <div class="tw-output @(_error is not null ? "is-error" : "")">
+                    @if (_busy)
+                    {
+                        <span class="tw-hint">Translating…</span>
+                    }
+                    else if (_error is not null)
+                    {
+                        <span>@_error</span>
+                    }
+                    else if (!string.IsNullOrEmpty(_output))
+                    {
+                        @_output
+                    }
+                    else
+                    {
+                        <span class="tw-hint">Translation appears here</span>
+                    }
+                </div>
+            </div>
+
+            <div class="tw-actions">
+                <span class="tw-hint">⌘⏎ to translate</span>
+                <div class="tw-buttons">
+                    @if (!string.IsNullOrEmpty(_output) && _error is null)
+                    {
+                        <button class="tw-btn" type="button" @onclick="CopyOutput">Copy</button>
+                    }
+                    <button class="tw-btn is-primary" type="button"
+                            disabled="@(_busy || string.IsNullOrWhiteSpace(_input))"
+                            @onclick="TranslateAsync">
+                        Translate
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private bool _open;
+    private bool _busy;
+    private string _input = string.Empty;
+    private string? _output;
+    private string? _error;
+
+    // Direction flips on Swap: false = NL → EN, true = EN → NL.
+    private bool _reversed;
+    private CancellationTokenSource? _cts;
+
+    private (string Code, string Name) Source => _reversed ? ("en", "English") : ("nl", "Dutch");
+    private (string Code, string Name) Target => _reversed ? ("nl", "Dutch") : ("en", "English");
+    private string SourceName => Source.Name;
+    private string TargetName => Target.Name;
+
+    private void Toggle() => _open = !_open;
+
+    private void Swap()
+    {
+        _reversed = !_reversed;
+        // A translated result is now in the source language — carry it into the input
+        // so a swap acts like "translate back", matching Google Translate's behaviour.
+        if (!string.IsNullOrEmpty(_output) && _error is null)
+        {
+            _input = _output;
+        }
+        _output = null;
+        _error = null;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && (e.MetaKey || e.CtrlKey))
+        {
+            await TranslateAsync();
+        }
+    }
+
+    private async Task TranslateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_input) || _busy) return;
+
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        _busy = true;
+        _error = null;
+        _output = null;
+
+        try
+        {
+            _output = await Translation.TranslateAsync(_input, Source.Code, Target.Code, _cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a newer request — leave state for that one to fill.
+            return;
+        }
+        catch (TranslationException ex)
+        {
+            _error = ex.Message;
+        }
+        catch (Exception)
+        {
+            _error = "Translation failed. Check your connection and try again.";
+        }
+        finally
+        {
+            _busy = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CopyOutput()
+    {
+        if (string.IsNullOrEmpty(_output)) return;
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", _output);
+        }
+        catch
+        {
+            // Clipboard access can be denied; silently ignore rather than surfacing noise.
+        }
+    }
+
+    public void Dispose() => _cts?.Cancel();
+}
